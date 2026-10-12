@@ -56,13 +56,13 @@ Init()
 
 	ShowAsProc init
 
-	IsOsOk || return
-	IsUserOk || return
-	SetCapabilities
-	IsCMDsOk || return
+	CheckBasicEnvironment || return
 	LoadEnv || return
 	ClaimLockfile || return
 	CreatePaths || return
+
+	ShowAsProc args
+
 	PrepareArgs
 	ParseManagementArgs || return
 	ParseHelpArgs || return
@@ -74,13 +74,10 @@ Init()
 
 	ShowTitle
 
-	CheckIfSelfSigned
+	CheckComplexEnvironment
 	ShowArgSuggestions
-	CheckQPKGsConflicts || return
-	CheckQPKGsWarnings
 	DebugLogEnv
 	CheckTasks
-	CheckEnv
 	AssignQpkgsToActions
 
 	return 0
@@ -532,6 +529,7 @@ LoadEnv()
 
 	SetHardwareCpuThreads
 	SetHardwareInstalledRAM
+	SetNasArch
 	SetQpkgArch
 
 	readonly r_concurrency=$r_cpu_threads				# Maximum concurrent package actions to run. Should probably make this account for CPU speed too.
@@ -843,7 +841,6 @@ DebugLogEnv()
 	local a=''
 	local b=''
 
-	SetNasArch
 	SetHardwarePlatform
 	SetOsKernelPageSize
 
@@ -1073,17 +1070,6 @@ DebugLogEnv()
 
 	}
 
-CheckIfSelfSigned()
-	{
-
-	if IsOsCanManageSignedPackages && IsOsRequireSignedPackages && IsNtQpkgSigned sherpa; then
-		[[ $title_art_shown = true ]] && Display
-		ShowAsWarn "$(ShowAsTitleName) is unsigned, and $(GetOsName) is presently configured to require all packages to be signed."
-		ShowAsWarn "Please either self-sign $(ShowAsTitleName) with 'sherpa resign self', or allow unsigned QPKGs in your $(GetOsName) App Center"
-	fi
-
-	}
-
 CheckTasks()
 	{
 
@@ -1107,6 +1093,9 @@ CheckTasks()
 	local build_extended_states=false	# These cannot be found in `/etc/config/qpkg.conf`
 	local group=''
 	local state=''
+	local installed_version=''
+	local a_target_packages=''
+	local -r r_pid_pathfile=$(CreatePidFilePathName)
 
 	if [[ $useropt_fix = true || $useropt_show_status = true ]]; then
 		build_extended_states=true
@@ -1183,42 +1172,6 @@ CheckTasks()
 	fi
 
 	[[ $build_extended_states = true ]] && BuildExtendedQPKGsStates
-
-	FuncExit
-
-	}
-
-CheckEnv()
-	{
-
-	[[ $run_package_actions = true ]] || return 0
-
-	FuncInit
-
-	EndAni "$ani_id"
-	ShowAsProc 'check env'
-	StartAni "$ani_id"
-
-	local -i n=0
-	local installed_version=''
-	local a_target_packages=''
-	local -r r_pid_pathfile=$(CreatePidFilePathName)
-
-#	r_websites+=(testsiteisdown.com)						# directive:omit-from-production
-
-	for ((n=0; n<${#r_websites[@]}; n++)); do
-		IsSiteUp ${r_websites[n]} || ShowAsWarn "${r_websites[n]} is down"
-	done
-
-	if [[ $(/bin/grep -iE 'out of memory|oom-killer' /mnt/HDA_ROOT/.logs/kmsg | /usr/bin/wc -l) -gt 0 ]]; then
-		ShowAsWarn "the $(TextBrightRed 'Out-Of-Memory killer') has been triggered, check for $(TextBrightRed inactive) QPKGs"
-	fi
-
-#	if IsQpkgInstalled OMedusa || IsQpkgInstalled Medusa; then
-#		ShowAsNews "Medusa support to be discontinued: $(ShowAsURL 'https://github.com/OneCDOnly/sherpa/discussions/318')"
-#	fi
-
-	SetNasArch
 
 	if IsValidQpkgInstalled Entware; then
 		if [[ $r_entware_type != none ]]; then
@@ -1330,7 +1283,7 @@ CheckEnv()
 	fi
 
 	WaitForPidsThenRemove "$r_pid_pathfile"		# Ensure Entware package updater completes before continuing.
-	EndAni "$ani_id"
+
 	FuncExit
 
 	}
@@ -3420,7 +3373,7 @@ ShowArgSuggestions()
 					useropt_help_basic=false
 					;;
 				check)
-					DisplayAsProjSynExam "'check' has been replaced by 'fix'" fix
+					DisplayAsProjSynExam "'check' has been replaced by 'fix', so please use" fix
 					arg_problem=true
 					useropt_help_basic=false
 					;;
@@ -7489,47 +7442,44 @@ ShowQPKGsNewVers()
 
 	}
 
-CheckQPKGsConflicts()
+CheckBasicEnvironment()
 	{
 
-	[[ $run_package_actions = false ]] || return 0
+	FuncInit
 
-	local a=''
+	IsOsOk || return
+	IsUserOk || return
+	SetCapabilities
+	IsCMDsOk || return
 
-	if [[ -n ${r_base_qpkg_conflicts_with:-} ]]; then
-		for a in "${r_base_qpkg_conflicts_with[@]}"; do
-			if IsQpkgEnabled "$a"; then
-				ShowAsError "the '$a' QPKG is enabled. $(ShowAsTitleName) is incompatible with this package. Please consider stopping this QPKG in your App Center"
-				run_package_actions=false
-
-				return 1
-			fi
-		done
-	fi
-
-	return 0
+	FuncExit
 
 	}
 
-CheckQPKGsWarnings()
+CheckComplexEnvironment()
 	{
 
 	# Inputs: (global)
-	#	$r_base_qpkg_warnings[]
+	#	$ani_id
+	#	$run_package_actions
 
-	local a=''
+	[[ $run_package_actions = true ]] || return 0
 
-	if [[ -n ${r_base_qpkg_warnings:-} ]]; then
-		for a in "${r_base_qpkg_warnings[@]}"; do
-			if IsQpkgEnabled "$a"; then
-				ShowAsWarn "the '$a' QPKG is enabled. This may cause problems with $(ShowAsTitleName) applications. Please consider stopping this QPKG in your App Center"
+	FuncInit
 
-				return 1
-			fi
-		done
-	fi
+	EndAni "$ani_id"
+	ShowAsProc 'check environment'
+	StartAni "$ani_id"
 
-	return 0
+	CheckSelfSigned
+	CheckIncompatibleQPKGs
+	CheckProblemEnabledQPKGs
+	CheckWebsitesUp
+	CheckSystemLoad
+	CheckOOM
+	CheckNews
+
+	FuncExit
 
 	}
 
@@ -7754,6 +7704,91 @@ ListQPKGsStates()
 
 	}
 
+CheckSelfSigned()
+	{
+
+	# Inputs: (global)
+	#	$title_art_shown
+
+	FuncInit
+
+	if IsOsCanManageSignedPackages && IsOsRequireSignedPackages && IsNtQpkgSigned sherpa; then
+		[[ $title_art_shown = true ]] && Display
+		ShowAsWarn "$(ShowAsTitleName) is unsigned, and $(GetOsName) is presently configured to require all packages to be signed."
+		ShowAsWarn "Please either self-sign $(ShowAsTitleName) with 'sherpa resign self', or allow unsigned QPKGs in your $(GetOsName) App Center"
+	fi
+
+	FuncExit
+
+	}
+
+CheckIncompatibleQPKGs()
+	{
+
+	# Inputs: (global)
+	#	$r_base_qpkg_conflicts_with[]
+
+	# Outputs: (global)
+	#	$run_package_actions
+
+	local a=''
+
+	if [[ -n ${r_base_qpkg_conflicts_with:-} ]]; then
+		for a in "${r_base_qpkg_conflicts_with[@]}"; do
+			if IsQpkgEnabled "$a"; then
+				ShowAsError "the '$a' QPKG is enabled. $(ShowAsTitleName) is incompatible with this package. Please consider stopping this QPKG in your App Center"
+				run_package_actions=false
+
+				return 1
+			fi
+		done
+	fi
+
+	}
+
+CheckProblemEnabledQPKGs()
+	{
+
+	# Inputs: (global)
+	#	$r_base_qpkg_warnings[]
+
+	local a=''
+
+	if [[ -n ${r_base_qpkg_warnings:-} ]]; then
+		for a in "${r_base_qpkg_warnings[@]}"; do
+			if IsQpkgEnabled "$a"; then
+				ShowAsWarn "the '$a' QPKG is enabled. This may cause problems with $(ShowAsTitleName) applications. Please consider stopping this QPKG in your App Center"
+
+				return 1
+			fi
+		done
+	fi
+
+	}
+
+CheckWebsitesUp()
+	{
+
+	# Inputs: (global)
+	#	$r_websites[]
+
+	# Outputs: (global)										# directive:omit-from-production
+	#	$r_websites[]										# directive:omit-from-production
+
+	FuncInit
+
+	local -i n=0
+
+#	r_websites+=(testsiteisdown.com)						# directive:omit-from-production
+
+	for ((n=0; n<${#r_websites[@]}; n++)); do
+		IsSiteUp ${r_websites[n]} || ShowAsWarn "${r_websites[n]} is down"
+	done
+
+	FuncExit
+
+	}
+
 CheckSystemLoad()
 	{
 
@@ -7785,6 +7820,32 @@ CheckSystemLoad()
 
 	}
 
+CheckOOM()
+	{
+
+	FuncInit
+
+	if [[ $(/bin/grep -iE 'out of memory|oom-killer' /mnt/HDA_ROOT/.logs/kmsg | /usr/bin/wc -l) -gt 0 ]]; then
+		ShowAsWarn "the $(TextBrightRed 'Out-Of-Memory killer') has been triggered, check for $(TextBrightRed inactive) QPKGs"
+	fi
+
+	FuncExit
+
+	}
+
+CheckNews()
+	{
+
+	FuncInit
+
+#	if IsQpkgInstalled OMedusa || IsQpkgInstalled Medusa; then
+#		ShowAsNews "Medusa support to be discontinued: $(ShowAsURL 'https://github.com/OneCDOnly/sherpa/discussions/318')"
+#	fi
+
+	FuncExit
+
+	}
+
 BuildExtendedQPKGsStates()
 	{
 
@@ -7802,14 +7863,12 @@ BuildExtendedQPKGsStates()
 		FuncExit; return
 	fi
 
-	CheckSystemLoad
 	LoadDatabase
 	InitQPKGsStates
 	RefreshAndStoreQPKGsStates		# Includes `StartAni "$ani_id"`
 	LoadQPKGsStates
 	ShowQPKGsMissing
 	ShowQPKGsNewVers
-	EndAni "$ani_id"				# Starts in RefreshAndStoreQPKGsStates().
 
 	FuncExit
 
@@ -7824,7 +7883,6 @@ InitQPKGsStates()
 	#	$ar_qpkg_is_states[]
 	#	$ar_qpkg_isnt_states[]
 	#	$r_qpkg_states_path
-	#	$ar_qpkg_transient_states[]
 
 	# Outputs: (global)
 	#	$qpkgs_states_built
@@ -10458,7 +10516,7 @@ _QPKG:rebuild_()
 
 	DebugAsProc "meta-rebuilding $(FormatPackageName)"
 
-	# Nothing-to-do here, real QPKG actions have already been assigned in CheckEnv().
+	# Nothing-to-do here, real QPKG actions have already been assigned in CheckTasks().
 
 	SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
 	MarkActionForkAsDoneOk
@@ -15639,17 +15697,19 @@ ShowTitle()
 	#	$r_args_raw[]
 	#	$show_title
 	#	$title_shown
-	#	$useropt_verbose
 
 	# Outputs: (global)
+	#	$title_art_shown
 	#	$title_shown
 
-	[[ $show_title = true && $title_shown = false && $useropt_verbose = false ]] || return
+	[[ $show_title = true && $title_shown = false ]] || return
+
+	FuncInit
 
 	EndAni "$ani_id"
 	EraseThisLine
 
-	# Only show ASCII title when no arguments have been specified.
+	# Only show ASCII title when no arguments are specified.
 
 	if [[ -z ${r_args_raw[*]} ]]; then
 		Display "$(ShowTitleArt)"
@@ -15659,6 +15719,8 @@ ShowTitle()
 	fi
 
 	title_shown=true
+
+	FuncExit
 
 	}
 
