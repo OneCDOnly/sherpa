@@ -44,21 +44,19 @@ readonly r_args_raw=$*
 Init()
 	{
 
-	trap CaughtSIGINT SIGINT
-	trap CaughtEXIT EXIT
-
+	ConfirmEnv || return
+	ClaimLockfile || return
+	StartScriptTimer
+	SetTraps
 	HideCursor
 	HideKeystrokes
-	LoadCMDs
+	SetCMDs
 	LoadConsts
 	LoadDefaults
-	InitAni
 
 	ShowAsProc init
 
-	CheckBasicEnvironment || return
-	LoadEnv || return
-	ClaimLockfile || return
+	ConfigEnv || return
 	CreatePaths || return
 	PrepareArgs
 	ParseManagementArgs || return
@@ -71,7 +69,7 @@ Init()
 
 	ShowTitle
 
-	CheckComplexEnvironment
+	CheckEnv
 	ShowArgSuggestions
 	DebugLogEnv
 	CheckTasks
@@ -86,7 +84,7 @@ ShowResults()
 
 	FuncInit
 
-	if [[ $generate_show_report = true ]]; then
+	if [[ ${generate_show_report:=false} = true ]]; then
 		if [[ $useropt_show_log_last = true ]]; then
 			ReleaseLockfile
 			ViewLogLast
@@ -121,7 +119,7 @@ ShowResults()
 		fi
 	fi
 
-	if [[ $generate_list_report = true ]]; then
+	if [[ ${generate_list_report:=false} = true ]]; then
 		show_action_results_report=false
 
 		if [[ $useropt_list_versions = true ]]; then
@@ -132,13 +130,13 @@ ShowResults()
 		fi
 	fi
 
-	if [[ $useropt_help_basic = true ]]; then
+	if [[ ${useropt_help_basic:=false} = true ]]; then
 		ShowHelpBasic
 		ShowHelpBasicExamples
 		Display
 	fi
 
-	if [[ $generate_help_report = true ]]; then
+	if [[ ${generate_help_report:=false} = true ]]; then
 		ReleaseLockfile
 		IsAnsiStrippingSupported || colourful=false
 
@@ -169,13 +167,13 @@ ShowResults()
 		Display
 	fi
 
-	if [[ $show_action_results_report = true ]]; then
+	if [[ ${show_action_results_report:=false} = true ]]; then
 		ReportAllActionResults
 		Display
 	fi
 
-	[[ $show_backuploc = true ]] && ShowHelpBackupLocation
-	[[ $show_suggest_raise_issue = true ]] && ShowHelpIssue
+	[[ ${show_backuploc:=false} = true ]] && ShowHelpBackupLocation
+	[[ ${show_suggest_raise_issue:=false} = true ]] && ShowHelpIssue
 
 	DebugInfoMinSepr
 	DebugScript info finished "$(TextBrightWhite "$(ConvertNowToFullDate)")"
@@ -184,8 +182,26 @@ ShowResults()
 
 	FuncExit
 
-	[[ $archive_debug_afterward = true ]] && ArchiveActiveSessLog
+	[[ ${archive_debug_afterward:=false} = true ]] && ArchiveActiveSessLog
 	ResetActiveSessLog
+
+	IsNtError
+
+	}
+
+StartScriptTimer()
+	{
+
+	r_script_startseconds=$(ConvertNowToSeconds)
+	readonly r_script_startseconds
+
+	}
+
+SetTraps()
+	{
+
+	trap CaughtSIGINT SIGINT
+	trap CaughtEXIT EXIT
 
 	}
 
@@ -221,14 +237,6 @@ LoadConsts()
 		readonly r_entware_packages_last_updated=20260407
 		readonly r_file_change_threshold_minutes=60
 
-		if IsInTerminal; then						# Only allow ANSI colour codes if running in a user terminal.
-			r_colourful_default=true
-		else
-			r_colourful_default=false
-		fi
-
-		readonly r_colourful_default
-
 	# Error messages.
 
 		readonly e_inurl='invalid URL'
@@ -242,6 +250,7 @@ LoadConsts()
 		readonly e_nonam='undefined name'
 		readonly e_noopr='undefined operation'
 		readonly e_nopfi='undefined pathfile'
+		readonly e_nopid='undefined process ID'
 		readonly e_nopnm='undefined package name'
 		readonly e_noprm='undefined prompt'
 		readonly e_nopth='undefined path'
@@ -253,7 +262,6 @@ LoadConsts()
 		readonly e_nourl='undefined URL'
 		readonly e_noval='undefined value'
 		readonly e_novar='undefined variable'
-		readonly e_nopid='undefined process ID'
 
 	# QPKG actions.
 
@@ -355,6 +363,42 @@ LoadConsts()
 			readonly r_help_syntax_sudo_prefix=$r_chars_super_prompt
 		fi
 
+	# Animation.
+
+		local -r blue='\033[94m'
+		local -r cyan='\033[96m'
+		local -r green='\033[92m'
+		local -r orange='\033[1;38;5;214m'
+		local -r red='\033[91m'
+		local -r white='\033[97m'
+		local -r yellow='\033[93m'
+
+		readonly r_ani_colour=$orange
+		readonly r_ani_frame_duration=0.08				# In decimal seconds.
+		readonly r_ani_id=1
+		readonly r_ani_reverse_motion=false				# Set 'true' to run animation backwards.
+
+		# 5 pixels, clockwise orbit.
+		r_ani_chars=(2 '⢎⡀' '⢎⠁' '⠎⠑' '⠊⠱' '⠈⡱' '⢀⡱' '⢄⡰' '⢆⡠')
+			r_ani_width=${r_ani_chars[0]}				# Use first element as animation character width. QTS BusyBox 1.01 doesn't support `wc -m`  so can't measure width.
+			r_ani_total_frames=${#r_ani_chars[@]}		# Total animation frames. A frame is one or-more characters.
+				r_ani_last_frame=$r_ani_total_frames	# Complete animation at this array element (option base 1).
+		r_ani_first_frame=2								# Begin animation at this array element (option base 1).
+		r_ani_frame_step=1								# 1 = show every frame, 2 = show every second frame.
+
+		if [[ $r_ani_reverse_motion = true ]]; then		# Reverse processing order.
+			r_ani_first_frame=$r_ani_total_frames
+			r_ani_last_frame=2
+			r_ani_frame_step=-$r_ani_frame_step
+		fi
+
+		readonly r_ani_chars
+		readonly r_ani_first_frame
+		readonly r_ani_frame_step
+		readonly r_ani_last_frame
+		readonly r_ani_total_frames
+		readonly r_ani_width
+
 	# Only for the message pipe enhanced log.
 
 		local date_field_longest_string='Tue 27 May 2025 4:55:42 PM EST '	# directive:omit-from-production
@@ -413,6 +457,7 @@ LoadDefaults()
 		backup_stdin_fd=none
 		package_release_version='<?package_release_version?>'
 		proc_counts_path=''
+		qpkg_name=sherpa
 		user_branch_value=''
 		user_report_info_value=''
 		user_terse_value=''
@@ -457,7 +502,7 @@ LoadDefaults()
 
 	}
 
-LoadCMDs()
+SetCMDs()
 	{
 
 	# Cherry-pick Entware binaries.
@@ -521,10 +566,8 @@ IsCMDsOk()
 
 	}
 
-LoadEnv()
+ConfigEnv()
 	{
-
-	qpkg_name=sherpa
 
 	SetHardwareCpuThreads
 	SetHardwareInstalledRAM
@@ -1312,9 +1355,9 @@ AssignQpkgsToActions()
 
 	FuncInit
 
-	EndAni "$ani_id"
+	EndAni "$r_ani_id"
 	ShowAsProc 'action assignment'
-	StartAni "$ani_id"
+	StartAni "$r_ani_id"
 
 	local action=''
 	local prospect=''
@@ -1647,9 +1690,9 @@ ProcActions()
 
 	FuncInit
 
-	EndAni "$ani_id"
+	EndAni "$r_ani_id"
 	ShowAsProc 'package actions'
-	StartAni "$ani_id"
+	StartAni "$r_ani_id"
 
 	local -i tier_index=0
 
@@ -1869,7 +1912,7 @@ ProcAction()
 				FuncExit; return
 			fi
 
-			EndAni "$ani_id"
+			EndAni "$r_ani_id"
 
 			if [[ $total_count -eq 1 ]]; then
 				fork_progress_prefix="$r_action_intransitive_msg $(TextBrightOrange "${a_target_packages[0]}") $r_package_type"
@@ -2169,9 +2212,9 @@ PrepareArgs()
 	#	$a_args[]
 	#	$useropt_help_basic
 
-	EndAni "$ani_id"
+	EndAni "$r_ani_id"
 	ShowAsProc args
-	StartAni "$ani_id"
+	StartAni "$r_ani_id"
 
 	local a=''
 
@@ -3431,9 +3474,9 @@ AllocPackGroupsToAcs()
 
 	FuncInit
 
-	EndAni "$ani_id"
+	EndAni "$r_ani_id"
 	ShowAsProc 'package groups'
-	StartAni "$ani_id"
+	StartAni "$r_ani_id"
 
 	local action=''
 	local group=''
@@ -3483,9 +3526,9 @@ AllocPackStatesToAcs()
 
 	FuncInit
 
-	EndAni "$ani_id"
+	EndAni "$r_ani_id"
 	ShowAsProc 'conditional package states'
-	StartAni "$ani_id"
+	StartAni "$r_ani_id"
 
 	local action=''
 	local check_later=false
@@ -3814,7 +3857,7 @@ CalcIpkDepsToInstall()
 		FuncExit 1; return
 	fi
 
-	EndAni "$ani_id"
+	EndAni "$r_ani_id"
 
 	DebugInfo "$requested_count IPK$(Pluralise "$requested_count") requested" "'$req_list' "
 
@@ -3858,9 +3901,9 @@ CalcIpkDepsToInstall()
 	pre_exclude_count=$(/usr/bin/wc -w <<< "$pre_exclude_list")
 
 	if [[ $pre_exclude_count -gt 0 ]]; then
-		EndAni "$ani_id"
+		EndAni "$r_ani_id"
 		ShowAsProc 'exclude IPKs already installed'
-		StartAni "$ani_id"
+		StartAni "$r_ani_id"
 
 		DebugInfo "$pre_exclude_count IPK$(Pluralise "$pre_exclude_count") required (including dependencies)" "'$pre_exclude_list' "
 
@@ -3907,9 +3950,9 @@ CalcIpkDownloadSize()
 	size_count=$(IPKs-ACdownload-to:Count)
 
 	if [[ $size_count -gt 0 ]]; then
-		EndAni "$ani_id"
+		EndAni "$r_ani_id"
 		ShowAsProc "calculate size of IPK$(Pluralise "$size_count") to download"
-		StartAni "$ani_id"
+		StartAni "$r_ani_id"
 
 		DebugAsDone "$size_count IPK$(Pluralise "$size_count") to download: '$(IPKs-ACdownload-to:List)'"
 		a_sizes=($($r_gnu_grep_cmd -w '^Package:\|^Size:' "$r_external_packages_pathfile" | $r_gnu_grep_cmd --after-context 1 --no-group-separator ": $(/bin/sed 's/ /$ /g;s/\$ /\$\\\|: /g' <<< "$(IPKs-ACdownload-to:List)")" | /bin/grep '^Size:' | /bin/sed 's/^Size: //'))
@@ -3978,7 +4021,7 @@ IPKs:upgrade()
 		dir_location=$r_ipk_download_path
 		dir_size_progress_prefix='upgrade '$desc
 
-		EndAni "$ani_id"
+		EndAni "$r_ani_id"
 		_DirSizeMonitor_ &
 		fork_pid=$!
 
@@ -4081,7 +4124,7 @@ IPKs:install()
 		dir_location=$r_ipk_download_path
 		dir_size_progress_prefix='install '$desc
 
-		EndAni "$ani_id"
+		EndAni "$r_ani_id"
 
 		_DirSizeMonitor_ &
 		fork_pid=$!
@@ -4157,7 +4200,7 @@ IPKs:downgrade()
 		desc="$total_count ${package_type}$(Pluralise "$total_count")"
 		log_pathfile=$r_log_path/ipks.$r_download_log_file
 
-		EndAni "$ani_id"
+		EndAni "$r_ani_id"
 		ShowAsProc "download $desc"
 
 		SetQpkgArch
@@ -4222,7 +4265,7 @@ IPKs:downgrade()
 		desc="$total_count auxiliary ${package_type}$(Pluralise "$total_count")"
 		log_pathfile=$r_log_path/ipks.$r_downgrade_log_file
 
-		EndAni "$ani_id"
+		EndAni "$r_ani_id"
 		ShowAsProc "downgrade $desc"
 
 		ShowAsPercentProgress "downgrade $desc" '' "$done_ok_count" 0 "$done_fail_count" "$total_count"
@@ -4307,7 +4350,7 @@ PIPs:install()
 		exec_cmd="$r_pip_cmd install --upgrade --no-input $(PIPs-ACinstall-to:List) --cache-dir $r_pip_cache_path --root-user-action=ignore"
 		desc="$total_count auxiliary PIP$(Pluralise "$total_count")"
 
-		EndAni "$ani_id"
+		EndAni "$r_ani_id"
 		ShowAsPercentProgress "install $desc" '' "$done_ok_count" 0 0 "$total_count"
 		Executer "$exec_cmd" "$log_pathfile" log:failure-only
 		z=$?
@@ -4415,7 +4458,7 @@ _ExecOneActionWithManyForks_()
 	local a=$1
 	local qpkg_name=''
 
-	shift												# `shift` all arguments one position to the left.
+	shift												# Shift arguments one position to the left.
 
 	local -a a_c=("$@")
 
@@ -6869,11 +6912,11 @@ DisplayFileInViewport()
 
 	local report_pathfile=$1
 
-	shift															# Shift all arguments one position to the left.
+	shift															# Shift arguments one position to the left.
 
 	local -a a_b=("${@:-}")
 
-	local -r r_prompt=' use arrow-keys to scroll up-down & left-right, press Q to quit '
+	local -r r_prompt=' Report viewer\: use arrow-keys to scroll up-down & left-right, press Q to quit '
 
 	local arg=''
 	local headers=false
@@ -7444,34 +7487,38 @@ ShowQPKGsNewVers()
 
 	}
 
-CheckBasicEnvironment()
+ConfirmEnv()
 	{
 
-	FuncInit
+	if IsInTerminal; then						# Only allow ANSI colour codes if running in a user terminal.
+		r_colourful_default=true
+	else
+		r_colourful_default=false
+	fi
 
+	readonly r_colourful_default
+
+	SetColourisation
 	IsOsOk || return
 	IsUserOk || return
-	SetCapabilities
 	IsCMDsOk || return
-
-	FuncExit
 
 	}
 
-CheckComplexEnvironment()
+CheckEnv()
 	{
 
 	# Inputs: (global)
-	#	$ani_id
+	#	$r_ani_id
 	#	$run_package_actions
 
 	[[ $run_package_actions = true ]] || return 0
 
 	FuncInit
 
-	EndAni "$ani_id"
+	EndAni "$r_ani_id"
 	ShowAsProc 'check environment'
-	StartAni "$ani_id"
+	StartAni "$r_ani_id"
 
 	CheckSelfSigned
 	CheckIncompatibleQPKGs
@@ -7937,9 +7984,9 @@ RefreshAndStoreQPKGsStates()
 
 	local -r r_pid_pathfile=$(CreatePidFilePathName)
 
-	EndAni "$ani_id"
+	EndAni "$r_ani_id"
 	ShowAsProc 'basic package states'
-	StartAni "$ani_id"
+	StartAni "$r_ani_id"
 
 	# Faster to launch several concurrent loops async than a single loop. Launch those requiring more processing-time first.
 
@@ -8002,9 +8049,9 @@ LoadQPKGsStates()
 
 	qpkg_name=''
 
-	EndAni "$ani_id"
+	EndAni "$r_ani_id"
 	ShowAsProc 'load QPKG states'
-	StartAni "$ani_id"
+	StartAni "$r_ani_id"
 
 	# Load status lines from individual files into session arrays.
 
@@ -8190,7 +8237,7 @@ HelpAbbreviations()
 
 	DisplayAsProjSynExam "example: to install $(FormatPackageName SABnzbd), $(FormatPackageName HeadPhones) and $(FormatPackageName nzbToMedia) all-at-once" 'install sab hp nzb2' >> "$r_report_output_pathfile"
 
-	EndAni "$ani_id"
+	EndAni "$r_ani_id"
 	EraseThisLine
 	ShowReport
 	ListQPKGsStates
@@ -8266,7 +8313,7 @@ ReportBackups()
 		GenerateReportInfo >> "$r_report_output_pathfile"
 	fi
 
-	EndAni "$ani_id"
+	EndAni "$r_ani_id"
 	EraseThisLine
 	ShowReport
 
@@ -8324,7 +8371,7 @@ ReportDependencies()
 		GenerateReportInfo >> "$r_report_output_pathfile"
 	fi
 
-	EndAni "$ani_id"
+	EndAni "$r_ani_id"
 	EraseThisLine
 	ShowReport
 	ListQPKGsStates
@@ -8383,7 +8430,7 @@ ReportFeatures()
 		GenerateReportHeadingsInfo >> "$r_report_output_pathfile"
 	fi
 
-	EndAni "$ani_id"
+	EndAni "$r_ani_id"
 	EraseThisLine
 	ShowReport
 	ListQPKGsStates
@@ -8454,7 +8501,7 @@ ReportPackages()
 
 		} >> "$r_report_output_pathfile"
 
-	EndAni "$ani_id"
+	EndAni "$r_ani_id"
 	EraseThisLine
 	ShowReport
 	ListQPKGsStates
@@ -8513,7 +8560,7 @@ ReportRepos()
 		GenerateReportInfo >> "$r_report_output_pathfile"
 	fi
 
-	EndAni "$ani_id"
+	EndAni "$r_ani_id"
 	EraseThisLine
 	ShowReport
 	ListQPKGsStates
@@ -8573,7 +8620,7 @@ ReportStatuses()
 		GenerateReportInfo >> "$r_report_output_pathfile"
 	fi
 
-	EndAni "$ani_id"
+	EndAni "$r_ani_id"
 	EraseThisLine
 	ShowReport
 	ListQPKGsStates
@@ -8913,7 +8960,7 @@ ShowReport()
 	# Inputs: (global)
 	#	$r_report_output_pathfile
 
-	EndAni "$ani_id"
+	EndAni "$r_ani_id"
 
 	if [[ -s $r_report_output_pathfile ]]; then
 		if [[ $generate_report_headers = true ]]; then
@@ -8937,7 +8984,7 @@ ShowVersionsList()
 	#	$r_this_package_ver
 
 	DisableDebugToArchiveAndFile
-	EndAni "$ani_id"
+	EndAni "$r_ani_id"
 	EraseThisLine
 
 	Display "QPKG: $(ConvertAsSmartDate "$r_this_package_ver")"
@@ -9058,7 +9105,7 @@ ShowQPKGList()
 	local qpkg_name=''
 
 	DisableDebugToArchiveAndFile
-	EndAni "$ani_id"
+	EndAni "$r_ani_id"
 	EraseThisLine
 
 	if IsFuncExist QPKGs-$1.IsAny && QPKGs-$1.IsAny; then
@@ -9141,7 +9188,7 @@ WriteToMsgPipe()
 	# Inputs: (global)
 	#	$action_msg_pipe_fd
 
-	[[ $action_msg_pipe_fd != none && -e /proc/$$/fd/$action_msg_pipe_fd ]] && echo "${1:-null}|${2:-null}|${3:-null}|${4:-null}" >&$action_msg_pipe_fd
+	[[ ${action_msg_pipe_fd:=none} != none && -e /proc/$$/fd/$action_msg_pipe_fd ]] && echo "${1:-null}|${2:-null}|${3:-null}|${4:-null}" >&$action_msg_pipe_fd
 
 	return 0
 
@@ -15717,7 +15764,7 @@ ShowTitle()
 
 	FuncInit
 
-	EndAni "$ani_id"
+	EndAni "$r_ani_id"
 	EraseThisLine
 
 	# Only show ASCII title when no arguments are specified.
@@ -16003,9 +16050,9 @@ DisplayProcReport()
 
 	[[ -n ${1:-} ]] && a=$1' '
 
-	EndAni "$ani_id"
+	EndAni "$r_ani_id"
 	ShowAsProc "${a}report"
-	StartAni "$ani_id"
+	StartAni "$r_ani_id"
 
 	report_title_shown=true
 
@@ -16019,7 +16066,7 @@ DebugInfoMajSepr()
 	# Inputs: (global)
 	#	$r_debug_log_width
 
-	DebugInfo "$(eval printf '%0.s═' "{1..$r_debug_log_width}")"	# `seq` is unavailable in QTS, so must resort to `eval` trickery instead.
+	DebugInfo "$(eval printf '%0.s═' "{1..${r_debug_log_width:=1}}")"	# `seq` is unavailable in QTS, so must resort to `eval` trickery instead.
 
 	}
 
@@ -16031,7 +16078,7 @@ DebugInfoMinSepr()
 	# Inputs: (global)
 	#	$r_debug_log_width
 
-	DebugInfo "$(eval printf '%0.s─' "{1..$r_debug_log_width}")"	# `seq` is unavailable in QTS, so must resort to `eval` trickery instead.
+	DebugInfo "$(eval printf '%0.s─' "{1..${r_debug_log_width:=1}}")"	# `seq` is unavailable in QTS, so must resort to `eval` trickery instead.
 
 	}
 
@@ -16043,7 +16090,7 @@ DebugExtLogMinSepr()
 	# Inputs: (global)
 	#	$r_debug_log_width
 
-	DebugAsLog "$(eval printf '%0.s─' "{1..$r_debug_log_width}")"	# `seq` is unavailable in QTS, so must resort to `eval` trickery instead.
+	DebugAsLog "$(eval printf '%0.s─' "{1..${r_debug_log_width:=1}}")"	# `seq` is unavailable in QTS, so must resort to `eval` trickery instead.
 
 	}
 
@@ -16229,7 +16276,7 @@ DebugInfoTabld()
 	elif [[ ${3: -1} = ' ' ]]; then		# If $3 has a trailing whitespace then print $3 without the trailing whitespace.
 		DebugAsInfo "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: %-s\n" "${1:-}" "${2:-}" "$(/bin/sed 's/ *$//' <<< "${3:-}")")"
 	else
-		DebugAsInfo "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: %-s\n" "${1:-}" "${2:-}" "${3:-}")"
+		DebugAsInfo "$(printf "%${r_debug_log_first_column_width:=1}s: %${r_debug_log_second_column_width:=1}s: %-s\n" "${1:-}" "${2:-}" "${3:-}")"
 	fi
 
 	}
@@ -16942,7 +16989,7 @@ ShowAsNote()
 
 	[[ -n ${1:-} ]] || return
 
-	EndAni "$ani_id"
+	EndAni "$r_ani_id"
 
 	local a=note
 	local b=''
@@ -16961,7 +17008,7 @@ ShowAsDone()
 
 	[[ -n ${1:-} ]] || return
 
-	EndAni "$ani_id"
+	EndAni "$r_ani_id"
 
 	local a='done'
 	local b=''
@@ -16980,7 +17027,7 @@ ShowAsNews()
 
 	[[ -n ${1:-} ]] || return
 
-	EndAni "$ani_id"
+	EndAni "$r_ani_id"
 
 	local a=news
 	local b=$1
@@ -16997,7 +17044,7 @@ ShowAsWarn()
 
 	[[ -n ${1:-} ]] || return
 
-	EndAni "$ani_id"
+	EndAni "$r_ani_id"
 
 	local a=warn
 	local b=''
@@ -17016,7 +17063,7 @@ ShowAsAbort()
 
 	[[ -n ${1:-} ]] || return
 
-	EndAni "$ani_id"
+	EndAni "${r_ani_id:=1}"
 
 	local a=bort
 	local b=''
@@ -17036,7 +17083,7 @@ ShowAsFail()
 
 	[[ -n ${1:-} ]] || return
 
-	EndAni "$ani_id"
+	EndAni "$r_ani_id"
 
 	local a=fail
 	local b=''
@@ -17055,7 +17102,7 @@ ShowAsError()
 
 	[[ -n ${1:-} ]] || return
 
-	EndAni "$ani_id"
+	EndAni "$r_ani_id"
 
 	local a=derp
 	local b=''
@@ -17079,7 +17126,7 @@ ShowAsBug()
 
 	[[ -n ${1:-} && -n ${2:-} ]] || return
 
-	EndAni "$ani_id"
+	EndAni "$r_ani_id"
 
 	local -i i=0
 
@@ -17311,15 +17358,15 @@ OpStepClearWait()
 	# Displays script operation message from beginning of line, remain on this line, and leave cursor at end.
 
 	# Inputs: (local)
-	#	$1 = a 4 character string such as 'info', 'proc', 'done', 'derp'.
+	#	$1 = a 4 character string such as 'info', 'proc', 'done', 'derp', 'bort', 'news'.
 	#	$2 = detailed message.
 
 	# Inputs: (global)
 	#	$colourful
 
-	local -i n=4												# Width of the message type.
+	local -i n=4						# Width of the message type.
 
-	[[ ${colourful:=$r_colourful_default} = true ]] && n=10		# Allow extra length for ANSI codes in message type.
+	[[ $colourful = true ]] && n=10		# Allow extra length for ANSI codes in message type.
 
 	DisplayWait "$(printf "\033[2K\r%-${n}s: %s" "${1:-}" "${2:-}")"
 
@@ -17333,7 +17380,7 @@ OpStepClear()
 	# Displays script operation message from beginning of line, jump down a line, and leave cursor at start.
 
 	# Inputs: (local)
-	#	$1 = a 4 character string such as 'info', 'proc', 'done', 'derp'.
+	#	$1 = a 4 character string such as 'info', 'proc', 'done', 'derp', 'bort', 'news'.
 	#	$2 = detailed message.
 
 	# Inputs: (global)
@@ -18174,9 +18221,9 @@ LoadObjects()
 
 	LoadLists
 
-	EndAni "$ani_id"
+	EndAni "$r_ani_id"
 	ShowAsProc objects
-	StartAni "$ani_id"
+	StartAni "$r_ani_id"
 
 	# NOTE: Set these prior to calling RefreshArchive()
 
@@ -18229,9 +18276,9 @@ LoadDatabase()
 
 	LoadObjects
 
-	EndAni "$ani_id"
+	EndAni "$r_ani_id"
 	ShowAsProc database
-	StartAni "$ani_id"
+	StartAni "$r_ani_id"
 
 	# NOTE: Set these prior to calling RefreshArchive()
 
@@ -18351,7 +18398,7 @@ CaughtSIGINT()
 	[[ -n ${r_inhibit_display_pathfile:-} ]] && /bin/touch "$r_inhibit_display_pathfile"
 	[[ -n ${r_abort_actions_pathfile:-} ]] && /bin/touch "$r_abort_actions_pathfile"
 
-	EndAni "$ani_id"
+	EndAni "$r_ani_id"
 	EraseThisLine
 	ShowAsAbort 'caught SIGINT'
 	CloseMsgPipe
@@ -18373,54 +18420,6 @@ CaughtEXIT()
 
 	}
 
-InitAni()
-	{
-
-	local blue='\033[94m'
-	local cyan='\033[96m'
-	local green='\033[92m'
-	local orange='\033[1;38;5;214m'
-	local red='\033[91m'
-	local white='\033[97m'
-	local yellow='\033[93m'
-
-	readonly blue
-	readonly cyan
-	readonly green
-	readonly orange
-	readonly red
-	readonly white
-	readonly yellow
-
-	ani_colour=$orange
-	ani_frame_duration=0.08		# In decimal seconds.
-	ani_id=1
-	reverse_motion=false		# Set 'true' to run animation backwards.
-
-	SetAniType
-
-	}
-
-SetAniType()
-	{
-
-	# 5 pixels, clockwise orbit.
-	ani_chars=(2 '⢎⡀' '⢎⠁' '⠎⠑' '⠊⠱' '⠈⡱' '⢀⡱' '⢄⡰' '⢆⡠')
-
-	ani_first_frame=2						# Begin animation at this array element (option base 1).
-	ani_total_frames=${#ani_chars[@]}		# Total animation frames. A frame is one or-more characters.
-		ani_last_frame=$ani_total_frames	# Complete animation at this array element (option base 1).
-	ani_frame_step=1						# 1 = show every frame, 2 = show every second frame.
-	ani_width=${ani_chars[0]}				# Use first element as animation character width. QTS BusyBox 1.01 doesn't support `wc -m`  so can't measure width.
-
-	if [[ $reverse_motion = true ]]; then	# Reverse processing order.
-		ani_first_frame=$ani_total_frames
-		ani_last_frame=2
-		ani_frame_step=-$ani_frame_step
-	fi
-
-	}
-
 StartAni()
 	{
 
@@ -18432,7 +18431,7 @@ StartAni()
 	rm -f "$ani_end_pathfile"
 
 	_Animator_ &
-	: # This is only here to prevent Squeeze() combining the end-of-function brace with this line.
+	: # This is only here to prevent Squeeze() combining the end-of-function brace below with the line above.
 
 	}
 
@@ -18465,11 +18464,11 @@ ShowAniFrameInColour()
 	{
 
 	# Inputs: (global)
-	#	$ani_colour
-	#	$ani_width
+	#	$r_ani_colour
+	#	$r_ani_width
 
-	printf "${ani_colour}%s\033[0m" "${1:-$(printf '%*s' "${ani_width:=1}" '')}"
-	printf '%.0s\b' $(eval echo -n "{1..${ani_width}}")
+	printf "${r_ani_colour}%s\033[0m" "${1:-$(printf '%*s' "${r_ani_width:=1}" '')}"
+	printf '%.0s\b' $(eval echo -n "{1..${r_ani_width}}")
 
 	}
 
@@ -18491,21 +18490,21 @@ _Animator_()
 	{
 
 	# Inputs: (global)
-	#	$ani_chars[]
 	#	$ani_end_pathfile
-	#	$ani_first_frame
-	#	$ani_frame_duration
 	#	$ani_frame_pathfile
-	#	$ani_frame_step
-	#	$ani_last_frame
+	#	$r_ani_chars[]
+	#	$r_ani_first_frame
+	#	$r_ani_frame_duration
+	#	$r_ani_frame_step
+	#	$r_ani_last_frame
 
 	[[ -n $ani_pid_pathfile ]] || return
 	[[ -n $ani_end_pathfile ]] || return
-	[[ $ani_first_frame -gt 0 ]] || return
-	[[ $ani_last_frame -gt 0 ]] || return
-	[[ $((10#${ani_frame_duration/./})) -gt 0 ]] || return
-	[[ ${#ani_chars[@]} -gt 2 ]] || return
-	[[ $ani_frame_step -gt 0 ]] || return
+	[[ $r_ani_first_frame -gt 0 ]] || return
+	[[ $r_ani_last_frame -gt 0 ]] || return
+	[[ $((10#${r_ani_frame_duration/./})) -gt 0 ]] || return
+	[[ ${#r_ani_chars[@]} -gt 2 ]] || return
+	[[ $r_ani_frame_step -gt 0 ]] || return
 
 	local -i ani_start_frame=1
 	local -i n=0
@@ -18518,13 +18517,13 @@ _Animator_()
 	fi
 
 	while true; do
-		for ((n=ani_first_frame; ani_frame_step>0 ? n<=ani_last_frame : n>=ani_last_frame; n+=ani_frame_step)); do
-			ShowAniFrameInColour "${ani_chars[n-1]}"
+		for ((n=r_ani_first_frame; r_ani_frame_step>0 ? n<=r_ani_last_frame : n>=r_ani_last_frame; n+=r_ani_frame_step)); do
+			ShowAniFrameInColour "${r_ani_chars[n-1]}"
 
-			Pause "$ani_frame_duration"
+			Pause "$r_ani_frame_duration"
 
 			if [[ -e $ani_end_pathfile ]]; then
-				echo "$((n+ani_frame_step))" > "$ani_frame_pathfile"	# Save next frame to be displayed when relaunching _Animator_().
+				echo "$((n+r_ani_frame_step))" > "$ani_frame_pathfile"	# Save next frame to be displayed when relaunching _Animator_().
 				ShowAniFrameInColour ''									# Erase existing frame.
 				break 2
 			fi
@@ -18574,10 +18573,6 @@ IsSiteUp()
 
 	} &> /dev/null
 
-r_script_startseconds=$(ConvertNowToSeconds)
-readonly r_script_startseconds
-
 Init || exit
 ProcActions
 ShowResults
-IsNtError
