@@ -82,6 +82,49 @@ Init()
 ShowResults()
 	{
 
+	# Inputs: (global)
+	#	$archive_debug_afterward
+	#	$colourful
+	#	$generate_help_report
+	#	$generate_list_report
+	#	$generate_show_report
+	#	$r_script_startseconds
+	#	$show_action_results_report
+	#	$show_backuploc
+	#	$show_suggest_raise_issue
+	#	$useropt_help_abbreviations
+	#	$useropt_help_actions
+	#	$useropt_help_actions_all
+	#	$useropt_help_basic
+	#	$useropt_help_groups
+	#	$useropt_help_lists
+	#	$useropt_help_options
+	#	$useropt_help_packages
+	#	$useropt_help_problems
+	#	$useropt_help_show
+	#	$useropt_help_tips
+	#	$useropt_help_upgrades
+	#	$useropt_list_versions
+	#	$useropt_show_backups
+	#	$useropt_show_dependencies
+	#	$useropt_show_features
+	#	$useropt_show_log_last
+	#	$useropt_show_log_tail
+	#	$useropt_show_packages
+	#	$useropt_show_repos
+	#	$useropt_show_status
+
+	# Outputs: (global)
+	#	$archive_debug_afterward
+	#	$colourful
+	#	$generate_help_report
+	#	$generate_list_report
+	#	$generate_show_report
+	#	$show_action_results_report
+	#	$show_backuploc
+	#	$show_suggest_raise_issue
+	#	$useropt_help_basic
+
 	FuncInit
 
 	if [[ ${generate_show_report:=false} = true ]]; then
@@ -191,6 +234,9 @@ ShowResults()
 
 StartScriptTimer()
 	{
+
+	# Outputs: (global)
+	#	$r_script_startseconds
 
 	r_script_startseconds=$(ConvertNowToSeconds)
 	readonly r_script_startseconds
@@ -343,7 +389,6 @@ LoadConsts()
 		readonly r_chars_note='* '
 		readonly r_chars_regular_prompt='$ '
 			readonly r_chars_sudo_prompt=$r_chars_regular_prompt'sudo '
-
 		readonly r_chars_results='= '
 		readonly r_chars_super_prompt='# '
 
@@ -374,15 +419,16 @@ LoadConsts()
 		local -r yellow='\033[93m'
 
 		readonly r_ani_colour=$orange
-		readonly r_ani_frame_duration=0.08				# In decimal seconds.
+		readonly r_ani_frame_duration=0.06				# In decimal seconds.
 		readonly r_ani_id=1
 		readonly r_ani_reverse_motion=false				# Set 'true' to run animation backwards.
 
 		# 5 pixels, clockwise orbit.
 		r_ani_chars=(2 '⢎⡀' '⢎⠁' '⠎⠑' '⠊⠱' '⠈⡱' '⢀⡱' '⢄⡰' '⢆⡠')
-			r_ani_width=${r_ani_chars[0]}				# Use first element as animation character width. QTS BusyBox 1.01 doesn't support `wc -m`  so can't measure width.
-			r_ani_total_frames=${#r_ani_chars[@]}		# Total animation frames. A frame is one or-more characters.
-				r_ani_last_frame=$r_ani_total_frames	# Complete animation at this array element (option base 1).
+
+		r_ani_width=${r_ani_chars[0]}					# Use first element as animation character width. QTS BusyBox 1.01 doesn't support `wc -m`  so can't measure width.
+		r_ani_total_frames=${#r_ani_chars[@]}			# Total animation frames. A frame is one or-more characters.
+			r_ani_last_frame=$r_ani_total_frames		# Complete animation at this array element (option base 1).
 		r_ani_first_frame=2								# Begin animation at this array element (option base 1).
 		r_ani_frame_step=1								# 1 = show every frame, 2 = show every second frame.
 
@@ -521,6 +567,10 @@ SetCMDs()
 			readonly r_pip_cmd=$r_python3_cmd' -m pip'
 		readonly r_python_cmd=/opt/bin/python
 
+	[[ ! -x /bin/less ]] && ln -sf /bin/busybox /bin/less			# KLUDGE: `/bin/less` isn't always there in QTS.
+	[[ ! -x /usr/bin/sort ]] && ln -sf /bin/busybox /usr/bin/sort	# KLUDGE: `/usr/bin/sort` randomly disappears from QTS.
+	[[ -x $r_python3_cmd && ! -L $r_python_cmd ]] && ln -s "$r_python3_cmd" "$r_python_cmd" # KLUDGE: in-case `python` has disappeared again ... ¯\_(ツ)_/¯
+
 	SetOsPauseMethod
 
 	}
@@ -531,36 +581,34 @@ IsCMDsOk()
 	# Confirm required binaries are present.
 
 	IsCriticalFile /bin/awk || return
-	IsCriticalFile /usr/bin/basename || return
 	IsCriticalFile /bin/cat || return
-	IsCriticalFile /sbin/curl || return
-	# `/bin/date` has already been called before arriving here.
+	IsCriticalFile /bin/date || return
 	IsCriticalFile /bin/df || return
-	IsCriticalFile /usr/bin/dirname || return
-	IsCriticalFile /usr/bin/du || return
 	IsCriticalFile /bin/grep || return
-	[[ ! -x /bin/less ]] && ln -sf /bin/busybox /bin/less				# KLUDGE: `/bin/less` isn't always there in QTS.
 	IsCriticalFile /bin/md5sum || return
 	IsCriticalFile /bin/mknod || return
 	IsCriticalFile /bin/mktemp || return
-	# Don't check for `/bin/more`, it's a very low-priority utility (non-essential).
+	IsCriticalFile /bin/more || return
 	IsCriticalFile /bin/ps || return
-	IsCriticalFile /usr/local/bin/python2 || return
-	IsCriticalFile /usr/bin/readlink || return
-	IsCriticalFile /usr/sbin/screen || return
-	# `/bin/sed` has already been called before arriving here.
+	IsCriticalFile /bin/sed || return
 	IsCriticalFile /bin/sh || return
 	IsCriticalFile /bin/sha1sum || return
-	[[ ! -x /usr/bin/sort ]] && ln -sf /bin/busybox /usr/bin/sort		# KLUDGE: `/usr/bin/sort` randomly disappears from QTS.
-	IsCriticalFile /usr/bin/stat || return
-	IsCriticalFile /usr/bin/tail || return
 	IsCriticalFile /bin/tar || return
-	IsCriticalFile /usr/bin/tee || return
 	IsCriticalFile /bin/uname || return
 	IsCriticalFile /bin/uniq || return
+	IsCriticalFile /sbin/curl || return
+	IsCriticalFile /usr/bin/basename || return
+	IsCriticalFile /usr/bin/dirname || return
+	IsCriticalFile /usr/bin/du || return
+	IsCriticalFile /usr/bin/readlink || return
+	IsCriticalFile /usr/bin/stat || return
+	IsCriticalFile /usr/bin/tail || return
+	IsCriticalFile /usr/bin/tee || return
 	IsCriticalFile /usr/bin/unzip || return
 	IsCriticalFile /usr/bin/uptime || return
-	# `/usr/bin/wc` has already been called before arriving here.
+	IsCriticalFile /usr/bin/wc || return
+	IsCriticalFile /usr/local/bin/python2 || return
+	IsCriticalFile /usr/sbin/screen || return
 
 	return 0
 
@@ -574,7 +622,7 @@ ConfigEnv()
 	SetNasArch
 	SetQpkgArch
 
-	readonly r_concurrency=$r_cpu_threads				# Maximum concurrent package actions to run. Should probably make this account for CPU speed too.
+	readonly r_concurrency=$r_cpu_threads		# Maximum concurrent package actions to run. Should probably make this account for CPU speed too.
 
 	local -r r_sherpa_packages_base_url='<?sherpa_packages_base_url?>'
 
@@ -667,6 +715,7 @@ ConfigEnv()
 		readonly r_screen_sessions_pathfile=$r_temp_log_path/screen.sessions
 		readonly r_session_last_pathfile=$r_temp_log_path/session-last.log
 		readonly r_session_tail_pathfile=$r_temp_log_path/session-tail.log
+
 		session_active_log_pathfile=$r_temp_log_path/session.$$.active.log
 
 	# Entware.
@@ -676,10 +725,6 @@ ConfigEnv()
 			readonly r_external_packages_archive_pathfile=$r_external_apps_path/var/opkg-lists/entware
 
 		readonly r_external_packages_pathfile=$r_cache_path/Packages
-
-	# KLUDGE: in-case `python` has disappeared again ... ¯\_(ツ)_/¯
-
-		[[ -x $r_python3_cmd && ! -L $r_python_cmd ]] && ln -s "$r_python3_cmd" "$r_python_cmd"
 
 	rm -f "$r_report_output_pathfile" "$r_ramfs_freespace_pathfile" "$r_inhibit_display_pathfile" 2> /dev/null
 
@@ -755,10 +800,10 @@ LoadLists()
 
 	readonly ar_user_qpkg_actions
 
-	local action=''
+	local a=''
 
-	for action in "${ar_qpkg_actions[@]}" debug downgrade fix; do
-		readonly r_"$(Lowercase "$action")"_log_file=$action.log
+	for a in "${ar_qpkg_actions[@]}" debug downgrade fix; do
+		readonly r_"$(Lowercase "$a")"_log_file=$a.log
 	done
 
 	lists_loaded=true
@@ -768,22 +813,34 @@ LoadLists()
 CreatePaths()
 	{
 
-	ClearPath "$r_temp_run_path" "$r_async_procs_path"
+	# Inputs: (global)
+	#	$r_action_counts_path
+	#	$r_action_log_path
+	#	$r_action_times_path
+	#	$r_animation_path
+	#	$r_async_procs_path
+	#	$r_cache_path
+	#	$r_log_path
+	#	$r_qpkg_bu_path
+	#	$r_qpkg_states_path
+	#	$r_run_logs_path
+	#	$r_temp_log_path
+	#	$r_temp_run_path
 
-	MakePath "$r_temp_log_path" 'temporary logs' || return
-	MakePath "$r_temp_run_path" 'temporary runtime files' || return
+	ClearPath "$r_temp_run_path" "$r_async_procs_path"
 
 	MakePath "$r_action_counts_path" 'action counts' || return
 	MakePath "$r_action_log_path" 'action logs' || return
 	MakePath "$r_action_times_path" 'action times' || return
-	MakePath "$r_async_procs_path" 'asynchronous process tracking' || return
 	MakePath "$r_animation_path" 'animation process tracking' || return
+	MakePath "$r_async_procs_path" 'asynchronous process tracking' || return
+	MakePath "$r_cache_path" cache || return
 	MakePath "$r_log_path" 'persistent logs' || return
 	MakePath "$r_qpkg_bu_path" 'QPKG backup' || return
 	MakePath "$r_qpkg_states_path" states || return
 	MakePath "$r_run_logs_path" 'run logs' || return
-
-	MakePath "$r_cache_path" cache || return
+	MakePath "$r_temp_log_path" 'temporary logs' || return
+	MakePath "$r_temp_run_path" 'temporary runtime files' || return
 
 	CreatePackagePaths
 
@@ -791,6 +848,15 @@ CreatePaths()
 
 CreatePackagePaths()
 	{
+
+	# Inputs: (global)
+	#	$r_cache_path
+	#	$r_ipk_cache_path
+	#	$r_ipk_downgrade_path
+	#	$r_ipk_download_path
+	#	$r_pip_cache_path
+	#	$r_qpkg_cache_path
+	#	$r_qpkg_download_path
 
 	ClearPath "$r_cache_path" "$r_ipk_cache_path"
 	ClearPath "$r_cache_path" "$r_ipk_download_path"
@@ -810,12 +876,17 @@ CreateReportPaths()
 
 	# Only create these if generating a report.
 
+	# Inputs: (global)
+	#	$r_report_flags_path
+	#	$r_report_rows_path
+	#	$r_temp_report_path
+
 	ClearPath "$r_temp_report_path" "$r_report_flags_path"
 	ClearPath "$r_temp_report_path" "$r_report_rows_path"
 
-	MakePath "$r_temp_report_path" 'temporary reports' || return
 	MakePath "$r_report_flags_path" 'report flags' || return
 	MakePath "$r_report_rows_path" 'report rows' || return
+	MakePath "$r_temp_report_path" 'temporary reports' || return
 
 	}
 
@@ -839,6 +910,7 @@ ClearTempRunPath()
 	{
 
 	# Inputs: (global)
+	#	$r_sys_run_path
 	#	$r_temp_run_path
 
 	if [[ -n $r_temp_run_path && -d $r_temp_run_path ]]; then
@@ -854,6 +926,7 @@ ClearTempLogPath()
 	{
 
 	# Inputs: (global)
+	#	$r_sys_log_path
 	#	$r_temp_log_path
 
 	if [[ -n $r_temp_log_path && -d $r_temp_log_path ]]; then
@@ -1120,12 +1193,12 @@ CheckTasks()
 	# Establish whether there's anything to-do.
 
 	if [[ $arg_problem = true || $useropt_help_basic = true ]]; then
-		show_action_results_report=false
 		generate_help_report=false
 		generate_list_report=false
 		generate_show_report=false
 		get_qpkg_extended_states=false
 		run_package_actions=false
+		show_action_results_report=false
 	fi
 
 	[[ $get_qpkg_extended_states = true ]] || return 0
@@ -1835,29 +1908,29 @@ ProcAction()
 
 	# Inputs: (global)
 	#	$done_fail_count
+	#	$done_ok_count
 	#	$ipks_downgrade
 	#	$ipks_install
 	#	$ipks_upgrade
-	#	$done_ok_count
 	#	$pips_install
 	#	$r_abort_actions_pathfile
 	#	$r_async_procs_path
 	#	$skip_abort_count
-	#	$skip_ok_count
 	#	$skip_error_count
+	#	$skip_ok_count
 	#	$useropt_terse
 	#	$useropt_verbose
 
 	# Outputs: (global)
 	#	$done_fail_count
-	#	$fork_progress_prefix
 	#	$done_ok_count
+	#	$fork_progress_prefix
 	#	$show_action_results_failed
 	#	$show_action_results_ok
 	#	$show_action_results_skipped
 	#	$skip_abort_count
-	#	$skip_ok_count
 	#	$skip_error_count
+	#	$skip_ok_count
 	#	$total_count
 	#	$useropt_terse
 	#	$useropt_verbose
@@ -1869,12 +1942,13 @@ ProcAction()
 	local -a a_target_packages=()
 
 	local -i package_index=0
+	local -i pid=0
 
 	local -r r_action=${1:?${FUNCNAME[0]}(): $e_noact}
 	local -r r_action_intransitive_msg=${4:?${FUNCNAME[0]}(): $e_noact message}
 	local -r r_package_type=${3:?${FUNCNAME[0]}(): $e_nopty}
-	local -r r_tier=${2:?${FUNCNAME[0]}(): $e_notir}
 	local -r r_pid_pathfile=$(CreatePidFilePathName)
+	local -r r_tier=${2:?${FUNCNAME[0]}(): $e_notir}
 
 	local group=''
 	local msg1_key=''
@@ -1885,7 +1959,6 @@ ProcAction()
 	local re=''
 	local state=''
 	local target_object_name=''
-	local pid=0
 
 	DebugVar r_action
 	DebugVar r_tier
@@ -3814,6 +3887,7 @@ CalcIpkDepsToInstall()
 	# From a specified list of IPK names, find all dependent IPKs, exclude those already installed, then generate a list to download.
 
 	# Inputs: (global)
+	#	$r_ani_id
 	#	$r_external_packages_pathfile
 	#	$r_gnu_grep_cmd
 	#	$r_opkg_cmd
@@ -3862,6 +3936,8 @@ CalcIpkDepsToInstall()
 	DebugInfo "$requested_count IPK$(Pluralise "$requested_count") requested" "'$req_list' "
 
 	while [[ $iterations -le $r_iteration_limit ]]; do
+		# Update progress twice per loop. First instance.
+
 		ShowAsIterativeProgress 'resolve IPK dependencies' "$iterations" iteration "${#a_dep_acc[@]}" 'unique IPK'
 
 		((iterations++))
@@ -3870,7 +3946,7 @@ CalcIpkDepsToInstall()
 
 		a_this_list=($($r_gnu_grep_cmd --word-regexp --after-context 1 --no-group-separator '^Package:\|^Depends:' "$r_external_packages_pathfile" | $r_gnu_grep_cmd -vG '^Section:\|^Version:' | $r_gnu_grep_cmd --word-regexp --after-context 1 --no-group-separator "$ipk_titles" | $r_gnu_grep_cmd -vG "$ipk_titles" | $r_gnu_grep_cmd -vG '^Package: ' | /bin/sed 's/^Depends: //;s/, /\n/g' | /usr/bin/sort | /bin/uniq))
 
-		# Update progress twice per loop.
+		# Update progress twice per loop. Second instance.
 
 		ShowAsIterativeProgress 'resolve IPK dependencies' "$iterations" iteration "${#a_dep_acc[@]}" 'unique IPK'
 
@@ -3884,7 +3960,7 @@ CalcIpkDepsToInstall()
 		fi
 	done
 
-	Pause 0.5
+	Pause 0.2
 
 	[[ ${useropt_terse:=true} = false && ${useropt_verbose:=false} = false ]] && echo
 
@@ -3938,6 +4014,7 @@ CalcIpkDownloadSize()
 	# Calculate size of required IPKs.
 
 	# Inputs: (global)
+	#	$r_ani_id
 	#	$r_gnu_grep_cmd
 	#	$r_external_packages_pathfile
 
@@ -3958,7 +4035,7 @@ CalcIpkDownloadSize()
 		a_sizes=($($r_gnu_grep_cmd -w '^Package:\|^Size:' "$r_external_packages_pathfile" | $r_gnu_grep_cmd --after-context 1 --no-group-separator ": $(/bin/sed 's/ /$ /g;s/\$ /\$\\\|: /g' <<< "$(IPKs-ACdownload-to:List)")" | /bin/grep '^Size:' | /bin/sed 's/^Size: //'))
 
 		# shellcheck disable=2283
-		IPKs-ACdownload-to:Size = "$(IFS=+; echo "$((${a_sizes[*]}))")"		# Rather nifty sizing shortcut found here: https://stackoverflow.com/a/13635566/6182835
+		IPKs-ACdownload-to:Size = "$(IFS=+; echo "$((${a_sizes[*]}))")"		# Nifty sizing shortcut found here: https://stackoverflow.com/a/13635566/6182835
 		DebugAsDone "$(FormatAsThous "$(IPKs-ACdownload-to:Size)") bytes ($(FormatAsIsoBytes "$(IPKs-ACdownload-to:Size)")) to download"
 	else
 		DebugAsDone 'no IPKs to size'
@@ -3975,10 +4052,11 @@ IPKs:upgrade()
 
 	# Inputs: (global)
 	#	$ipks_upgrade
-	#	$r_opkg_cmd
+	#	$r_ani_id
 	#	$r_ipk_cache_path
 	#	$r_ipk_download_path
 	#	$r_log_path
+	#	$r_opkg_cmd
 	#	$r_upgrade_log_file
 	#	$useropt_terse
 	#	$useropt_verbose
@@ -3994,11 +4072,11 @@ IPKs:upgrade()
 
 	FuncInit
 
+	local -i pid=''
 	local -i total_count=0
 	local -i z=0
 
 	local desc=''
-	local fork_pid=''
 
 	IPKs-ACupgrade-to:Init
 	IPKs-ACdownload-to:Init
@@ -4023,12 +4101,12 @@ IPKs:upgrade()
 
 		EndAni "$r_ani_id"
 		_DirSizeMonitor_ &
-		fork_pid=$!
+		pid=$!
 
 		Executer "$r_opkg_cmd upgrade --force-overwrite $(IPKs-ACdownload-to:List) --cache $r_ipk_cache_path --tmp-dir $r_ipk_download_path" "$r_log_path/ipks.$r_upgrade_log_file" log:failure-only
 		z=$?
 
-		KillPID "$fork_pid"
+		KillPID "$pid"
 
 		# Finish-up with 100% regardless of what happened.
 
@@ -4057,12 +4135,13 @@ IPKs:install()
 
 	# Inputs: (global)
 	#	$ipks_install
-	#	$r_opkg_cmd
+	#	$r_ani_id
 	#	$r_essential_ipks
 	#	$r_install_log_file
 	#	$r_ipk_cache_path
 	#	$r_ipk_download_path
 	#	$r_log_path
+	#	$r_opkg_cmd
 	#	$r_prev_ipk_list_pathfile
 	#	$r_qpkg_name[]
 	#	$useropt_fix
@@ -4081,11 +4160,11 @@ IPKs:install()
 	FuncInit
 
 	local -i i=0
+	local -i pid=''
 	local -i total_count=0
 	local -i z=0
 
 	local desc=''
-	local fork_pid=''
 	local previous=''
 
 	IPKs-ACinstall-to:Init
@@ -4125,14 +4204,13 @@ IPKs:install()
 		dir_size_progress_prefix='install '$desc
 
 		EndAni "$r_ani_id"
-
 		_DirSizeMonitor_ &
-		fork_pid=$!
+		pid=$!
 
 		Executer "$r_opkg_cmd install --force-overwrite $(IPKs-ACdownload-to:List) --cache $r_ipk_cache_path --tmp-dir $r_ipk_download_path" "$r_log_path/ipks.$r_install_log_file" log:failure-only
 		z=$?
 
-		KillPID "$fork_pid"
+		KillPID "$pid"
 
 		# Finish-up with 100% regardless of what happened.
 
@@ -4169,7 +4247,12 @@ IPKs:downgrade()
 
 	# Inputs: (global)
 	#	$ipks_downgrade
+	#	$r_ani_id
 	#	$r_opkg_cmd
+
+	# Outputs: (global)
+	#	$useropt_terse
+	#	$useropt_verbose
 
 	[[ $ipks_downgrade = true ]] || return
 	IsQpkgEnabled Entware || return
@@ -4310,6 +4393,7 @@ PIPs:install()
 	{
 
 	# Inputs: (global)
+	#	$r_ani_id
 	#	$r_base_pips
 	#	$r_install_log_file
 	#	$r_log_path
@@ -18518,15 +18602,19 @@ _Animator_()
 
 	while true; do
 		for ((n=r_ani_first_frame; r_ani_frame_step>0 ? n<=r_ani_last_frame : n>=r_ani_last_frame; n+=r_ani_frame_step)); do
-			ShowAniFrameInColour "${r_ani_chars[n-1]}"
-
-			Pause "$r_ani_frame_duration"
+			if [[ $ani_start_frame -ge 2 ]]; then
+				n=$ani_start_frame						# Apply next frame,
+				ani_start_frame=1						# ... then reset.
+			fi
 
 			if [[ -e $ani_end_pathfile ]]; then
-				echo "$((n+r_ani_frame_step))" > "$ani_frame_pathfile"	# Save next frame to be displayed when relaunching _Animator_().
-				ShowAniFrameInColour ''									# Erase existing frame.
+				echo "$n" > "$ani_frame_pathfile"		# Save next frame to be displayed when relaunching _Animator_().
+				ShowAniFrameInColour ''					# Erase existing frame.
 				break 2
 			fi
+
+			ShowAniFrameInColour "${r_ani_chars[n-1]}"	# Display animation frame.
+			Pause "$r_ani_frame_duration"
 		done
 	done
 
@@ -18538,7 +18626,7 @@ GetSubshellPid()
 	# Get PID of subshell.
 	# Source: https://stackoverflow.com/a/79344149
 
-	(exec sh -c 'echo "$PPID"')
+	(exec /bin/sh -c 'echo "$PPID"')
 
 	}
 
