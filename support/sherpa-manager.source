@@ -4015,8 +4015,8 @@ CalcIpkDownloadSize()
 
 	# Inputs: (global)
 	#	$r_ani_id
-	#	$r_gnu_grep_cmd
 	#	$r_external_packages_pathfile
+	#	$r_gnu_grep_cmd
 
 	FuncInit
 
@@ -18134,7 +18134,7 @@ Pause()
 
 	if [[ $1 != "${_pause_previous_duration:=0}" ]]; then		# Don't recalculate unless specified duration is different to previous.
 		if [[ $_pause_method = usleep ]]; then
-			_pause_translated_duration=$(awk -v d="$1" 'BEGIN {print d*10^6}')	# Convert seconds to microseconds.
+			_pause_translated_duration=$(ConvertDecimalSecondsToMicroseconds "$1")
 		else
 			_pause_translated_duration=$1
 		fi
@@ -18143,6 +18143,31 @@ Pause()
 	fi
 
 	eval $_pause_method ${_pause_translated_duration:=0}
+
+	}
+
+ConvertDecimalSecondsToMicroseconds()
+	{
+
+	# Convert decimal seconds to microseconds.
+
+	# In pure bash 3.2 because QTS BusyBox 1.01 `awk` doesn't suppport mathematical calcs like:
+	#	awk -v d="$1" 'BEGIN {print d*10^6}'
+	# So, convert the hard way.
+
+	# Inputs: (local)
+	#	$1 = decimal seconds.
+
+	# Outputs: (local)
+	#	stdout = microseconds.
+
+	local -i a=${1%.*}
+	local b=${1#*.}
+
+	[[ $a != "$1" ]] || b=0
+	b=${b}000000
+
+	printf '%s' "$((a*10**6+10#${b:0:6}))"
 
 	}
 
