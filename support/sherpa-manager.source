@@ -277,11 +277,11 @@ LoadConsts()
 
 	# Various.
 
-		readonly r_this_script_ver='<?manager_version?>'
-		readonly r_script_built_epoch='<?manager_epoch?>'
 		readonly r_cert_db_pathfile=/etc/config/nas_sign_qpkg.db
 		readonly r_entware_packages_last_updated=20260407
 		readonly r_file_change_threshold_minutes=60
+		readonly r_script_built_epoch='<?manager_epoch?>'
+		readonly r_this_script_ver='<?manager_version?>'
 
 	# Error messages.
 
@@ -1015,13 +1015,7 @@ DebugLogEnv()
 
 	a='load averages'
 	b=$(GetPrettyLoadAverages)
-
-#	if IsThisLoadAverageElevated "$(GetOsSysLoad1MinAverage)"; then
-		DebugOS ok "$a" "$b"
-#	else
-#		DebugOS warning "$a" "$b"
-#	fi
-
+	DebugOS ok "$a" "$b"
 	DebugStorage ok 'default volume mounted' "$(GetUserDefVol)"
 	DebugStorage ok 'basic write benchmark' "$(GetHardwareVolumeBenchmark)"
 
@@ -1449,7 +1443,7 @@ AssignQpkgsToActions()
 		for qpkg_name in $(QPKGs-ACrebuild-to:Array); do
 			SetQpkgIndex
 
-			if IsNtValidQpkgInstalled "$qpkg_name" && (IsQpkgBackupExist || (QPKGs-ACbackup-to.Exist "O$qpkg_name" && QPKGs-ACuninstall-to.Exist "O$qpkg_name")); then						# KLUDGE: Permit 'rebuild' of non-'O' QPKG if an 'O' QPKG is marked for 'backup' and 'uninstall'. Allows 'rebuild' of non-'O' to be run in same session as 'backup' & 'uninstall' of 'O'.
+			if IsNtValidQpkgInstalled "$qpkg_name" && (IsQpkgBackupExist || (QPKGs-ACbackup-to.Exist "O$qpkg_name" && QPKGs-ACuninstall-to.Exist "O$qpkg_name")); then		# KLUDGE: Permit 'rebuild' of non-'O' QPKG if an 'O' QPKG is marked for 'backup' and 'uninstall'. Allows 'rebuild' of non-'O' to be run in same session as 'backup' & 'uninstall' of 'O'.
 				QPKGs-ACinstall-to:Add "$qpkg_name"
 				QPKGs-ACrestore-to:Add "$qpkg_name"
 			fi
@@ -1679,7 +1673,7 @@ AssignQpkgsToActions()
 
 	QPKGs-ACsign-to.IsAny && LoadQpkgSigningCert
 
-	IsDebug && ListQPKGsActionsAll	# directive:omit-from-production
+	IsDebug && ListQPKGsActionsAll			# directive:omit-from-production
 
 	FuncExit
 
@@ -3179,14 +3173,14 @@ MatchVerb()
 	[[ -n ${1:-} ]] || return
 
 	case $1 in
+		backup|clean|@(dis|en)able|fix|follow|help|reassign|rebuild|reinstall|report-info|reset|restore|terse|update|upgrade)	# NOTE: There should be no single characters in this list.
+			printf '%s' "$1"
+			;;
 		activate|start)
 			printf activate
 			;;
 		add|install)
 			printf install
-			;;
-		backup|clean|@(dis|en)able|fix|follow|help|reassign|rebuild|reinstall|report-info|reset|restore|terse|update|upgrade)	# NOTE: There should be no single characters in this list.
-			printf '%s' "$1"
 			;;
 		deactivate|stop)
 			printf deactivate
@@ -3232,6 +3226,9 @@ MatchNoun()
 	[[ -n ${1:-} ]] || return
 
 	case $1 in
+		backedup|canbackup|complete|installable|installed|missing|results|show|?(un)stable)		# NOTE: There should be no single characters in this list.
+			printf '%s' "$1"
+			;;
 		a|about)
 			printf about
 			;;
@@ -3246,9 +3243,6 @@ MatchNoun()
 			;;
 		abs|abbreviations)
 			printf abs
-			;;
-		backedup|canbackup|complete|installable|installed|missing|results|show|?(un)stable)		# NOTE: There should be no single characters in this list.
-			printf '%s' "$1"
 			;;
 		action?(s))
 			printf actions
@@ -4033,7 +4027,7 @@ CalcIpkDownloadSize()
 		a_sizes=($($r_gnu_grep_cmd -w '^Package:\|^Size:' "$r_external_packages_pathfile" | $r_gnu_grep_cmd --after-context 1 --no-group-separator ": $(/bin/sed 's/ /$ /g;s/\$ /\$\\\|: /g' <<< "$(IPKs-ACdownload-to:List)")" | /bin/grep '^Size:' | /bin/sed 's/^Size: //'))
 
 		# shellcheck disable=2283
-		IPKs-ACdownload-to:Size = "$(IFS=+; echo "$((${a_sizes[*]}))")"		# Nifty sizing shortcut found here: https://stackoverflow.com/a/13635566/6182835
+		IPKs-ACdownload-to:Size = "$(IFS=+; echo "$((${a_sizes[*]}))")"		# Nifty array sizing shortcut found here: https://stackoverflow.com/a/13635566/6182835
 		DebugAsDone "$(FormatAsThous "$(IPKs-ACdownload-to:Size)") bytes ($(FormatAsIsoBytes "$(IPKs-ACdownload-to:Size)")) to download"
 	else
 		DebugAsDone 'no IPKs to size'
@@ -4611,7 +4605,6 @@ _DirSizeMonitor_()
 	while [[ $current_bytes -lt $dir_bytes ]]; do
 		[[ ! -e $r_abort_actions_pathfile ]] || break
 		Pause 0.2
-
 		UpdateDirSizeProgress
 
 		if [[ $current_bytes -ne $last_bytes ]]; then
@@ -4833,6 +4826,7 @@ LoadSetting()
 
 	if [[ ! -x /sbin/getcfg ]]; then
 		printf '%s' "$a"
+
 		return
 	fi
 
@@ -4989,6 +4983,7 @@ DisplayAsIndentQuotedInfoItem()
 	#	$2 = description
 
 	# Inputs: (global)
+	#	$r_chars_dash
 	#	$r_help_desc_indent
 	#	$r_report_info_name_column_width
 
@@ -5020,7 +5015,7 @@ GeneratePacksReportTitleRow()
 	else
 		FormatReportFieldWidth "${a_headers[0]}" "$r_report_qpkg_name_column_width"
 		FormatReportFieldWidth "${a_headers[1]}" "$r_report_qpkg_appl_version_column_width"
-		printf '%s' "${a_headers[2]}"
+		FormatReportFieldWidth "${a_headers[2]}" "$r_report_qpkg_description_column_width"
 	fi
 
 	printf '\n'
@@ -5036,7 +5031,11 @@ _GeneratePacksReportDataRow_()
 	#	$1 (optional) = QPKG name.
 
 	# Inputs: (global)
+	#	$e_nopnm
 	#	$qpkg_name
+	#	$r_report_flags_path
+	#	$r_report_qpkg_appl_version_column_width
+	#	$r_report_qpkg_name_column_width
 
 	local -a a_column_vars=(app_ver description name)
 
@@ -5397,7 +5396,9 @@ GenerateReposReportTitleRow()
 	# Requires 57 columns when auto-column-width isn't available. TODO: recheck this.
 
 	# Inputs: (global)
+	#	$r_report_qpkg_install_date_column_width
 	#	$r_report_qpkg_name_column_width
+	#	$r_report_qpkg_repo_column_width
 
 	local -a a_headers=('QPKG name:' 'Repository:' 'Install date:')
 
@@ -5410,7 +5411,8 @@ GenerateReposReportTitleRow()
 		)
 	else
 		FormatReportFieldWidth "${a_headers[0]}" "$r_report_qpkg_name_column_width"
-		printf '%s' "${a_headers[1]}"
+		FormatReportFieldWidth "${a_headers[1]}" "$r_report_qpkg_repo_column_width"
+		FormatReportFieldWidth "${a_headers[2]}" "$r_report_qpkg_install_date_column_width"
 	fi
 
 	printf '\n'
@@ -5573,6 +5575,10 @@ _GenerateAbsReportDataRow_()
 
 	# Inputs: (global)
 	#	$qpkg_name
+	#	$r_report_flags_path
+	#	$r_report_qpkg_abbreviations_column_width
+	#	$r_report_qpkg_is_installed_column_width
+	#	$r_report_qpkg_name_column_width
 
 	local -a a_column_vars=(abs auxiliary installed name)
 		local auxiliary_column=installed		# Auxiliary messages are shown in this column name.
@@ -6748,7 +6754,6 @@ ShowHelpShow()
 		DisplayAsHelpTitle "'show' usage examples:"
 		DisplayAsProjSynIndentExam 'show QPKG abbreviations' 'show abbreviations'
 		DisplayAsProjSynIndentExam '' 'show abs'
-#		DisplayAsProjSynIndentExam '' a
 		DisplayAsProjSynIndentExam 'show application backup files' 'show backups'
 		DisplayAsProjSynIndentExam '' b
 		DisplayAsProjSynIndentExam 'show QPKG dependency report' 'show dependencies'
@@ -6904,7 +6909,6 @@ ShowHelpTips()
 		DisplayAsProjSynIndentExam "install all available $(ShowAsTitleName) QPKGs" 'install all'
 		DisplayAsProjSynIndentExam "install all installable $(ShowAsTitleName) QPKGs" 'install installable'
 		DisplayAsProjSynIndentExam 'package abbreviations and aliases also work. To see these' 'help abs'
-#		DisplayAsProjSynIndentExam '' a
 		DisplayAsProjSynIndentExam 'reactivate all QPKGs (upgrades internal applications where-supported)' 'reactivate all'
 		DisplayAsProjSynIndentExam 'list only QPKGs that can be installed' 'list installable'
 		DisplayAsProjSynIndentExam "view only the most recent $(ShowAsTitleName) session log" last
@@ -7099,11 +7103,11 @@ GetLogSessStartLine()
 	# Inputs: (global)
 	#	$r_session_tail_pathfile
 
-	local -i linenum=0
+	local -i a=0
 
-	linenum=$(($(/bin/grep -n 'SCRIPT:.*started:' "$r_session_tail_pathfile" | /usr/bin/tail -n${1:-1} | head -n1 | cut -d':' -f1)-1))
-	[[ $linenum -lt 1 ]] && linenum=1
-	printf '%s' "$linenum"
+	a=$(($(/bin/grep -n 'SCRIPT:.*started:' "$r_session_tail_pathfile" | /usr/bin/tail -n${1:-1} | head -n1 | cut -d':' -f1)-1))
+	[[ $a -lt 1 ]] && a=1
+	printf '%s' "$a"
 
 	}
 
@@ -7116,11 +7120,11 @@ GetLogSessFinishLine()
 	# Inputs: (global)
 	#	$r_session_tail_pathfile
 
-	local -i linenum=0
+	local -i a=0
 
-	linenum=$(($(/bin/grep -n 'SCRIPT:.*finished:' "$r_session_tail_pathfile" | /usr/bin/tail -n${1:-1} | cut -d':' -f1)+2))
-	[[ $linenum -eq 2 ]] && linenum=3
-	printf '%s' "$linenum"
+	a=$(($(/bin/grep -n 'SCRIPT:.*finished:' "$r_session_tail_pathfile" | /usr/bin/tail -n${1:-1} | cut -d':' -f1)+2))
+	[[ $a -eq 2 ]] && a=3
+	printf '%s' "$a"
 
 	}
 
@@ -7142,7 +7146,6 @@ ArchivePriorSessLog()
 
 	# Inputs: (global)
 	#	$r_session_archive_log_pathfile
-	#	$r_this_package_path
 	#	$session_active_log_pathfile
 
 	local f=''
