@@ -5399,8 +5399,6 @@ _GenerateStatusReportDataRow_()
 GenerateReposReportTitleRow()
 	{
 
-	# Requires 57 columns when auto-column-width isn't available. TODO: recheck this.
-
 	# Inputs: (global)
 	#	$r_report_qpkg_install_date_column_width
 	#	$r_report_qpkg_name_column_width
