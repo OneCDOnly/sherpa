@@ -728,6 +728,13 @@ ConfigEnv()
 
 	rm -f "$r_report_output_pathfile" "$r_ramfs_freespace_pathfile" "$r_inhibit_display_pathfile" 2> /dev/null
 
+	readonly r_ani_end_pathfile=$r_animation_path/$r_ani_id.end			# Internal fileflag (to stop animation cleanly).
+	readonly r_ani_frame_pathfile=$r_animation_path/$r_ani_id.frame		# Next frame to be displayed by animator process.
+	readonly r_ani_pid_pathfile=$r_animation_path/$r_ani_id.pid			# PID of forked animator process.
+	readonly r_ani_resume_pathfile=$r_animation_path/$r_ani_id.resume	# If exists, animation was running prior to PauseAni(), and should be started again ASAP.
+
+	ClearAnimationFiles
+
 	}
 
 LoadLists()
@@ -1422,9 +1429,9 @@ AssignQpkgsToActions()
 
 	FuncInit
 
-	EndAni
+	PauseAni
 	ShowAsProc 'action assignment'
-	StartAni
+	ResumeAni
 
 	local action=''
 	local prospect=''
@@ -1757,9 +1764,9 @@ ProcActions()
 
 	FuncInit
 
-	EndAni
+	PauseAni
 	ShowAsProc 'package actions'
-	StartAni
+	ResumeAni
 
 	local -i tier_index=0
 
@@ -1979,7 +1986,7 @@ ProcAction()
 				FuncExit; return
 			fi
 
-			EndAni
+			PauseAni
 
 			if [[ $total_count -eq 1 ]]; then
 				fork_progress_prefix="$r_action_intransitive_msg $(TextBrightOrange "${a_target_packages[0]}") $r_package_type"
@@ -2279,7 +2286,6 @@ PrepareArgs()
 	#	$a_args[]
 	#	$useropt_help_basic
 
-	EndAni
 	ShowAsProc args
 	StartAni
 
@@ -3541,9 +3547,9 @@ AllocPackGroupsToAcs()
 
 	FuncInit
 
-	EndAni
+	PauseAni
 	ShowAsProc 'package groups'
-	StartAni
+	ResumeAni
 
 	local action=''
 	local group=''
@@ -3593,9 +3599,9 @@ AllocPackStatesToAcs()
 
 	FuncInit
 
-	EndAni
+	PauseAni
 	ShowAsProc 'conditional package states'
-	StartAni
+	ResumeAni
 
 	local action=''
 	local check_later=false
@@ -3924,7 +3930,7 @@ CalcIpkDepsToInstall()
 		FuncExit 1; return
 	fi
 
-	EndAni
+	PauseAni
 
 	DebugInfo "$requested_count IPK$(Pluralise "$requested_count") requested" "'$req_list' "
 
@@ -3970,9 +3976,9 @@ CalcIpkDepsToInstall()
 	pre_exclude_count=$(/usr/bin/wc -w <<< "$pre_exclude_list")
 
 	if [[ $pre_exclude_count -gt 0 ]]; then
-		EndAni
+		PauseAni
 		ShowAsProc 'exclude IPKs already installed'
-		StartAni
+		ResumeAni
 
 		DebugInfo "$pre_exclude_count IPK$(Pluralise "$pre_exclude_count") required (including dependencies)" "'$pre_exclude_list' "
 
@@ -4019,9 +4025,9 @@ CalcIpkDownloadSize()
 	size_count=$(IPKs-ACdownload-to:Count)
 
 	if [[ $size_count -gt 0 ]]; then
-		EndAni
+		PauseAni
 		ShowAsProc "calculate size of IPK$(Pluralise "$size_count") to download"
-		StartAni
+		ResumeAni
 
 		DebugAsDone "$size_count IPK$(Pluralise "$size_count") to download: '$(IPKs-ACdownload-to:List)'"
 		a_sizes=($($r_gnu_grep_cmd -w '^Package:\|^Size:' "$r_external_packages_pathfile" | $r_gnu_grep_cmd --after-context 1 --no-group-separator ": $(/bin/sed 's/ /$ /g;s/\$ /\$\\\|: /g' <<< "$(IPKs-ACdownload-to:List)")" | /bin/grep '^Size:' | /bin/sed 's/^Size: //'))
@@ -4090,7 +4096,7 @@ IPKs:upgrade()
 		dir_location=$r_ipk_download_path
 		dir_size_progress_prefix='upgrade '$desc
 
-		EndAni
+		PauseAni
 		_DirSizeMonitor_ &
 		pid=$!
 
@@ -4193,7 +4199,7 @@ IPKs:install()
 		dir_location=$r_ipk_download_path
 		dir_size_progress_prefix='install '$desc
 
-		EndAni
+		PauseAni
 		_DirSizeMonitor_ &
 		pid=$!
 
@@ -4272,7 +4278,7 @@ IPKs:downgrade()
 		desc="$total_count ${package_type}$(Pluralise "$total_count")"
 		log_pathfile=$r_log_path/ipks.$r_download_log_file
 
-		EndAni
+		PauseAni
 		ShowAsProc "download $desc"
 
 		SetQpkgArch
@@ -4337,7 +4343,7 @@ IPKs:downgrade()
 		desc="$total_count auxiliary ${package_type}$(Pluralise "$total_count")"
 		log_pathfile=$r_log_path/ipks.$r_downgrade_log_file
 
-		EndAni
+		PauseAni
 		ShowAsProc "downgrade $desc"
 
 		ShowAsPercentProgress "downgrade $desc" '' "$done_ok_count" 0 "$done_fail_count" "$total_count"
@@ -4422,7 +4428,7 @@ PIPs:install()
 		exec_cmd="$r_pip_cmd install --upgrade --no-input $(PIPs-ACinstall-to:List) --cache-dir $r_pip_cache_path --root-user-action=ignore"
 		desc="$total_count auxiliary PIP$(Pluralise "$total_count")"
 
-		EndAni
+		PauseAni
 		ShowAsPercentProgress "install $desc" '' "$done_ok_count" 0 0 "$total_count"
 		Executer "$exec_cmd" "$log_pathfile" log:failure-only
 		z=$?
@@ -6550,6 +6556,7 @@ ShowHelpActions()
 
 		} > "$r_report_output_pathfile"
 
+	EndAni
 	EraseThisLine
 	ShowReport
 
@@ -6597,6 +6604,7 @@ ShowHelpActionsAll()
 
 		} > "$r_report_output_pathfile"
 
+	EndAni
 	EraseThisLine
 	ShowReport
 
@@ -6642,6 +6650,7 @@ ShowHelpBasicExamples()
 
 		} > "$r_report_output_pathfile"
 
+	EndAni
 	ShowReport
 
 	return 0
@@ -6680,6 +6689,7 @@ ShowHelpGroups()
 
 		} > "$r_report_output_pathfile"
 
+	EndAni
 	EraseThisLine
 	ShowReport
 
@@ -6732,6 +6742,7 @@ ShowHelpLists()
 
 		} > "$r_report_output_pathfile"
 
+	EndAni
 	EraseThisLine
 	ShowReport
 
@@ -6767,6 +6778,7 @@ ShowHelpShow()
 
 		} > "$r_report_output_pathfile"
 
+	EndAni
 	EraseThisLine
 	ShowReport
 
@@ -6793,6 +6805,7 @@ ShowHelpOptions()
 
 		} > "$r_report_output_pathfile"
 
+	EndAni
 	EraseThisLine
 	ShowReport
 
@@ -6816,6 +6829,7 @@ ShowHelpPackages()
 
 		} > "$r_report_output_pathfile"
 
+	EndAni
 	EraseThisLine
 	ShowReport
 
@@ -6856,6 +6870,7 @@ ShowHelpProblems()
 
 		} > "$r_report_output_pathfile"
 
+	EndAni
 	EraseThisLine
 	ShowReport
 
@@ -6886,6 +6901,7 @@ ShowHelpUpgrades()
 
 		} > "$r_report_output_pathfile"
 
+	EndAni
 	EraseThisLine
 	ShowReport
 
@@ -6919,6 +6935,7 @@ ShowHelpTips()
 
 		} > "$r_report_output_pathfile"
 
+	EndAni
 	EraseThisLine
 	ShowReport
 
@@ -7596,9 +7613,8 @@ CheckEnv()
 
 	FuncInit
 
-	EndAni
 	ShowAsProc 'check environment'
-	StartAni
+	ResumeAni
 
 	CheckSelfSigned
 	CheckIncompatibleQPKGs
@@ -8064,9 +8080,9 @@ RefreshAndStoreQPKGsStates()
 
 	local -r r_pid_pathfile=$(CreatePidFilePathName)
 
-	EndAni
+	PauseAni
 	ShowAsProc 'basic package states'
-	StartAni
+	ResumeAni
 
 	# Faster to launch several concurrent loops async than a single loop. Launch those requiring more processing-time first.
 
@@ -8129,9 +8145,9 @@ LoadQPKGsStates()
 
 	qpkg_name=''
 
-	EndAni
+	PauseAni
 	ShowAsProc 'load QPKG states'
-	StartAni
+	ResumeAni
 
 	# Load status lines from individual files into session arrays.
 
@@ -8765,6 +8781,7 @@ ReportAllActionResults()
 
 			} > "$r_report_output_pathfile"
 
+			EndAni
 			ShowReport
 		fi
 	else
@@ -9039,8 +9056,6 @@ ShowReport()
 
 	# Inputs: (global)
 	#	$r_report_output_pathfile
-
-	EndAni
 
 	if [[ -s $r_report_output_pathfile ]]; then
 		if [[ $generate_report_headers = true ]]; then
@@ -15844,7 +15859,7 @@ ShowTitle()
 
 	FuncInit
 
-	EndAni
+	PauseAni
 	EraseThisLine
 
 	# Only show ASCII title when no arguments are specified.
@@ -16130,9 +16145,9 @@ DisplayProcReport()
 
 	[[ -n ${1:-} ]] && a=$1' '
 
-	EndAni
+	PauseAni
 	ShowAsProc "${a}report"
-	StartAni
+	ResumeAni
 
 	report_title_shown=true
 
@@ -17069,7 +17084,7 @@ ShowAsNote()
 
 	[[ -n ${1:-} ]] || return
 
-	EndAni
+	PauseAni
 
 	local a=note
 	local b=''
@@ -17088,7 +17103,7 @@ ShowAsDone()
 
 	[[ -n ${1:-} ]] || return
 
-	EndAni
+	PauseAni
 
 	local a='done'
 	local b=''
@@ -17107,7 +17122,7 @@ ShowAsNews()
 
 	[[ -n ${1:-} ]] || return
 
-	EndAni
+	PauseAni
 
 	local a=news
 	local b=$1
@@ -17124,7 +17139,7 @@ ShowAsWarn()
 
 	[[ -n ${1:-} ]] || return
 
-	EndAni
+	PauseAni
 
 	local a=warn
 	local b=''
@@ -17143,7 +17158,7 @@ ShowAsAbort()
 
 	[[ -n ${1:-} ]] || return
 
-	EndAni
+	PauseAni
 
 	local a=bort
 	local b=''
@@ -17163,7 +17178,7 @@ ShowAsFail()
 
 	[[ -n ${1:-} ]] || return
 
-	EndAni
+	PauseAni
 
 	local a=fail
 	local b=''
@@ -17182,7 +17197,7 @@ ShowAsError()
 
 	[[ -n ${1:-} ]] || return
 
-	EndAni
+	PauseAni
 
 	local a=derp
 	local b=''
@@ -17206,7 +17221,7 @@ ShowAsBug()
 
 	[[ -n ${1:-} && -n ${2:-} ]] || return
 
-	EndAni
+	PauseAni
 
 	local -i i=0
 
@@ -18326,9 +18341,9 @@ LoadObjects()
 
 	LoadLists
 
-	EndAni
+	PauseAni
 	ShowAsProc objects
-	StartAni
+	ResumeAni
 
 	# NOTE: Set these prior to calling RefreshArchive()
 
@@ -18381,9 +18396,9 @@ LoadDatabase()
 
 	LoadObjects
 
-	EndAni
+	PauseAni
 	ShowAsProc database
-	StartAni
+	ResumeAni
 
 	# NOTE: Set these prior to calling RefreshArchive()
 
@@ -18491,75 +18506,61 @@ LoadDatabase()
 
 	}
 
-CaughtSIGINT()
-	{
-
-	# Inputs: (global)
-	#	$r_abort_actions_pathfile
-	#	$r_inhibit_display_pathfile
-
-	trap - SIGINT
-
-	[[ -n ${r_inhibit_display_pathfile:-} ]] && /bin/touch "$r_inhibit_display_pathfile"
-	[[ -n ${r_abort_actions_pathfile:-} ]] && /bin/touch "$r_abort_actions_pathfile"
-
-	EndAni
-	EraseThisLine
-	ShowAsAbort 'caught SIGINT'
-	CloseMsgPipe
-
-	# TODO: send SIGTERM to each PID in `$r_async_procs_path` here.
-
-	exit
-
-	}
-
-CaughtEXIT()
-	{
-
-	trap - EXIT
-
-	ShowKeystrokes
-	ShowCursor
-	ReleaseLockfile
-
-	}
-
 StartAni()
 	{
 
 	IsNtDebug || return							# Don't start an animation in debug mode.
-	SetAniPathFiles || return
-	[[ ! -e $ani_pid_pathfile ]] || return		# Don't start another animation with the same ID.
-
-	rm -f "$ani_end_pathfile"
+	[[ ! -s $r_ani_pid_pathfile ]] || return	# Don't start a second animation with the same ID.
+	ClearAnimationFiles
 
 	_Animator_ &
 	: # This is only here to prevent Squeeze() combining the end-of-function brace below with the line above.
 
 	}
 
-EndAni()
+ResumeAni()
 	{
 
-	SetAniPathFiles || return
-	[[ -s $ani_pid_pathfile ]] || return		# Don't try to stop an animation without a PID.
+	IsNtDebug || return							# Don't start an animation in debug mode.
+	[[ -e $r_ani_resume_pathfile ]] || return
+	rm -f "$r_ani_end_pathfile" "$r_ani_pid_pathfile" "$r_ani_resume_pathfile"
 
-	touch "$ani_end_pathfile"
-
-	wait $(< "$ani_pid_pathfile") 2> /dev/null
-	rm -f "$ani_end_pathfile" "$ani_pid_pathfile"
+	_Animator_ &
+	: # This is only here to prevent Squeeze() combining the end-of-function brace below with the line above.
 
 	}
 
-SetAniPathFiles()
+PauseAni()
 	{
 
-	[[ -n ${r_animation_path:-} && -d $r_animation_path ]] || return
+	[[ -s $r_ani_pid_pathfile ]] || return		# Don't try to stop an animation without a PID.
 
-	ani_end_pathfile=$r_animation_path/$r_ani_id.end			# Internal fileflag (to stop animation cleanly).
-	ani_frame_pathfile=$r_animation_path/$r_ani_id.frame		# Next frame to be displayed by animator process.
-	ani_pid_pathfile=$r_animation_path/$r_ani_id.pid			# PID of forked animator process.
+	touch "$r_ani_end_pathfile"
+
+	wait $(< "$r_ani_pid_pathfile") 2> /dev/null
+
+	touch "$r_ani_resume_pathfile"
+	rm -f "$r_ani_end_pathfile" "$r_ani_pid_pathfile"
+
+	}
+
+EndAni()
+	{
+
+	[[ -s $r_ani_pid_pathfile ]] || return		# Don't try to stop an animation without a PID.
+
+	touch "$r_ani_end_pathfile"
+
+	wait $(< "$r_ani_pid_pathfile") 2> /dev/null
+
+	ClearAnimationFiles
+
+	}
+
+ClearAnimationFiles()
+	{
+
+	rm -f "$r_ani_end_pathfile" "$r_ani_frame_pathfile" "$r_ani_pid_pathfile" "$r_ani_resume_pathfile"
 
 	}
 
@@ -18581,11 +18582,11 @@ SaveAniPid()
 	# Save PID of subshell.
 
 	# Inputs: (global)
-	#	$ani_pid_pathfile
+	#	$r_ani_pid_pathfile
 
-	[[ -n $ani_pid_pathfile ]] || return
-	GetSubshellPid > "$ani_pid_pathfile"
-	[[ -s $ani_pid_pathfile ]] || return
+	[[ -n $r_ani_pid_pathfile ]] || return
+	GetSubshellPid > "$r_ani_pid_pathfile"
+	[[ -s $r_ani_pid_pathfile ]] || return
 
 	}
 
@@ -18593,16 +18594,16 @@ _Animator_()
 	{
 
 	# Inputs: (global)
-	#	$ani_end_pathfile
-	#	$ani_frame_pathfile
 	#	$r_ani_chars[]
+	#	$r_ani_end_pathfile
 	#	$r_ani_first_frame
 	#	$r_ani_frame_duration
+	#	$r_ani_frame_pathfile
 	#	$r_ani_frame_step
 	#	$r_ani_last_frame
 
-	[[ -n $ani_pid_pathfile ]] || return
-	[[ -n $ani_end_pathfile ]] || return
+	[[ -n $r_ani_pid_pathfile ]] || return
+	[[ -n $r_ani_end_pathfile ]] || return
 	[[ $r_ani_first_frame -gt 0 ]] || return
 	[[ $r_ani_last_frame -gt 0 ]] || return
 	[[ $((10#${r_ani_frame_duration/./})) -gt 0 ]] || return
@@ -18614,9 +18615,9 @@ _Animator_()
 
 	SaveAniPid
 
-	if [[ -e $ani_frame_pathfile ]]; then
-		ani_start_frame=$(< "$ani_frame_pathfile")
-		rm -f "$ani_frame_pathfile"
+	if [[ -e $r_ani_frame_pathfile ]]; then
+		ani_start_frame=$(< "$r_ani_frame_pathfile")
+		rm -f "$r_ani_frame_pathfile"
 	fi
 
 	while true; do
@@ -18626,8 +18627,8 @@ _Animator_()
 				ani_start_frame=1						# ... then reset.
 			fi
 
-			if [[ -e $ani_end_pathfile ]]; then
-				echo "$n" > "$ani_frame_pathfile"		# Save next frame to be displayed when relaunching _Animator_().
+			if [[ -e $r_ani_end_pathfile ]]; then
+				echo "$n" > "$r_ani_frame_pathfile"		# Save next frame to be displayed when relaunching _Animator_().
 				ShowAniFrameInColour ''					# Erase existing frame.
 				break 2
 			fi
@@ -18679,6 +18680,41 @@ IsSiteUp()
 	return 1
 
 	} &> /dev/null
+
+CaughtSIGINT()
+	{
+
+	# Inputs: (global)
+	#	$r_abort_actions_pathfile
+	#	$r_inhibit_display_pathfile
+
+	trap - SIGINT
+
+	[[ -n ${r_inhibit_display_pathfile:-} ]] && /bin/touch "$r_inhibit_display_pathfile"
+	[[ -n ${r_abort_actions_pathfile:-} ]] && /bin/touch "$r_abort_actions_pathfile"
+
+	EndAni
+	EraseThisLine
+	ShowAsAbort 'caught SIGINT'
+	CloseMsgPipe
+
+	# TODO: send SIGTERM to each PID in `$r_async_procs_path` here.
+
+	exit
+
+	}
+
+CaughtEXIT()
+	{
+
+	trap - EXIT
+
+	EndAni
+	ShowKeystrokes
+	ShowCursor
+	ReleaseLockfile
+
+	}
 
 Init || exit
 ProcActions
