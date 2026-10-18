@@ -6556,8 +6556,6 @@ ShowHelpActions()
 
 		} > "$r_report_output_pathfile"
 
-	EndAni
-	EraseThisLine
 	ShowReport
 
 	return 0
@@ -6604,8 +6602,6 @@ ShowHelpActionsAll()
 
 		} > "$r_report_output_pathfile"
 
-	EndAni
-	EraseThisLine
 	ShowReport
 
 	return 0
@@ -6650,7 +6646,6 @@ ShowHelpBasicExamples()
 
 		} > "$r_report_output_pathfile"
 
-	EndAni
 	ShowReport
 
 	return 0
@@ -6689,8 +6684,6 @@ ShowHelpGroups()
 
 		} > "$r_report_output_pathfile"
 
-	EndAni
-	EraseThisLine
 	ShowReport
 
 	return 0
@@ -6742,8 +6735,6 @@ ShowHelpLists()
 
 		} > "$r_report_output_pathfile"
 
-	EndAni
-	EraseThisLine
 	ShowReport
 
 	return 0
@@ -6778,8 +6769,6 @@ ShowHelpShow()
 
 		} > "$r_report_output_pathfile"
 
-	EndAni
-	EraseThisLine
 	ShowReport
 
 	return 0
@@ -6805,8 +6794,6 @@ ShowHelpOptions()
 
 		} > "$r_report_output_pathfile"
 
-	EndAni
-	EraseThisLine
 	ShowReport
 
 	return 0
@@ -6829,8 +6816,6 @@ ShowHelpPackages()
 
 		} > "$r_report_output_pathfile"
 
-	EndAni
-	EraseThisLine
 	ShowReport
 
 	return 0
@@ -6870,8 +6855,6 @@ ShowHelpProblems()
 
 		} > "$r_report_output_pathfile"
 
-	EndAni
-	EraseThisLine
 	ShowReport
 
 	return 0
@@ -6901,8 +6884,6 @@ ShowHelpUpgrades()
 
 		} > "$r_report_output_pathfile"
 
-	EndAni
-	EraseThisLine
 	ShowReport
 
 	return 0
@@ -6935,8 +6916,6 @@ ShowHelpTips()
 
 		} > "$r_report_output_pathfile"
 
-	EndAni
-	EraseThisLine
 	ShowReport
 
 	return 0
@@ -8333,8 +8312,6 @@ HelpAbbreviations()
 
 	DisplayAsProjSynExam "example: to install $(FormatPackageName SABnzbd), $(FormatPackageName HeadPhones) and $(FormatPackageName nzbToMedia) all-at-once" 'install sab hp nzb2' >> "$r_report_output_pathfile"
 
-	EndAni
-	EraseThisLine
 	ShowReport
 	ListQPKGsStates
 
@@ -8409,8 +8386,6 @@ ReportBackups()
 		GenerateReportInfo >> "$r_report_output_pathfile"
 	fi
 
-	EndAni
-	EraseThisLine
 	ShowReport
 
 	FuncExit
@@ -8467,8 +8442,6 @@ ReportDependencies()
 		GenerateReportInfo >> "$r_report_output_pathfile"
 	fi
 
-	EndAni
-	EraseThisLine
 	ShowReport
 	ListQPKGsStates
 
@@ -8526,8 +8499,6 @@ ReportFeatures()
 		GenerateReportHeadingsInfo >> "$r_report_output_pathfile"
 	fi
 
-	EndAni
-	EraseThisLine
 	ShowReport
 	ListQPKGsStates
 
@@ -8597,8 +8568,6 @@ ReportPackages()
 
 		} >> "$r_report_output_pathfile"
 
-	EndAni
-	EraseThisLine
 	ShowReport
 	ListQPKGsStates
 
@@ -8656,8 +8625,6 @@ ReportRepos()
 		GenerateReportInfo >> "$r_report_output_pathfile"
 	fi
 
-	EndAni
-	EraseThisLine
 	ShowReport
 	ListQPKGsStates
 
@@ -8716,8 +8683,6 @@ ReportStatuses()
 		GenerateReportInfo >> "$r_report_output_pathfile"
 	fi
 
-	EndAni
-	EraseThisLine
 	ShowReport
 	ListQPKGsStates
 
@@ -8754,6 +8719,8 @@ ReportAllActionResults()
 	fi
 
 	if [[ -s $r_action_results_pathfile ]]; then
+		DisplayProcReport results
+
 		while IFS='|' read -r datetime action quantity package_name package_type result duration reason; do
 			if [[ $datetime -gt 0 && $duration -gt 0 ]]; then
 				[[ $a -eq 0 ]] && a=$datetime	# Only use first entry as start time.
@@ -8781,7 +8748,6 @@ ReportAllActionResults()
 
 			} > "$r_report_output_pathfile"
 
-			EndAni
 			ShowReport
 		fi
 	else
@@ -9056,6 +9022,9 @@ ShowReport()
 
 	# Inputs: (global)
 	#	$r_report_output_pathfile
+
+	EndAni
+	EraseThisLine
 
 	if [[ -s $r_report_output_pathfile ]]; then
 		if [[ $generate_report_headers = true ]]; then
