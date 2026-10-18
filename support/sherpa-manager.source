@@ -18500,7 +18500,7 @@ ResumeAni()
 PauseAni()
 	{
 
-	[[ -s $r_ani_pid_pathfile ]] || return		# Don't try to stop an animation without a PID.
+	[[ -s ${r_ani_pid_pathfile:-} ]] || return	# Don't try to stop an animation without a PID.
 
 	touch "$r_ani_end_pathfile"
 
@@ -18514,7 +18514,7 @@ PauseAni()
 EndAni()
 	{
 
-	[[ -s $r_ani_pid_pathfile ]] || return		# Don't try to stop an animation without a PID.
+	[[ -s ${r_ani_pid_pathfile:-} ]] || return	# Don't try to stop an animation without a PID.
 
 	touch "$r_ani_end_pathfile"
 
