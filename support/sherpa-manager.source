@@ -6508,7 +6508,6 @@ ShowHelpActions()
 	# Inputs: (global)
 	#	$r_report_output_pathfile
 
-	DisableDebugToArchiveAndFile
 	DisplayProcReport actions
 
 		{
@@ -6565,7 +6564,6 @@ ShowHelpActionsAll()
 	# Inputs: (global)
 	#	$r_report_output_pathfile
 
-	DisableDebugToArchiveAndFile
 	DisplayProcReport 'all actions'
 
 		{
@@ -6655,7 +6653,6 @@ ShowHelpGroups()
 	# Inputs: (global)
 	#	$r_report_output_pathfile
 
-	DisableDebugToArchiveAndFile
 	DisplayProcReport groups
 
 		{
@@ -6709,7 +6706,6 @@ ShowHelpLists()
 	# Inputs: (global)
 	#	$r_report_output_pathfile
 
-	DisableDebugToArchiveAndFile
 	DisplayProcReport lists
 
 		{
@@ -6744,7 +6740,6 @@ ShowHelpShow()
 	# Inputs: (global)
 	#	$r_report_output_pathfile
 
-	DisableDebugToArchiveAndFile
 	DisplayProcReport show
 
 		{
@@ -6778,7 +6773,6 @@ ShowHelpOptions()
 	# Inputs: (global)
 	#	$r_report_output_pathfile
 
-	DisableDebugToArchiveAndFile
 	DisplayProcReport options
 
 		{
@@ -6803,7 +6797,6 @@ ShowHelpPackages()
 	# Inputs: (global)
 	#	$r_report_output_pathfile
 
-	DisableDebugToArchiveAndFile
 	DisplayProcReport packages
 
 		{
@@ -6826,7 +6819,6 @@ ShowHelpProblems()
 	#	$r_log_tail_lines
 	#	$r_report_output_pathfile
 
-	DisableDebugToArchiveAndFile
 	DisplayProcReport problems
 
 		{
@@ -6864,7 +6856,6 @@ ShowHelpUpgrades()
 	# Inputs: (global)
 	#	$r_report_output_pathfile
 
-	DisableDebugToArchiveAndFile
 	DisplayProcReport upgrades
 
 		{
@@ -6893,7 +6884,6 @@ ShowHelpTips()
 	# Inputs: (global)
 	#	$r_report_output_pathfile
 
-	DisableDebugToArchiveAndFile
 	DisplayProcReport tips
 
 		{
@@ -6927,7 +6917,6 @@ ViewLogLast()
 	# Inputs: (global)
 	#	$r_session_last_pathfile
 
-	DisableDebugToArchiveAndFile
 	ExtractPrevSessFromTail
 	EraseThisLine
 
@@ -6949,7 +6938,6 @@ ViewLogTail()
 	# Inputs: (global)
 	#	$r_session_tail_pathfile
 
-	DisableDebugToArchiveAndFile
 	ExtractTailFromLog
 	EraseThisLine
 
@@ -8267,7 +8255,6 @@ HelpAbbreviations()
 	local b=''
 
 	LoadDatabase
-	DisableDebugToArchiveAndFile
 	DisplayProcReport abbreviations
 	CreateReportPaths
 
@@ -8337,7 +8324,6 @@ ReportBackups()
 	local file_name=''
 	local file_time=''
 
-	DisableDebugToArchiveAndFile
 	DisplayProcReport backups
 	CreateReportPaths
 
@@ -8404,7 +8390,6 @@ ReportDependencies()
 	local a=''
 	local b=''
 
-	DisableDebugToArchiveAndFile
 	DisplayProcReport dependency
 	CreateReportPaths
 
@@ -8461,7 +8446,6 @@ ReportFeatures()
 	local a=''
 	local b=''
 
-	DisableDebugToArchiveAndFile
 	DisplayProcReport features
 	CreateReportPaths
 
@@ -8516,7 +8500,6 @@ ReportPackages()
 	local a=''
 	local b=''
 
-	DisableDebugToArchiveAndFile
 	DisplayProcReport package
 	CreateReportPaths
 
@@ -8561,7 +8544,6 @@ ReportPackages()
 		{
 
 		DisplayAsProjSynExam "abbreviations and aliases may also be used to specify $(ShowAsPackages). To list these" 'help abs'
-#		DisplayAsProjSynIndentExam '' a
 
 		} >> "$r_report_output_pathfile"
 
@@ -8587,7 +8569,6 @@ ReportRepos()
 	local a=''
 	local b=''
 
-	DisableDebugToArchiveAndFile
 	DisplayProcReport repository
 	CreateReportPaths
 
@@ -8644,7 +8625,6 @@ ReportStatuses()
 	local a=''
 	local b=''
 
-	DisableDebugToArchiveAndFile
 	DisplayProcReport status
 	CreateReportPaths
 
@@ -9044,7 +9024,6 @@ ShowVersionsList()
 	#	$r_script_built_epoch
 	#	$r_this_package_ver
 
-	DisableDebugToArchiveAndFile
 	EndAni
 	EraseThisLine
 
@@ -9165,7 +9144,6 @@ ShowQPKGList()
 
 	local qpkg_name=''
 
-	DisableDebugToArchiveAndFile
 	EndAni
 	EraseThisLine
 
@@ -10398,13 +10376,13 @@ EnableDebugToArchiveAndFile()
 
 	}
 
-DisableDebugToArchiveAndFile()
-	{
-
-	archive_debug_afterward=false
-	useropt_debug=false
-
-	}
+#DisableDebugToArchiveAndFile()
+#	{
+#
+#	archive_debug_afterward=false
+#	useropt_debug=false
+#
+#	}
 
 SaveActionResultMetrics()
 	{
