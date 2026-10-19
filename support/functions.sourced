@@ -122,6 +122,8 @@ Squeeze()
 		echo -n 'squeezing ... '
 		local a=$(<"$1")
 
+		# Directives.
+
 		a=$(sed '/directive:omit-from-production/d' <<< "$a")				# Remove lines with 'directive:omit-from-production' tag.
 
 		a=$(sed '/[#>][[:space:]]>/! s/[[:space:]]>/>/g' <<< "$a")			# Remove whitespace before fd1 redirects.
@@ -129,19 +131,30 @@ Squeeze()
 		a=$(sed '/[#<][[:space:]]</! s/[[:space:]]</</g' <<< "$a")			# Remove whitespace before fd0 redirects.
 		a=$(sed '/directive:dont-squeeze/! s/<[[:space:]]/</g' <<< "$a")	# Remove whitespace after fd0 redirects, except for lines with 'directive:dont-squeeze' tag.
 
-		a=$(sed '/directive:dont-squeeze/! s/[[:space:]]|[[:space:]]/|/g' <<< "$a")		# Remove whitespace before-and-after pipe, except for lines with 'directive:dont-squeeze' tag.
+		a=$(sed '/directive:dont-squeeze/! s/[[:space:]]|[[:space:]]/|/g' <<< "$a")	# Remove whitespace before-and-after pipe, except for lines with 'directive:dont-squeeze' tag.
 
 		a=$(sed '/directive:ignore-leader/! s/^[[:space:]]*//' <<< "$a")	# Remove leading line whitespace, except for lines with 'directive:ignore-leader' tag.
 
-		a=$(sed 's/\;[[:space:]]/;/g' <<< "$a")								# Remove whitespace after semicolons.
+		# Basic removals.
+
 		a=$(sed 's/[[:space:]]\;/;/g' <<< "$a")								# Remove whitespace before semicolons.
+		a=$(sed 's/\;[[:space:]]/;/g' <<< "$a")								# Remove whitespace after semicolons.
 
 		a=$(sed 's/\&\&[[:space:]]/\&\&/g' <<< "$a")						# Remove whitespace after inline true test.
-#		a=$(sed 's/[[:space:]]\&\&/\&\&/g' <<< "$a")						# Remove whitespace before inline true test. WARNING: don't remove whitespace before inline true test within a double-test block.
+		a=$(sed 's/||[[:space:]]/||/g' <<< "$a")							# Remove whitespace after inline false test.
+		a=$(sed 's/[[:space:]]((/((/g' <<< "$a")							# Remove whitespace before inline arithmetic start.
+
+		# Conditional removals.
+
+		a=$(sed '/\[\[/! s/[[:space:]]\&\&/\&\&/g' <<< "$a")				# Remove whitespace before inline true test, except for lines with open double-test. WARNING: don't remove whitespace before inline true test within a double-test block.
 		a=$(sed 's/\]][[:space:]]\&\&/]]\&\&/g' <<< "$a")					# Remove whitespace before inline true test preceded by double-test exit.
 
-		a=$(sed 's/||[[:space:]]/||/g' <<< "$a")							# Remove whitespace after inline false test.
-#		a=$(sed 's/[[:space:]]||/||/g' <<< "$a")							# Remove whitespace before inline false test. WARNING: don't remove whitespace before inline false test within a double-test block.
+		a=$(sed '/\[\[/! s/[[:space:]]||/||/g' <<< "$a")					# Remove whitespace before inline false test, except for lines with open double-test. WARNING: don't remove whitespace before inline false test within a double-test block.
+		a=$(sed 's/[[:space:]]||\[\[/||\[\[/g' <<< "$a")					# Remove whitespace before inline false test followed by open double-test.
+		a=$(sed 's/[[:space:]]||(/||(/g' <<< "$a")							# Remove whitespace before inline false test followed by open parentheses.
+		a=$(sed 's/[[:space:]]\&\&\[\[/\&\&\[\[/g' <<< "$a")				# Remove whitespace before inline true test followed by open double-test.
+		a=$(sed 's/[[:space:]]\&\&(/\&\&(/g' <<< "$a")						# Remove whitespace before inline true test followed by open parentheses.
+
 		a=$(sed 's/\]\][[:space:]]||/]]||/g' <<< "$a")						# Remove whitespace before inline false test preceded by double-test exit.
 		a=$(sed 's/[[:space:]]||return/||return/g' <<< "$a")				# Remove whitespace before inline false test followed by 'return'.
 		a=$(sed 's/[[:space:]]\&\&return/\&\&return/g' <<< "$a")			# Remove whitespace before inline true test followed by 'return'.
@@ -154,8 +167,6 @@ Squeeze()
 		a=$(sed 's/[[:space:]]||\//||\//g' <<< "$a")						# Remove whitespace before inline false test followed by '/'.
 		a=$(sed 's/[[:space:]]||z/||z/g' <<< "$a")							# Remove whitespace before inline false test followed by 'z'.
 
-		a=$(sed 's/[[:space:]]((/((/g' <<< "$a")							# Remove whitespace before inline arithmetic start.
-
 		# CAUTION: comment tags are not seen beyond this point.
 
 		a=$(sed '/^#[[:space:]].*/d;/#$/d;s/[[:space:]]#[[:space:]].*//' <<< "$a")		# Remove comment lines and line comments.
@@ -165,14 +176,17 @@ Squeeze()
 		a=$(sed "s|Transfer-Encoding: base64|Transfer-Encoding: base64\n|" <<< "$a")	# Add a newline after this string so signature block is accepted by QTS.
 
 		a=$(sed ':a;N;$!ba; s/()\n{\n/(){\n/g' <<< "$a")								# Function start braces: move to function name line. https://stackoverflow.com/a/1252191
-
-		a=$(sed ':a;N;$!ba; s/\n;;\n/;;\n/g' <<< "$a")									# 'case' pattern block ends: move to last statement.
-
+		a=$(sed ':a;N;$!ba; s/\n;;\n/;;/g' <<< "$a")									# 'case' pattern block semicolons: move to previous line. https://stackoverflow.com/a/1252191
 		a=$(sed ':a;N;$!ba; s/\*)\n/*)/g' <<< "$a")										# 'case' pattern definitions of any '*)': move first statement to definition line.
+		a=$(sed ':a;N;$!ba; s/\n}\n/;}\n/g' <<< "$a")									# Function end braces: move to last statement in function.
 
 		# NOTE: these don't save any bytes, but do reduce the number of lines.
 
-		a=$(sed ':a;N;$!ba; s/\n}\n/;}\n/g' <<< "$a")									# Function end braces: move to last statement in function.
+		a=$(sed ':a;N;$!ba; s/then\ncase/then case/g' <<< "$a")							# Combine 'then case' on the same line.
+		a=$(sed ':a;N;$!ba; s/do\ncase/do case/g' <<< "$a")								# Combine 'do case' on the same line.
+		a=$(sed ':a;N;$!ba; s/else\ncase/else case/g' <<< "$a")							# Combine 'else case' on the same line.
+		a=$(sed ':a;N;$!ba; s/then\nif/then if/g' <<< "$a")								# Combine 'then if' on the same line.
+		a=$(sed ':a;N;$!ba; s/fi\nelse/fi else/g' <<< "$a")								# Combine 'fi else' on the same line.
 
 		[[ -e $2 ]] && chmod +w "$2"
 		echo "$a" > "$2"

@@ -58,6 +58,7 @@ Init()
 
 	ConfigEnv || return
 	CreatePaths || return
+	CreatePackagePaths || return
 	PrepareArgs
 	ParseManagementArgs || return
 	ParseHelpArgs || return
@@ -848,8 +849,6 @@ CreatePaths()
 	MakePath "$r_run_logs_path" 'run logs' || return
 	MakePath "$r_temp_log_path" 'temporary logs' || return
 	MakePath "$r_temp_run_path" 'temporary runtime files' || return
-
-	CreatePackagePaths
 
 	}
 
@@ -1817,7 +1816,7 @@ ProcActions()
 		# -> Package removal phase <-
 
 		for ((tier_index=${#ar_package_tiers[@]}-1; tier_index>=0; tier_index--)); do	# Process tiers in-reverse.
-			tier=${ar_package_tiers[$tier_index]}
+			tier=${ar_package_tiers[tier_index]}
 
 			if [[ $tier != auxiliary ]]; then
 				ProcAction deactivate $tier QPKG deactivate
@@ -12594,14 +12593,14 @@ GetQpkgDbApplVer()
 	local a=''
 
 	if [[ $qpkg_index -gt 0 ]]; then
-		a=${r_qpkg_appl_version[$qpkg_index]}
-		[[ $a = version ]] && a=${r_qpkg_version[$qpkg_index]}
+		a=${r_qpkg_appl_version[qpkg_index]}
+		[[ $a = version ]] && a=${r_qpkg_version[qpkg_index]}
 		[[ $a != none ]] || return
 	else
 		for i in "${!r_qpkg_name[@]}"; do
-			if [[ ${r_qpkg_name[$i]} = "$qpkg_name" ]]; then
-				a=${r_qpkg_appl_version[$i]}
-				[[ $a = version ]] && a=${r_qpkg_version[$i]}
+			if [[ ${r_qpkg_name[i]} = "$qpkg_name" ]]; then
+				a=${r_qpkg_appl_version[i]}
+				[[ $a = version ]] && a=${r_qpkg_version[i]}
 				[[ $a != none ]] || return
 
 				break
@@ -12636,7 +12635,7 @@ GetQpkgDbVer()
 	local a=''
 
 #	if [[ $qpkg_index -gt 0 ]]; then
-#		a=${r_qpkg_version[$qpkg_index]}
+#		a=${r_qpkg_version[qpkg_index]}
 #		[[ $a != none ]] || return
 
 #		printf '%s' "$a"
@@ -12648,8 +12647,8 @@ GetQpkgDbVer()
 
 	if [[ -n $a ]]; then
 		for i in "${!r_qpkg_name[@]}"; do
-			if [[ ${r_qpkg_name[$i]} = "$a" ]]; then
-				printf '%s' "${r_qpkg_version[$i]}"
+			if [[ ${r_qpkg_name[i]} = "$a" ]]; then
+				printf '%s' "${r_qpkg_version[i]}"
 
 				return 0
 			fi
@@ -12733,8 +12732,8 @@ GetQpkgInstalledOriginalPath()
 
 	if [[ ${#a_QPKGs_were_installed_name[@]} -gt 0 ]]; then
 		for i in "${!a_QPKGs_were_installed_name[@]}"; do
-			[[ ${a_QPKGs_were_installed_name[$i]} = "$a" ]] || continue
-			printf '%s' "${a_QPKGs_were_installed_path[$i]}"
+			[[ ${a_QPKGs_were_installed_name[i]} = "$a" ]] || continue
+			printf '%s' "${a_QPKGs_were_installed_path[i]}"
 
 			return 0
 		done
@@ -12782,7 +12781,7 @@ GetQpkgDbHash()
 
 	local a=''
 
-	a=${r_qpkg_hash[$qpkg_index]}
+	a=${r_qpkg_hash[qpkg_index]}
 	[[ $a != none ]] || return
 
 	printf '%s' "$a"
@@ -12813,8 +12812,8 @@ GetQpkgDbURL()
 
 	if [[ -n ${1:-} ]]; then
 		for i in "${!r_qpkg_name[@]}"; do
-			if [[ ${r_qpkg_name[$i]} = "$1" ]]; then
-				printf '%s' "${r_qpkg_url[$i]}"
+			if [[ ${r_qpkg_name[i]} = "$1" ]]; then
+				printf '%s' "${r_qpkg_url[i]}"
 
 				return 0
 			fi
@@ -12822,7 +12821,7 @@ GetQpkgDbURL()
 
 		return 1
 	else
-		a=${r_qpkg_url[$qpkg_index]}
+		a=${r_qpkg_url[qpkg_index]}
 		[[ -n $a ]] || a=none
 
 		printf '%s' "$a"
@@ -12852,13 +12851,13 @@ GetQpkgDbMinRAM()
 
 	if [[ -n ${1:-} ]]; then
 		for i in "${!r_qpkg_name[@]}"; do
-			[[ ${r_qpkg_name[$i]} = "$1" ]] || continue
-			a=${r_qpkg_min_ram_kb[$i]}
+			[[ ${r_qpkg_name[i]} = "$1" ]] || continue
+			a=${r_qpkg_min_ram_kb[i]}
 
 			break
 		done
 	else
-		a=${r_qpkg_min_ram_kb[$qpkg_index]}
+		a=${r_qpkg_min_ram_kb[qpkg_index]}
 	fi
 
 	[[ -n $a ]] || a=none
@@ -12889,13 +12888,13 @@ GetQpkgDbMinOSVer()
 
 	if [[ -n ${1:-} ]]; then
 		for i in "${!r_qpkg_name[@]}"; do
-			[[ ${r_qpkg_name[$i]} = "$1" ]] || continue
-			a=${r_qpkg_min_os_version[$i]}
+			[[ ${r_qpkg_name[i]} = "$1" ]] || continue
+			a=${r_qpkg_min_os_version[i]}
 
 			break
 		done
 	else
-		a=${r_qpkg_min_os_version[$qpkg_index]}
+		a=${r_qpkg_min_os_version[qpkg_index]}
 	fi
 
 	[[ -n $a ]] || a=none
@@ -12926,13 +12925,13 @@ GetQpkgDbMaxOSVer()
 
 	if [[ -n ${1:-} ]]; then
 		for i in "${!r_qpkg_name[@]}"; do
-			[[ ${r_qpkg_name[$i]} = "$1" ]] || continue
-			a=${r_qpkg_max_os_version[$i]}
+			[[ ${r_qpkg_name[i]} = "$1" ]] || continue
+			a=${r_qpkg_max_os_version[i]}
 
 			break
 		done
 	else
-		a=${r_qpkg_max_os_version[$qpkg_index]}
+		a=${r_qpkg_max_os_version[qpkg_index]}
 	fi
 
 	[[ -n $a ]] || a=none
@@ -12963,9 +12962,9 @@ GetQpkgDbAuthor()
 	local a=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}
 
 	for i in "${!r_qpkg_name[@]}"; do
-		[[ ${r_qpkg_name[$i]} = "$a" ]] || continue
+		[[ ${r_qpkg_name[i]} = "$a" ]] || continue
 
-		printf '%s' "${r_qpkg_author[$i]}"
+		printf '%s' "${r_qpkg_author[i]}"
 
 		return 0
 	done
@@ -13010,13 +13009,13 @@ GetQpkgDbDesc()
 
 	if [[ -n ${1:-} ]]; then
 		for i in "${!r_qpkg_name[@]}"; do
-			[[ ${r_qpkg_name[$i]} = "$1" ]] || continue
-			a=${r_qpkg_description[$i]}
+			[[ ${r_qpkg_name[i]} = "$1" ]] || continue
+			a=${r_qpkg_description[i]}
 
 			break
 		done
 	else
-		a=${r_qpkg_description[$qpkg_index]}
+		a=${r_qpkg_description[qpkg_index]}
 	fi
 
 	[[ -n $a ]] || a=none
@@ -13049,13 +13048,13 @@ GetQpkgDbAbbrvs()
 
 	if [[ -n ${1:-} ]]; then
 		for i in "${!r_qpkg_name[@]}"; do
-			[[ ${r_qpkg_name[$i]} = "$1" ]] || continue
-			a=${r_qpkg_abbrvs[$i]}
+			[[ ${r_qpkg_name[i]} = "$1" ]] || continue
+			a=${r_qpkg_abbrvs[i]}
 
 			break
 		done
 	else
-		a=${r_qpkg_abbrvs[$qpkg_index]}
+		a=${r_qpkg_abbrvs[qpkg_index]}
 	fi
 
 	[[ -n $a ]] || a=none
@@ -13086,7 +13085,7 @@ GetQpkgDbDependencies()
 	local out=''
 	local x=''
 
-	g=${r_qpkg_depends_on[$qpkg_index]}
+	g=${r_qpkg_depends_on[qpkg_index]}
 	[[ $g = none ]] && return 1
 
 	if [[ $g != *'|'* ]]; then		# No alternatives were listed.
@@ -13161,7 +13160,7 @@ GetQpkgDbOptDependencies()
 	local out=''
 	local x=''
 
-	g=${r_qpkg_opt_depends_on[$qpkg_index]}
+	g=${r_qpkg_opt_depends_on[qpkg_index]}
 	[[ $g = none ]] && return 1
 
 	if [[ $g != *'|'* ]]; then		# No alternatives were listed.
@@ -13239,8 +13238,8 @@ GetQpkgDbDependents()
 
 	if QPKGs-GRindependent.Exist "$qpkg_name"; then
 		for i in "${!r_qpkg_name[@]}"; do
-			if [[ ${r_qpkg_depends_on[$i]} =~ $re ]]; then
-				[[ ${a_ar[*]+"${a_ar[*]}"} != "${r_qpkg_name[$i]}" ]] && a_ar+=(${r_qpkg_name[$i]})
+			if [[ ${r_qpkg_depends_on[i]} =~ $re ]]; then
+				[[ ${a_ar[*]+"${a_ar[*]}"} != "${r_qpkg_name[i]}" ]] && a_ar+=(${r_qpkg_name[i]})
 			fi
 		done
 	fi
@@ -13278,8 +13277,8 @@ GetQpkgDbOptionals()
 
 	if QPKGs-GRoptional.Exist "$qpkg_name"; then
 		for i in "${!r_qpkg_name[@]}"; do
-			if [[ ${r_qpkg_opt_depends_on[$i]} =~ $re ]]; then
-				[[ ${a_ar[*]+"${a_ar[*]}"} != "${r_qpkg_name[$i]}" ]] && a_ar+=(${r_qpkg_name[$i]})
+			if [[ ${r_qpkg_opt_depends_on[i]} =~ $re ]]; then
+				[[ ${a_ar[*]+"${a_ar[*]}"} != "${r_qpkg_name[i]}" ]] && a_ar+=(${r_qpkg_name[i]})
 			fi
 		done
 	fi
@@ -13316,13 +13315,13 @@ GetQpkgConflicts()
 
 	if [[ -n ${1:-} ]]; then
 		for i in "${!r_qpkg_name[@]}"; do
-			[[ ${r_qpkg_name[$i]} = "$1" ]] || continue
-			a=${r_qpkg_conflicts_with[$i]}
+			[[ ${r_qpkg_name[i]} = "$1" ]] || continue
+			a=${r_qpkg_conflicts_with[i]}
 
 			break
 		done
 	else
-		a=${r_qpkg_conflicts_with[$qpkg_index]}
+		a=${r_qpkg_conflicts_with[qpkg_index]}
 	fi
 
 	[[ -n $a ]] || a=none
@@ -13348,7 +13347,7 @@ GetQpkgDbIPKs()
 
 	[[ -n $qpkg_name && $qpkg_index -gt 0 ]] || return
 
-	local a=${r_qpkg_requires_ipks[$qpkg_index]}
+	local a=${r_qpkg_requires_ipks[qpkg_index]}
 
 	[[ $a = none ]] && return 1
 
@@ -13374,7 +13373,7 @@ GetQpkgDbActiveTest()
 
 	[[ -n $qpkg_name && $qpkg_index -gt 0 ]] || return
 
-	local a=${r_qpkg_test_for_active[$qpkg_index]}
+	local a=${r_qpkg_test_for_active[qpkg_index]}
 
 	[[ $a = none ]] && return 1
 
@@ -13594,11 +13593,11 @@ QpkgMatchAbbrv()
 	local -i z=1			# Default to 'unmatched'.
 
 	for i in "${!r_qpkg_name[@]}"; do
-		a_ar=(${r_qpkg_abbrvs[$i]})
+		a_ar=(${r_qpkg_abbrvs[i]})
 
 		for j in "${!a_ar[@]}"; do
-			[[ ${a_ar[$j]} = "$1" ]] || continue
-			printf '%s' "${r_qpkg_name[$i]}"
+			[[ ${a_ar[j]} = "$1" ]] || continue
+			printf '%s' "${r_qpkg_name[i]}"
 			z=0
 
 			break 2
@@ -14317,7 +14316,7 @@ IsQpkgDbDependent()
 
 	local a=''
 
-	a=${r_qpkg_depends_on[$qpkg_index]}
+	a=${r_qpkg_depends_on[qpkg_index]}
 	[[ $a != none ]]
 
 	}
@@ -14359,7 +14358,7 @@ IsQpkgDbOptional()
 	local re=\\b${a}\\b
 
 	for i in "${!r_qpkg_name[@]}"; do
-		[[ ${r_qpkg_opt_depends_on[$i]} =~ $re ]] || continue
+		[[ ${r_qpkg_opt_depends_on[i]} =~ $re ]] || continue
 
 		return 0
 	done
@@ -14464,13 +14463,13 @@ IsQpkgDbCanBackup()
 
 	if [[ -n ${1:-} ]]; then
 		for i in "${!r_qpkg_name[@]}"; do
-			[[ ${r_qpkg_name[$i]} = "$1" ]] || continue
-			a=${r_qpkg_can_backup[$i]}
+			[[ ${r_qpkg_name[i]} = "$1" ]] || continue
+			a=${r_qpkg_can_backup[i]}
 
 			break
 		done
 	else
-		a=${r_qpkg_can_backup[$qpkg_index]}
+		a=${r_qpkg_can_backup[qpkg_index]}
 	fi
 
 	[[ -n $a ]] || a=none
@@ -14499,9 +14498,9 @@ IsQpkgDbCanRestartToUpdate()
 	local a=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}
 
 	for i in "${!r_qpkg_name[@]}"; do
-		[[ ${r_qpkg_name[$i]} = "$a" ]] || continue
+		[[ ${r_qpkg_name[i]} = "$a" ]] || continue
 
-		if ${r_qpkg_can_restart_to_update[$i]}; then
+		if ${r_qpkg_can_restart_to_update[i]}; then
 			return 0
 		else
 			break
@@ -14531,9 +14530,9 @@ IsQpkgDbCanClean()
 	local a=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}
 
 	for i in "${!r_qpkg_name[@]}"; do
-		[[ ${r_qpkg_name[$i]} = "$a" ]] || continue
+		[[ ${r_qpkg_name[i]} = "$a" ]] || continue
 
-		if ${r_qpkg_can_clean[$i]}; then
+		if ${r_qpkg_can_clean[i]}; then
 			return 0
 		else
 			break
@@ -14566,13 +14565,13 @@ IsQpkgDbSherpaCompatible()
 
 	if [[ -n ${1:-} ]]; then
 		for i in "${!r_qpkg_name[@]}"; do
-			[[ ${r_qpkg_name[$i]} = "$1" ]] || continue
-			a=${r_qpkg_is_sherpa_compatible[$i]}
+			[[ ${r_qpkg_name[i]} = "$1" ]] || continue
+			a=${r_qpkg_is_sherpa_compatible[i]}
 
 			break
 		done
 	else
-		a=${r_qpkg_is_sherpa_compatible[$qpkg_index]}
+		a=${r_qpkg_is_sherpa_compatible[qpkg_index]}
 	fi
 
 	[[ -n $a ]] || a=none
@@ -14603,13 +14602,13 @@ IsQpkgDbUniqueUnpack()
 
 	if [[ -n ${1:-} ]]; then
 		for i in "${!r_qpkg_name[@]}"; do
-			[[ ${r_qpkg_name[$i]} = "$1" ]] || continue
-			a=${r_qpkg_is_unique_unpack[$i]}
+			[[ ${r_qpkg_name[i]} = "$1" ]] || continue
+			a=${r_qpkg_is_unique_unpack[i]}
 
 			break
 		done
 	else
-		a=${r_qpkg_is_unique_unpack[$qpkg_index]}
+		a=${r_qpkg_is_unique_unpack[qpkg_index]}
 	fi
 
 	[[ -n $a ]] || a=none
@@ -14634,9 +14633,9 @@ IsQpkgDbWillLog()
 	local -i i=0
 
 	for i in "${!r_qpkg_name[@]}"; do
-		[[ ${r_qpkg_name[$i]} = "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}" ]] || continue
+		[[ ${r_qpkg_name[i]} = "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}" ]] || continue
 
-		if ${r_qpkg_will_log[$i]}; then
+		if ${r_qpkg_will_log[i]}; then
 			return 0
 		else
 			break
@@ -15332,7 +15331,7 @@ ConfirmVarIsDefined()
 	local second=${2:-undefined}
 	local third=${3:-undefined}
 
-	[[ $second != undefined ]] || { ShowAsBug "${FUNCNAME[$backdepth]}" "\$$first: '$third'"; return ;}
+	[[ $second != undefined ]] || { ShowAsBug "${FUNCNAME[backdepth]}" "\$$first: '$third'"; return ;}
 
 	return 0
 
@@ -17201,10 +17200,10 @@ ShowAsBug()
 	for ((i=${#FUNCNAME[@]}-1; i>=0; i--)); do
 		[[ $i -ne $((${#FUNCNAME[@]}-1)) ]] && b+="${c}>${c}"	# Insert separators.
 
-		if [[ ${FUNCNAME[$i]} = "$1" ]]; then
-			b+="${FUNCNAME[$i]}($2)"
+		if [[ ${FUNCNAME[i]} = "$1" ]]; then
+			b+="${FUNCNAME[i]}($2)"
 		else
-			b+="${FUNCNAME[$i]}()"
+			b+="${FUNCNAME[i]}()"
 		fi
 	done
 
@@ -17837,7 +17836,7 @@ SetQpkgIndex()
 	SetQpkgArch
 
 	for qpkg_index in "${!r_qpkg_name[@]}"; do
-		[[ ${r_qpkg_name[$qpkg_index]} = "$qpkg_name" ]] || continue
+		[[ ${r_qpkg_name[qpkg_index]} = "$qpkg_name" ]] || continue
 
 		return 0
 	done
@@ -18145,7 +18144,7 @@ ConvertDecimalSecondsToMicroseconds()
 	[[ $a != "$1" ]] || b=0
 	b=${b}000000
 
-	printf '%s' "$((a*10**6+10#${b:0:6}))"
+	printf '%s' "$((a*(10**6)+10#${b:0:6}))"
 
 	}
 
