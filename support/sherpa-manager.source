@@ -1688,10 +1688,10 @@ AssignQpkgsToActions()
 # QPKG action processing shall-be conducted in the following order:
 
 #	1. status all
-#	2. rebuild all				(meta-action: `download`, `install` & `restore` QPKG, but only if QPKG has an existing backup file)
+#	2. rebuild all (meta-action: `download`, `install` & `restore` QPKG, but only if QPKG has an existing backup file)
 #	3. reassign all
 #	4. download all
-#	5. re-sign all				(meta-action: `unsign`, `sign`)
+#	5. re-sign all (meta-action: `unsign`, `sign`)
 
 #	6. stop/deactivate dependents
 #	7. disable-auto-update dependents
@@ -1752,7 +1752,7 @@ AssignQpkgsToActions()
 #  56. restart/reactivate dependents
 #  57. start/activate dependents
 
-#  58. unsign all				(only QPKGs that failed to `install`)
+#  58. unsign all (only QPKGs that failed to `install`)
 
 ProcActions()
 	{
@@ -1763,9 +1763,8 @@ ProcActions()
 
 	FuncInit
 
-	PauseAni
+	EndAni
 	ShowAsProc 'package actions'
-	ResumeAni
 
 	local -i tier_index=0
 
@@ -1984,8 +1983,6 @@ ProcAction()
 
 				FuncExit; return
 			fi
-
-			PauseAni
 
 			if [[ $total_count -eq 1 ]]; then
 				fork_progress_prefix="$r_action_intransitive_msg $(TextBrightOrange "${a_target_packages[0]}") $r_package_type"
@@ -3975,9 +3972,8 @@ CalcIpkDepsToInstall()
 	pre_exclude_count=$(/usr/bin/wc -w <<< "$pre_exclude_list")
 
 	if [[ $pre_exclude_count -gt 0 ]]; then
-		PauseAni
 		ShowAsProc 'exclude IPKs already installed'
-		ResumeAni
+		StartAni
 
 		DebugInfo "$pre_exclude_count IPK$(Pluralise "$pre_exclude_count") required (including dependencies)" "'$pre_exclude_list' "
 
@@ -16089,9 +16085,8 @@ DisplayProcReport()
 
 	[[ -n ${1:-} ]] && a=$1' '
 
-	PauseAni
 	ShowAsProc "${a}report"
-	ResumeAni
+	StartAni
 
 	report_title_shown=true
 
