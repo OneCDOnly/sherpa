@@ -5152,8 +5152,6 @@ _GenerateStatusReportDataRow_()
 	local -a a_column_vars=(action app_ver auxiliary name path status ver)
 		local auxiliary_column=status		# Auxiliary messages are shown in this column name.
 
-	local -i n=0
-
 	local a=''
 	local mode=''
 	local req_alert=false
