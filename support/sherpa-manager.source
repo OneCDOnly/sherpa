@@ -1759,6 +1759,22 @@ ProcActions()
 
 	# Run all actions on all tiers.
 
+	# Inputs: (global)
+	#	$ar_package_tiers[]
+	#	$ar_qpkg_is_states[]
+	#	$ar_qpkg_isnt_states[]
+	#	$ar_user_qpkg_actions[]
+	#	$r_action_results_pathfile
+	#	$title_shown
+	#	$useropt_show_status
+
+	# Outputs: (global)
+	#	$ipks_downgrade
+	#	$ipks_install
+	#	$ipks_upgrade
+	#	$pips_install
+	#	$show_action_results_report
+
 	[[ $run_package_actions = true ]] || return
 
 	FuncInit
@@ -2231,10 +2247,10 @@ SetMaxForks()
 
 	local reason=''
 
-	if IsVerbose; then					# No-point running async actions in verbose mode: stdout would be a confusing mess.
+	if IsVerbose; then					# No-point running async actions in verbose or debug modes: stdout would be a confusing mess.
 		max_forks=1
 		reason='verbose mode is active'
-	elif IsDebug; then										# Same for debug mode: log would be a mess.
+	elif IsDebug; then
 		max_forks=1
 		reason='debug mode is active'
 	else
@@ -3762,28 +3778,22 @@ PatchEntwareService()
 _UpdateEntwarePackageList_()
 	{
 
-	# * This function runs asynchronously *
+	# * This function runs as an asynchronous process *
 
 	# Inputs: (global)
-	#	$r_entware_package_list_uptodate
+	#	$r_action_log_path
 	#	$r_external_packages_archive_pathfile
 	#	$r_external_packages_pathfile
 	#	$r_file_change_threshold_minutes
-	#	$r_log_path
 	#	$r_opkg_cmd
 	#	$r_update_log_file
 	#	$useropt_fix
 
-	# Outputs: (global)
-	#	$r_entware_package_list_uptodate
-
 	if IsNtCriticalFile $r_opkg_cmd; then
 		DisplayAsProjSynExam 'try reactivating Entware' 'reactivate ew'
 
-		return 1
+		exit 1
 	fi
-
-	[[ ${r_entware_package_list_uptodate:-false} = false ]] || return
 
 	local -i z=0
 
@@ -3810,9 +3820,8 @@ _UpdateEntwarePackageList_()
 	fi
 
 	IsFile "$r_external_packages_archive_pathfile" && IsNtFile "$r_external_packages_pathfile" && OpenIpkArchive
-	readonly r_entware_package_list_uptodate=true
 
-	return 0
+	exit 0
 
 	}
 
@@ -3926,7 +3935,7 @@ CalcIpkDepsToInstall()
 		FuncExit 1; return
 	fi
 
-	PauseAni
+	EndAni
 
 	DebugInfo "$requested_count IPK$(Pluralise "$requested_count") requested" "'$req_list' "
 
@@ -3994,10 +4003,11 @@ CalcIpkDepsToInstall()
 				fi
 			fi
 		done
+
+		EndAni
 	else
 		DebugAsDone 'no IPKs to exclude'
 	fi
-
 	FuncExit
 
 	}
@@ -4423,8 +4433,8 @@ PIPs:install()
 		exec_cmd="$r_pip_cmd install --upgrade --no-input $(PIPs-ACinstall-to:List) --cache-dir $r_pip_cache_path --root-user-action=ignore"
 		desc="$total_count auxiliary PIP$(Pluralise "$total_count")"
 
-		PauseAni
 		ShowAsPercentProgress "install $desc" '' "$done_ok_count" 0 0 "$total_count"
+		StartAni
 		Executer "$exec_cmd" "$log_pathfile" log:failure-only
 		z=$?
 
@@ -4443,6 +4453,7 @@ PIPs:install()
 			fi
 		fi
 
+		EndAni
 		ShowAsPercentProgress "install $desc" '' "$done_ok_count" 0 "$done_fail_count" "$total_count"
 
 		[[ ${useropt_terse:=true} = false && ${useropt_verbose:=false} = false ]] && echo
@@ -4503,9 +4514,9 @@ CloseIpkArchive()
 _ExecOneActionWithManyForks_()
 	{
 
-	# Execute one action on multiple QPKGs concurrently, but only as-many as $max_forks will allow given the circumstances.
-
 	# * This function runs as an asynchronous process *
+
+	# Execute one action on multiple QPKGs concurrently, but only as-many as $max_forks will allow given the circumstances.
 
 	# Inputs: (local)
 	#	$1 = the target function action to be applied to each QPKG in $a_target_packages()
@@ -4521,7 +4532,7 @@ _ExecOneActionWithManyForks_()
 	# Outputs: (global)
 	#	$pidfile
 
-	ConfirmVarIsDefined 1 "${1:-}" "$e_nofun" || return
+	ConfirmVarIsDefined 1 "${1:-}" "$e_nofun" || exit
 
 	FuncForkInit
 
@@ -4532,6 +4543,8 @@ _ExecOneActionWithManyForks_()
 	local qpkg_name=''
 
 	shift												# Shift arguments one position to the left.
+
+# StartAni
 
 	local -a a_c=("$@")
 
@@ -4578,6 +4591,8 @@ _ExecOneActionWithManyForks_()
 	UpdateActionForkProgress
 	Pause 0.2
 
+# EndAni
+
 	FuncForkExit
 
 	}
@@ -4585,14 +4600,14 @@ _ExecOneActionWithManyForks_()
 _DirSizeMonitor_()
 	{
 
-	# * This function runs asynchronously *
+	# * This function runs as an asynchronous process *
 
 	# Inputs: (global)
 	#	$dir_bytes
 	#	$dir_location
 	#	$r_abort_actions_pathfile
 
-	# Outputs: (global)
+	# Outputs: (global: only in this subshell)
 	#	$current_bytes
 	#	$last_active_epoch
 
@@ -5026,7 +5041,7 @@ GeneratePacksReportTitleRow()
 _GeneratePacksReportDataRow_()
 	{
 
-	# * This function runs asynchronously *
+	# * This function runs as an asynchronous process *
 
 	# Inputs: (local)
 	#	$1 (optional) = QPKG name.
@@ -5127,7 +5142,7 @@ GenerateStatusReportTitleRow()
 _GenerateStatusReportDataRow_()
 	{
 
-	# * This function runs asynchronously *
+	# * This function runs as an asynchronous process *
 
 	# Inputs: (global)
 	#	$qpkg_name
@@ -5421,7 +5436,7 @@ GenerateReposReportTitleRow()
 _GenerateReposReportDataRow_()
 	{
 
-	# * This function runs asynchronously *
+	# * This function runs as an asynchronous process *
 
 	# Inputs: (global)
 	#	$qpkg_name
@@ -5570,7 +5585,7 @@ GenerateAbsReportTitleRow()
 _GenerateAbsReportDataRow_()
 	{
 
-	# * This function runs asynchronously *
+	# * This function runs as an asynchronous process *
 
 	# Inputs: (global)
 	#	$qpkg_name
@@ -5702,7 +5717,7 @@ GenerateDepsReportTitleRow()
 _GenerateDepsReportDataRow_()
 	{
 
-	# * This function runs asynchronously *
+	# * This function runs as an asynchronous process *
 
 	# Inputs: (global)
 	#	$qpkg_name
@@ -6051,7 +6066,7 @@ GenerateFeaturesReportTitleRow()
 _GenerateFeaturesReportDataRow_()
 	{
 
-	# * This function runs asynchronously *
+	# * This function runs as an asynchronous process *
 
 	# Inputs: (global)
 	#	$qpkg_name
@@ -6243,7 +6258,7 @@ GenerateBacksReportTitleRow()
 _GenerateBacksReportItemLine_()
 	{
 
-	# * This function runs asynchronously *
+	# * This function runs as an asynchronous process *
 
 	# Inputs: (local)
 	#	$1 = last backup date in epoch seconds
@@ -7398,7 +7413,15 @@ UpdateActionForkProgress()
 		a+=$(TextBrightYellow "$worker_count")' in-progress'
 	fi
 
-	[[ -n $a ]] && ShowAsProc "${fork_progress_prefix:-}" "$a"
+	if [[ -n $a ]]; then
+#		if [[ $worker_count -eq 1 ]]; then
+#			PauseAni
+			ShowAsProc "${fork_progress_prefix:-}" "$a "
+#			ResumeAni
+#		else
+#			ShowAsProc "${fork_progress_prefix:-}" "$a "
+#		fi
+	fi
 
 	return 0
 
@@ -10462,7 +10485,7 @@ SaveActionResultMetrics()
 _QPKG:status_()
 	{
 
-	# * This function runs asynchronously *
+	# * This function runs as an asynchronous process *
 
 	# Query a QPKG for its 'status'. Each compatible QPKG will return 0 if application process is active or ready-to-run, 1 if not.
 
@@ -10530,12 +10553,12 @@ _QPKG:status_()
 	# Returncodes 124 and-up are generated by GNU `timeout`.
 
 	# Below is an extract from GNU `timeout` help:
-	#	124	if COMMAND times out, and --preserve-status is not specified
-	#	125	if the timeout command itself fails
-	#	126	if COMMAND is found but cannot be invoked
-	#	127	if COMMAND cannot be found
-	#	137	if COMMAND (or timeout itself) is sent the KILL (9) signal (128+9)
-	#	-	the exit status of COMMAND otherwise
+	#	124	if COMMAND times out, and --preserve-status is not specified.
+	#	125	if the timeout command itself fails.
+	#	126	if COMMAND is found but cannot be invoked.
+	#	127	if COMMAND cannot be found.
+	#	137	if COMMAND (or timeout itself) is sent the KILL (9) signal (128+9).
+	#	-	the exit status of COMMAND otherwise.
 
 	case $z in
 		0)
@@ -10561,7 +10584,7 @@ _QPKG:status_()
 _QPKG:rebuild_()
 	{
 
-	# * This function runs asynchronously *
+	# * This function runs as an asynchronous process *
 
 	# Meta-action: rebuild the QPKG named in $qpkg_name. This is a `download`, `install` and `restore`, but only if a backup file exists for this QPKG.
 
@@ -10614,7 +10637,7 @@ _QPKG:rebuild_()
 _QPKG:reassign_()
 	{
 
-	# * This function runs asynchronously *
+	# * This function runs as an asynchronous process *
 
 	# Remove the `storeid` assignment for the QPKG named in $qpkg_name.
 
@@ -10676,7 +10699,7 @@ _QPKG:reassign_()
 _QPKG:download_()
 	{
 
-	# * This function runs asynchronously *
+	# * This function runs as an asynchronous process *
 
 	# Download the QPKG named in $qpkg_name.
 
@@ -10806,7 +10829,7 @@ _QPKG:download_()
 _QPKG:install_()
 	{
 
-	# * This function runs asynchronously *
+	# * This function runs as an asynchronous process *
 
 	# Install the QPKG named in $qpkg_name.
 
@@ -10934,7 +10957,7 @@ _QPKG:install_()
 _QPKG:reinstall_()
 	{
 
-	# * This function runs asynchronously *
+	# * This function runs as an asynchronous process *
 
 	# Reinstall the QPKG named in $qpkg_name.
 
@@ -11027,7 +11050,7 @@ _QPKG:reinstall_()
 _QPKG:update_()
 	{
 
-	# * This function runs asynchronously *
+	# * This function runs as an asynchronous process *
 
 	# Update the QPKG application repo files named in $qpkg_name.
 
@@ -11117,7 +11140,7 @@ _QPKG:update_()
 _QPKG:upgrade_()
 	{
 
-	# * This function runs asynchronously *
+	# * This function runs as an asynchronous process *
 
 	# Upgrade the QPKG named in $qpkg_name.
 
@@ -11227,7 +11250,7 @@ _QPKG:upgrade_()
 _QPKG:uninstall_()
 	{
 
-	# * This function runs asynchronously *
+	# * This function runs as an asynchronous process *
 
 	# Uninstall the QPKG named in $qpkg_name. Digital signature will be removed automatically by OS.
 
@@ -11331,7 +11354,7 @@ _QPKG:uninstall_()
 _QPKG:activate_()
 	{
 
-	# * This function runs asynchronously *
+	# * This function runs as an asynchronous process *
 
 	# Activate/start the service-script for the QPKG named in $qpkg_name.
 
@@ -11440,7 +11463,7 @@ _QPKG:activate_()
 _QPKG:reactivate_()
 	{
 
-	# * This function runs asynchronously *
+	# * This function runs as an asynchronous process *
 
 	# Reactivate/restart the service-script for the QPKG named in $qpkg_name.
 
@@ -11542,7 +11565,7 @@ _QPKG:reactivate_()
 _QPKG:deactivate_()
 	{
 
-	# * This function runs asynchronously *
+	# * This function runs as an asynchronous process *
 
 	# Deactivate/stop the service-script for the QPKG named in $qpkg_name.
 
@@ -11649,7 +11672,7 @@ _QPKG:deactivate_()
 _QPKG:enable_()
 	{
 
-	# * This function runs asynchronously *
+	# * This function runs as an asynchronous process *
 
 	# Enable the QPKG named in $qpkg_name.
 
@@ -11710,7 +11733,7 @@ _QPKG:enable_()
 _QPKG:disable_()
 	{
 
-	# * This function runs asynchronously *
+	# * This function runs as an asynchronous process *
 
 	# Disable the QPKG named in $qpkg_name.
 
@@ -11776,7 +11799,7 @@ _QPKG:disable_()
 _QPKG:enableau_()
 	{
 
-	# * This function runs asynchronously *
+	# * This function runs as an asynchronous process *
 
 	# Enable auto-updating of the QPKG named in $qpkg_name.
 
@@ -11866,7 +11889,7 @@ _QPKG:enableau_()
 _QPKG:disableau_()
 	{
 
-	# * This function runs asynchronously *
+	# * This function runs as an asynchronous process *
 
 	# Disable auto-updating of the QPKG named in $qpkg_name.
 
@@ -11957,7 +11980,7 @@ _QPKG:disableau_()
 _QPKG:backup_()
 	{
 
-	# * This function runs asynchronously *
+	# * This function runs as an asynchronous process *
 
 	# Run a `backup` action for the QPKG named in $qpkg_name.
 
@@ -12047,7 +12070,7 @@ _QPKG:backup_()
 _QPKG:restore_()
 	{
 
-	# * This function runs asynchronously *
+	# * This function runs as an asynchronous process *
 
 	# Run a `restore` action for the QPKG named in $qpkg_name.
 
@@ -12144,7 +12167,7 @@ _QPKG:restore_()
 _QPKG:clean_()
 	{
 
-	# * This function runs asynchronously *
+	# * This function runs as an asynchronous process *
 
 	# Run a `clean` action for the QPKG named in $qpkg_name.
 
@@ -12241,7 +12264,7 @@ _QPKG:clean_()
 _QPKG:sign_()
 	{
 
-	# * This function runs asynchronously *
+	# * This function runs as an asynchronous process *
 
 	# Modify the QTS App Center certificate dB, and add an unsigned QPKG as-if it were signed. It adds a QNAP-generated certificate and digital signature to the certificate database for the unsigned QPKG.
 
@@ -12350,7 +12373,7 @@ EOB
 _QPKG:unsign_()
 	{
 
-	# * This function runs asynchronously *
+	# * This function runs as an asynchronous process *
 
 	# Modify the QTS App Center certificate dB, and remove signing details for a QPKG.
 
@@ -17238,7 +17261,7 @@ ShowAsPercentProgress()
 	local -r r_f
 
 	if [[ ${2:-} != long ]]; then
-		ShowAsProc "$r_a" "$r_f"
+		ShowAsProc "$r_a" "$r_f "		# Trailing whitespace to separate message from animation.
 	else
 		ShowAsProcLong "$r_a" "$r_f"
 	fi
@@ -18449,20 +18472,9 @@ StartAni()
 	{
 
 	IsNtDebug || return							# Don't start an animation in debug mode.
-	[[ ! -s $r_ani_pid_pathfile ]] || return	# Don't start a second animation with the same ID.
+	[[ ! -e $r_ani_pid_pathfile ]] || return	# Never start a second animation.
 	ClearAnimationFiles
-
-	_Animator_ &
-	: # This is only here to prevent Squeeze() combining the end-of-function brace below with the line above.
-
-	}
-
-ResumeAni()
-	{
-
-	IsNtDebug || return							# Don't start an animation in debug mode.
-	[[ -e $r_ani_resume_pathfile ]] || return
-	rm -f "$r_ani_end_pathfile" "$r_ani_pid_pathfile" "$r_ani_resume_pathfile"
+	touch "$r_ani_pid_pathfile"
 
 	_Animator_ &
 	: # This is only here to prevent Squeeze() combining the end-of-function brace below with the line above.
@@ -18473,21 +18485,37 @@ PauseAni()
 	{
 
 	[[ -s ${r_ani_pid_pathfile:-} ]] || return	# Don't try to stop an animation without a PID.
-
 	touch "$r_ani_end_pathfile"
 
 	wait $(< "$r_ani_pid_pathfile") 2> /dev/null
 
+	ClearAnimationFiles
 	touch "$r_ani_resume_pathfile"
-	rm -f "$r_ani_end_pathfile" "$r_ani_pid_pathfile"
+
+	}
+
+ResumeAni()
+	{
+
+	IsNtDebug || return							# Don't start an animation in debug mode.
+	[[ ! -e $r_ani_pid_pathfile ]] || return	# Never start a second animation.
+	[[ -e $r_ani_resume_pathfile ]] || return
+	ClearAnimationFiles
+	touch "$r_ani_pid_pathfile"
+
+	_Animator_ &
+	: # This is only here to prevent Squeeze() combining the line below with the line above.
 
 	}
 
 EndAni()
 	{
 
-	[[ -s ${r_ani_pid_pathfile:-} ]] || return	# Don't try to stop an animation without a PID.
+	# Inputs: (global)
+	#	$r_ani_end_pathfile
+	#	$r_ani_pid_pathfile
 
+	[[ -s ${r_ani_pid_pathfile:-} ]] || return	# Don't try to stop an animation without a PID.
 	touch "$r_ani_end_pathfile"
 
 	wait $(< "$r_ani_pid_pathfile") 2> /dev/null
@@ -18498,6 +18526,12 @@ EndAni()
 
 ClearAnimationFiles()
 	{
+
+	# Inputs: (global)
+	#	$r_ani_end_pathfile
+	#	$r_ani_frame_pathfile
+	#	$r_ani_pid_pathfile
+	#	$r_ani_resume_pathfile
 
 	rm -f "$r_ani_end_pathfile" "$r_ani_frame_pathfile" "$r_ani_pid_pathfile" "$r_ani_resume_pathfile"
 
@@ -18515,22 +18549,10 @@ ShowAniFrameInColour()
 
 	}
 
-SaveAniPid()
-	{
-
-	# Save PID of subshell.
-
-	# Inputs: (global)
-	#	$r_ani_pid_pathfile
-
-	[[ -n $r_ani_pid_pathfile ]] || return
-	GetSubshellPid > "$r_ani_pid_pathfile"
-	[[ -s $r_ani_pid_pathfile ]] || return
-
-	}
-
 _Animator_()
 	{
+
+	# * This function runs as an asynchronous process *
 
 	# Inputs: (global)
 	#	$r_ani_chars[]
@@ -18541,13 +18563,12 @@ _Animator_()
 	#	$r_ani_frame_step
 	#	$r_ani_last_frame
 
-	[[ -n $r_ani_pid_pathfile ]] || return
-	[[ -n $r_ani_end_pathfile ]] || return
-	[[ $r_ani_first_frame -gt 0 ]] || return
-	[[ $r_ani_last_frame -gt 0 ]] || return
-	[[ $((10#${r_ani_frame_duration/./})) -gt 0 ]] || return
-	[[ ${#r_ani_chars[@]} -gt 2 ]] || return
-	[[ $r_ani_frame_step -gt 0 ]] || return
+	[[ -n $r_ani_end_pathfile ]] || exit
+	[[ $r_ani_first_frame -gt 0 ]] || exit
+	[[ $r_ani_last_frame -gt 0 ]] || exit
+	[[ $((10#${r_ani_frame_duration/./})) -gt 0 ]] || exit
+	[[ ${#r_ani_chars[@]} -gt 2 ]] || exit
+	[[ $r_ani_frame_step -gt 0 ]] || exit
 
 	local -i ani_start_frame=1
 	local -i n=0
@@ -18569,13 +18590,27 @@ _Animator_()
 			if [[ -e $r_ani_end_pathfile ]]; then
 				echo "$n" > "$r_ani_frame_pathfile"		# Save next frame to be displayed when relaunching _Animator_().
 				ShowAniFrameInColour ''					# Erase existing frame.
-				break 2
+				exit
 			fi
 
 			ShowAniFrameInColour "${r_ani_chars[n-1]}"	# Display animation frame.
 			Pause "$r_ani_frame_duration"
 		done
 	done
+
+	}
+
+SaveAniPid()
+	{
+
+	# Save PID of subshell.
+
+	# Inputs: (global)
+	#	$r_ani_pid_pathfile
+
+	[[ -n $r_ani_pid_pathfile ]] || return
+	GetSubshellPid > "$r_ani_pid_pathfile"
+	[[ -s $r_ani_pid_pathfile ]] || return
 
 	}
 
