@@ -18670,7 +18670,7 @@ CaughtSIGINT()
 	ShowAsAbort 'caught SIGINT'
 	CloseMsgPipe
 
-	# TODO: send SIGTERM to each PID in `$r_async_procs_path` here.
+	# TODO: send SIGTERM to each PID in `$r_async_procs_path` here..
 
 	exit
 
