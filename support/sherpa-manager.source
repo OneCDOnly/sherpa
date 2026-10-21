@@ -6840,7 +6840,7 @@ ShowHelpProblems()
 		DisplayAsProjSynIndentExam 'clear local repository files from these QPKGs' "clean $(ShowAsPackages)"
 		DisplayAsProjSynIndentExam 'deactivate these QPKGs' "deactivate $(ShowAsPackages)"
 		DisplayAsProjSynIndentExam 'ensure all required application dependencies are installed' fix
-		DisplayAsProjSynIndentExam "increase the default 'qpkg_service' timeouts from 3 minutes to 30 minutes" 'install increasetimeouts'
+		IsOsCanQpkgTimeout && DisplayAsProjSynIndentExam "increase the default 'qpkg_service' timeouts from 3 minutes to 30 minutes" 'install increasetimeouts'
 		DisplayAsProjSynIndentExam "view only the most recent $(ShowAsTitleName) session log" last
 		DisplayAsProjSynIndentExam '' l
 		DisplayAsProjSynIndentExam "view the entire $(ShowAsTitleName) session log" log
@@ -13017,7 +13017,7 @@ GetQpkgDbDesc()
 
 	[[ -n $a ]] || a=none
 
-	printf '%s' "$a"
+	printf '%s' "$a."
 
 	return 0
 
