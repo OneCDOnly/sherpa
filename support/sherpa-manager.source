@@ -17892,12 +17892,14 @@ StripANSICodes()
 
 	# QTS 4.2.6 BusyBox `sed` doesn't fully support extended-regexes, so code-stripping only works with a real `sed`.
 
+	local re='s/\x1b\[[0-9;]*m//g'
+
 	if IsOsSedExtRegexSupported; then
-		echo -en "${1:-}" | /bin/sed -r 's/\x1b\[[0-9;]*m//g'		# https://superuser.com/a/380778
-	elif [[ -x /opt/bin/sed && -L /opt/etc/passwd ]]; then			# Try to ensure Entware is active first.
-		echo -en "${1:-}" | /opt/bin/sed -r 's/\x1b\[[0-9;]*m//g'	# https://superuser.com/a/380778
+		echo -en "${1:-}" | /bin/sed -r "$re"					# https://superuser.com/a/380778
+	elif [[ -x /opt/bin/sed && -L /opt/etc/passwd ]]; then		# Try to ensure Entware is active first.
+		echo -en "${1:-}" | /opt/bin/sed -r "$re"				# https://superuser.com/a/380778
 	else
-		echo -en "${1:-}"											# Can't strip, so pass thru original message unaltered.
+		echo -en "${1:-}"										# Can't strip, so pass thru original message unaltered.
 	fi
 
 	} 2> /dev/null
