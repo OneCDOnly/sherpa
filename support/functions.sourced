@@ -118,6 +118,8 @@ Squeeze()
 	# Outputs: (local)
 	#	$? = 0
 
+	local -i n=0
+
 	if [[ -f "$1" ]]; then			# Ignore symlinks.
 		echo -n 'squeezing ... '
 		local a=$(<"$1")
@@ -175,18 +177,49 @@ Squeeze()
 
 		a=$(sed "s|Transfer-Encoding: base64|Transfer-Encoding: base64\n|" <<< "$a")	# Add a newline after this string so signature block is accepted by QTS.
 
-		a=$(sed ':a;N;$!ba; s/()\n{\n/(){\n/g' <<< "$a")								# Function start braces: move to function name line. https://stackoverflow.com/a/1252191
-		a=$(sed ':a;N;$!ba; s/\n;;\n/;;/g' <<< "$a")									# 'case' pattern block semicolons: move to previous line. https://stackoverflow.com/a/1252191
-		a=$(sed ':a;N;$!ba; s/\*)\n/*)/g' <<< "$a")										# 'case' pattern definitions of any '*)': move first statement to definition line.
-		a=$(sed ':a;N;$!ba; s/\n}\n/;}\n/g' <<< "$a")									# Function end braces: move to last statement in function.
+		for ((n=1; n<3; n++)); do							# Run these rules multiple times, as global flag doesn't work with multi-line pattern match.
+			a=$(sed ':a;N;$!ba; s/()\n{\n/(){ /g' <<< "$a")		# Function start braces: move to function name line. https://stackoverflow.com/a/1252191
+			a=$(sed ':a;N;$!ba; s/\n;;\n/;;/g' <<< "$a")		# 'case' pattern block semicolons: move to previous line. https://stackoverflow.com/a/1252191
+			a=$(sed ':a;N;$!ba; s/\*)\n/*)/g' <<< "$a")			# 'case' pattern definitions of any '*)': move first statement to definition line.
+			a=$(sed ':a;N;$!ba; s/\n}\n/;}\n/g' <<< "$a")		# Function end braces: move to last statement in function.
 
-		# NOTE: these don't save any bytes, but do reduce the number of lines.
+			# NOTE: these don't save any bytes, but do reduce the number of lines.
 
-		a=$(sed ':a;N;$!ba; s/then\ncase/then case/g' <<< "$a")							# Combine 'then case' on the same line.
-		a=$(sed ':a;N;$!ba; s/do\ncase/do case/g' <<< "$a")								# Combine 'do case' on the same line.
-		a=$(sed ':a;N;$!ba; s/else\ncase/else case/g' <<< "$a")							# Combine 'else case' on the same line.
-		a=$(sed ':a;N;$!ba; s/then\nif/then if/g' <<< "$a")								# Combine 'then if' on the same line.
-		a=$(sed ':a;N;$!ba; s/fi\nelse/fi else/g' <<< "$a")								# Combine 'fi else' on the same line.
+			a=$(sed ':a;N;$!ba; s/[[:space:]]in\n/ in /g' <<< "$a")		# Combine ' in\n' with next line.
+			a=$(sed ':a;N;$!ba; s/\n(\n/\n(/g' <<< "$a")				# Combine '(' with next line.
+			a=$(sed ':a;N;$!ba; s/\n)\n/)\n/g' <<< "$a")				# Combine ')' with previous line.
+			a=$(sed ':a;N;$!ba; s/do\n/do /g' <<< "$a")					# Combine 'do\n' with next line.
+			a=$(sed ':a;N;$!ba; s/done\n/done;/g' <<< "$a")				# Combine 'done\n' with next line.
+			a=$(sed ':a;N;$!ba; s/\nelse\n/;else /g' <<< "$a")			# Combine 'else\n' with next line.
+			a=$(sed ':a;N;$!ba; s/esac\n/esac;/g' <<< "$a")				# Combine 'esac\n' with next line.
+			a=$(sed ':a;N;$!ba; s/[[:space:]]fi\n/;fi;/g' <<< "$a")		# Combine ' fi\n' with next line.
+			a=$(sed ':a;N;$!ba; s/then\n/then /g' <<< "$a")				# Combine 'then\n' with next line.
+			a=$(sed ':a;N;$!ba; s/\n{\n/\n{ /g' <<< "$a")				# Combine ' { ' with next line.
+			a=$(sed ':a;N;$!ba; s/\nFuncInit\n/\nFuncInit;/g' <<< "$a")	# Combine 'FuncInit' with next line.
+
+			# untested
+			a=$(sed ':a;N;$!ba; s/\nfi;/;fi;/g' <<< "$a")				# Combine 'fi;' with previous line.
+			a=$(sed ':a;N;$!ba; s/\n}/;}/g' <<< "$a")					# Combine '}' with previous line.
+			a=$(sed ':a;N;$!ba; s/\ndone/;done/g' <<< "$a")				# Combine 'done' with previous line.
+			a=$(sed ':a;N;$!ba; s/\nDisplay\n/;Display;/g' <<< "$a")	# Combine 'Display' with previous line.
+			a=$(sed ':a;N;$!ba; s/\nEraseThisLine\n/;EraseThisLine;/g' <<< "$a")	# Combine 'Display' with previous line.
+			# untested
+
+			a=$(sed ':a;N;$!ba; s/else if/else\nif/g' <<< "$a")			# Separate 'else if' onto 2 lines lines. TODO: manually combine as 'elif'.
+			a=$(sed ':a;N;$!ba; s/[[:space:]]\&;/ \&\n/g' <<< "$a")		# Separate ' &;' onto 2 lines.
+		done
+
+		# WARNING: "invalid syntax".
+			# Combine 'done for' on the same line.
+			# Combine 'done if' on the same line.
+			# Combine 'done while' on the same line.
+			# Combine 'esac case' on the same line.
+			# Combine 'esac if' on the same line.
+			# Combine 'fi case' on the same line.
+			# Combine 'fi for' on the same line.
+			# Combine 'fi if' on the same line.
+			# Combine 'fi return' on the same line.
+			# Combine 'return fi' on the same line.
 
 		[[ -e $2 ]] && chmod +w "$2"
 		echo "$a" > "$2"
