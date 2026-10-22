@@ -17546,7 +17546,6 @@ TextBrightGreen()
 
 	if [[ $colourful = true ]]; then
 		printf '\033[1;32m%s\033[39;22m' "$1"
-#		printf '\033[1;32m%s\033[0m' "$1"
 	else
 		printf '%s' "$1"
 	fi
@@ -17569,7 +17568,6 @@ TextBrightYellow()
 
 	if [[ $colourful = true ]]; then
 		printf '\033[1;33m%s\033[39;22m' "$1"
-#		printf '\033[1;33m%s\033[0m' "$1"
 	else
 		printf '%s' "$1"
 	fi
@@ -17592,7 +17590,6 @@ TextBrightYellow()
 #
 #	if [[ $colourful = true ]]; then
 #		printf '\033[1;5;33m%s\033[39;22m' "$1"
-#		printf '\033[1;5;33m%s\033[0m' "$1"
 #	else
 #		printf '%s' "$1"
 #	fi
@@ -17615,7 +17612,6 @@ TextBrightOrange()
 
 	if [[ $colourful = true ]]; then
 		printf '\033[1;38;5;214m%s\033[39;22m' "$1"			# Bright/bold orange.
-#		printf '\033[1;38;5;214m%s\033[0m' "$1"				# Bright/bold orange.
 #		printf '\033[0;33;40m%s\033[0m' "$1"				# Subdued orange (good for 16 colour terminal).
 	else
 		printf '%s' "$1"
@@ -17639,7 +17635,6 @@ TextBrightOrangeBlink()
 
 	if [[ $colourful = true ]]; then
 		printf '\033[1;5;38;5;214m%s\033[39;22m' "$1"
-#		printf '\033[1;5;38;5;214m%s\033[0m' "$1"
 	else
 		printf '%s' "$1"
 	fi
@@ -17662,7 +17657,6 @@ TextBrightRed()
 
 	if [[ $colourful = true ]]; then
 		printf '\033[1;31m%s\033[39;22m' "$1"
-#		printf '\033[1;31m%s\033[0m' "$1"
 	else
 		printf '%s' "$1"
 	fi
@@ -17685,7 +17679,6 @@ TextBrightRedBlink()
 
 	if [[ $colourful = true ]]; then
 		printf '\033[1;5;31m%s\033[39;22m' "$1"
-#		printf '\033[1;5;31m%s\033[0m' "$1"
 	else
 		printf '%s' "$1"
 	fi
@@ -17708,7 +17701,6 @@ TextDarkGrey()
 
 	if [[ $colourful = true ]]; then
 		printf '\033[1;90m%s\033[39;22m' "$1"
-#		printf '\033[1;90m%s\033[0m' "$1"
 	else
 		printf '%s' "$1"
 	fi
@@ -17730,7 +17722,6 @@ TextOnDarkGrey()
 	[[ -n ${1:-} ]] || return
 
 	if [[ $colourful = true ]]; then
-#		printf '\033[48;5;234m%s\033[49m' "$1"
 		printf '\033[48;5;233m%s\033[49m' "$1"
 	else
 		printf '%s' "$1"
@@ -17753,7 +17744,6 @@ TextUnderlinedCyan()
 	[[ -n ${1:-} ]] || return
 
 	if [[ $colourful = true ]]; then
-#		printf '\033[4;36m%s\033[39m' "$1"
 		printf '\033[4;36m%s\033[0m' "$1"
 	else
 		printf '%s' "$1"
@@ -17799,7 +17789,6 @@ TextBrightWhite()
 
 	if [[ $colourful = true ]]; then
 		printf '\033[1;97m%s\033[39;22m' "$1"
-#		printf '\033[1;97m%s\033[0m' "$1"
 	else
 		printf '%s' "$1"
 	fi
@@ -17822,7 +17811,6 @@ TextBrightWhiteBlink()
 
 	if [[ $colourful = true ]]; then
 		printf '\033[1;5;97m%s\033[39;22m' "$1"
-#		printf '\033[1;5;97m%s\033[0m' "$1"
 	else
 		printf '%s' "$1"
 	fi
