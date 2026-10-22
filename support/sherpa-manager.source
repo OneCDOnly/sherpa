@@ -2011,7 +2011,7 @@ ProcAction()
 			InitActionForkCounters
 			OpenMsgPipe
 
-			re=\\bEntware\\b			# bash 3.2 regex with word boundaries: https://stackoverflow.com/a/9793094
+			re=\\bEntware\\b			# Bash 3.2 regex with word boundaries: https://stackoverflow.com/a/9793094
 
 			if [[ $r_action = uninstall && ${a_target_packages[*]} =~ $re ]]; then
 				ShowKeystrokes			# Enable before removing Entware (& GNU `stty`).
@@ -13406,7 +13406,7 @@ GetQpkgDbActiveTest()
 	#	$r_qpkg_test_for_active[]
 
 	# Outputs: (local)
-	#	stdout = bash tests.
+	#	stdout = Bash tests.
 	#	$? = 0 (found), !0 (not-found)
 
 	[[ -n $qpkg_name && $qpkg_index -gt 0 ]] || return
@@ -14823,7 +14823,7 @@ IsQpkgProhibited()
 	# Outputs: (local)
 	#	$? = true/false
 
-	local re=\\b${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}\\b	# bash 3.2 regex with word boundaries: https://stackoverflow.com/a/9793094
+	local re=\\b${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}\\b	# Bash 3.2 regex with word boundaries: https://stackoverflow.com/a/9793094
 
 	[[ ${r_qpkg_names_prohibited[*]} =~ $re ]]
 
@@ -16680,7 +16680,7 @@ ConvertSecondsToDuration()
 	elif [[ $s -eq 1 ]]; then
 		printf "~ %d second" "$s"
 	else
-		s=1							# Never show zero seconds as a duration (bash isn't that fast).
+		s=1							# Never show zero seconds as a duration (Bash isn't that fast).
 		printf '< %d second' "$s"	# directive:dont-squeeze
 	fi
 
@@ -18217,7 +18217,7 @@ ConvertDecimalSecondsToMicroseconds()
 
 	# Convert decimal seconds to microseconds.
 
-	# In pure bash 3.2 because QTS BusyBox 1.01 `awk` doesn't suppport mathematical calcs like:
+	# In pure Bash 3.2 because QTS BusyBox 1.01 `awk` doesn't suppport mathematical calcs like:
 	#	awk -v d="$1" 'BEGIN {print d*10^6}'
 	# So, convert the hard way.
 
