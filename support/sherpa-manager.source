@@ -8580,7 +8580,7 @@ ReportPackages()
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
 		SetQpkgIndex
-		_GeneratePacksReportDataRow_ "$qpkg_name" "$n"> "$r_report_rows_path/$n" &
+		_GeneratePacksReportDataRow_ "$qpkg_name" "$n" > "$r_report_rows_path/$n" &
 		AppendToPidsFile "$!" "$r_pid_pathfile"
 	done
 
@@ -18208,7 +18208,7 @@ ConvertDecimalSecondsToMicroseconds()
 
 	# Convert decimal seconds to microseconds.
 
-	# In pure Bash 3.2 because QTS BusyBox 1.01 `awk` doesn't suppport mathematical calcs like:
+	# In pure Bash 3.2 because QTS BusyBox 1.01 `awk` doesn't support mathematical calcs like:
 	#	awk -v d="$1" 'BEGIN {print d*10^6}'
 	# So, convert the hard way.
 
