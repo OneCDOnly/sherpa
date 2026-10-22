@@ -470,6 +470,7 @@ LoadDefaults()
 
 	# Default flags.
 
+		alternate_report_lines=true
 		archive_debug_afterward=false
 		colourful=$r_colourful_default
 		generate_help_report=false
@@ -5045,6 +5046,7 @@ _GeneratePacksReportDataRow_()
 
 	# Inputs: (local)
 	#	$1 (optional) = QPKG name.
+	#	$2 = report data line index.
 
 	# Inputs: (global)
 	#	$e_nopnm
@@ -5100,7 +5102,11 @@ _GeneratePacksReportDataRow_()
 	esac
 
 	if IsOsCanAutowidthTableColumns; then
-		printf '%s' "$name_msg|$app_ver_msg|$description_msg"
+		if IsThisAnAlternateLine "$2"; then
+			TextOnDarkGrey "$(printf '%s' "$name_msg|$app_ver_msg|$description_msg")"
+		else
+			printf '%s' "$name_msg|$app_ver_msg|$description_msg"
+		fi
 	else
 		FormatReportFieldWidth "$name_msg" "$r_report_qpkg_name_column_width"
 		FormatReportFieldWidth "$app_ver_msg" "$r_report_qpkg_appl_version_column_width"
@@ -5143,6 +5149,9 @@ _GenerateStatusReportDataRow_()
 	{
 
 	# * This function runs as an asynchronous process *
+
+	# Inputs: (local)
+	#	$1 = report data line index.
 
 	# Inputs: (global)
 	#	$qpkg_name
@@ -5389,7 +5398,11 @@ _GenerateStatusReportDataRow_()
 	name_msg=$(FormatReportPackageName "$name")
 
 	if IsOsCanAutowidthTableColumns; then
-		printf '%s' "$name_msg|$status_msg|$action_msg|$ver_msg|$app_ver_msg|$path_msg"
+		if IsThisAnAlternateLine "$1"; then
+			TextOnDarkGrey "$(printf '%s' "$name_msg|$status_msg|$action_msg|$ver_msg|$app_ver_msg|$path_msg")"
+		else
+			printf '%s' "$name_msg|$status_msg|$action_msg|$ver_msg|$app_ver_msg|$path_msg"
+		fi
 	else
 		FormatReportFieldWidth "$name_msg" "$r_report_qpkg_name_column_width"
 
@@ -5435,6 +5448,9 @@ _GenerateReposReportDataRow_()
 	{
 
 	# * This function runs as an asynchronous process *
+
+	# Inputs: (local)
+	#	$1 = report data line index.
 
 	# Inputs: (global)
 	#	$qpkg_name
@@ -5539,7 +5555,11 @@ _GenerateReposReportDataRow_()
 	name_msg=$(FormatReportPackageName "$name")
 
 	if IsOsCanAutowidthTableColumns; then
-		printf '%s' "$name_msg|$assigned_repo_msg|$install_date_msg"
+		if IsThisAnAlternateLine "$1"; then
+			TextOnDarkGrey "$(printf '%s' "$name_msg|$assigned_repo_msg|$install_date_msg")"
+		else
+			printf '%s' "$name_msg|$assigned_repo_msg|$install_date_msg"
+		fi
 	else
 		if [[ -z $auxiliary_msg ]]; then
 			FormatReportFieldWidth "$name_msg" "$r_report_qpkg_name_column_width"
@@ -5584,6 +5604,9 @@ _GenerateAbsReportDataRow_()
 	{
 
 	# * This function runs as an asynchronous process *
+
+	# Inputs: (local)
+	#	$1 = report data line index.
 
 	# Inputs: (global)
 	#	$qpkg_name
@@ -5655,7 +5678,11 @@ _GenerateAbsReportDataRow_()
 	name_msg=$(FormatReportPackageName "$name")
 
 	if IsOsCanAutowidthTableColumns; then
-		printf '%s' "$name_msg|$installed_msg|$abs_msg"
+		if IsThisAnAlternateLine "$1"; then
+			TextOnDarkGrey "$(printf '%s' "$name_msg|$installed_msg|$abs_msg")"
+		else
+			printf '%s' "$name_msg|$installed_msg|$abs_msg"
+		fi
 	else
 		FormatReportFieldWidth "$name_msg" "$r_report_qpkg_name_column_width"
 		FormatReportFieldWidth "$installed_msg" "$r_report_qpkg_is_installed_column_width"
@@ -5716,6 +5743,9 @@ _GenerateDepsReportDataRow_()
 	{
 
 	# * This function runs as an asynchronous process *
+
+	# Inputs: (local)
+	#	$1 = report data line index.
 
 	# Inputs: (global)
 	#	$qpkg_name
@@ -5999,7 +6029,11 @@ _GenerateDepsReportDataRow_()
 	name_msg=$(FormatReportPackageName "$name")
 
 	if IsOsCanAutowidthTableColumns; then
-		printf '%s' "$name_msg|$deps_msg|$opt_deps_msg|$prohibited_msg|$installed_msg|$enabled_msg|$complete_msg|$managed_msg|$signed_msg|$min_ram_msg|$min_os_msg|$max_os_msg|$author_msg"
+		if IsThisAnAlternateLine "$1"; then
+			TextOnDarkGrey "$(printf '%s' "$name_msg|$deps_msg|$opt_deps_msg|$prohibited_msg|$installed_msg|$enabled_msg|$complete_msg|$managed_msg|$signed_msg|$min_ram_msg|$min_os_msg|$max_os_msg|$author_msg")"
+		else
+			printf '%s' "$name_msg|$deps_msg|$opt_deps_msg|$prohibited_msg|$installed_msg|$enabled_msg|$complete_msg|$managed_msg|$signed_msg|$min_ram_msg|$min_os_msg|$max_os_msg|$author_msg"
+		fi
 	else
 		FormatReportFieldWidth "$name_msg" "$r_report_qpkg_name_column_width"
 		FormatReportFieldWidth "$deps_msg" "$r_report_qpkg_dependencies_column_width"
@@ -6207,7 +6241,11 @@ _GenerateFeaturesReportDataRow_()
 	name_msg=$(FormatReportPackageName "$name")
 
 	if IsOsCanAutowidthTableColumns; then
-		printf '%s' "$name_msg|$independent_msg|$optional_msg|$dependent_msg|$enhanced_msg|$backup_msg|$clean_msg|$restart_to_update_msg|$autoupdate_msg|$active_test_msg|$uniqueunpack_msg"
+		if IsThisAnAlternateLine "$1"; then
+			TextOnDarkGrey "$(printf '%s' "$name_msg|$independent_msg|$optional_msg|$dependent_msg|$enhanced_msg|$backup_msg|$clean_msg|$restart_to_update_msg|$autoupdate_msg|$active_test_msg|$uniqueunpack_msg")"
+		else
+			printf '%s' "$name_msg|$independent_msg|$optional_msg|$dependent_msg|$enhanced_msg|$backup_msg|$clean_msg|$restart_to_update_msg|$autoupdate_msg|$active_test_msg|$uniqueunpack_msg"
+		fi
 	else
 		FormatReportFieldWidth "$name_msg" "$r_report_qpkg_name_column_width"
 		FormatReportFieldWidth "$independent_msg" "$r_report_qpkg_tier_column_width"
@@ -6264,6 +6302,7 @@ _GenerateBacksReportItemLine_()
 	#	$3 = filesize in bytes
 	#	$4 (optional) = age threshold to highlight, '1 week ago'
 	#	   (default) e.g. '2 days ago', '2 weeks ago', etc ...
+	#	$5 = report data line index.
 
 	# Inputs: (global)
 	#	$r_report_file_bytes_column_width
@@ -6305,7 +6344,11 @@ _GenerateBacksReportItemLine_()
 	esac
 
 	if IsOsCanAutowidthTableColumns; then
-		printf '%s' "$file_name_msg|$file_bytes_msg|$epoch_time_msg"
+		if IsThisAnAlternateLine "$5"; then
+			TextOnDarkGrey "$(printf '%s' "$file_name_msg|$file_bytes_msg|$epoch_time_msg")"
+		else
+			printf '%s' "$file_name_msg|$file_bytes_msg|$epoch_time_msg"
+		fi
 	else
 		FormatReportFieldWidth "$file_name_msg" "$r_report_file_name_column_width"
 		FormatReportFieldWidth "$file_bytes_msg" "$r_report_file_bytes_column_width"
@@ -8287,7 +8330,7 @@ HelpAbbreviations()
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
 		SetQpkgIndex
-		_GenerateAbsReportDataRow_ > "$r_report_rows_path/$n" &
+		_GenerateAbsReportDataRow_ "$n" > "$r_report_rows_path/$n" &
 		AppendToPidsFile "$!" "$r_pid_pathfile"
 	done
 
@@ -8351,7 +8394,7 @@ ReportBackups()
 			[[ -z $epoch_time || -z $file_name ]] && break
 
 			((n++))
-			_GenerateBacksReportItemLine_ "$epoch_time" "$file_name" "$file_bytes" "$r_report_highlight_backups_older_than" > "$r_report_rows_path/$n" &
+			_GenerateBacksReportItemLine_ "$epoch_time" "$file_name" "$file_bytes" "$r_report_highlight_backups_older_than" "$n" > "$r_report_rows_path/$n" &
 			AppendToPidsFile "$!" "$r_pid_pathfile"
 		done <<< "$($r_gnu_find_cmd "$r_qpkg_bu_path"/*.config.tar.gz -maxdepth 1 -printf '%C@ %f %s\n' 2> /dev/null | /usr/bin/sort)"
 	else										# If GNU `find` isn't available, do-it the hard-way.
@@ -8361,7 +8404,7 @@ ReportBackups()
 			file_name=$(/usr/bin/basename "$file_name")
 
 			((n++))
-			_GenerateBacksReportItemLine_ "$epoch_time" "$file_name" "$file_bytes" "$r_report_highlight_backups_older_than" > "$r_report_rows_path/$n" &
+			_GenerateBacksReportItemLine_ "$epoch_time" "$file_name" "$file_bytes" "$r_report_highlight_backups_older_than" "$n" > "$r_report_rows_path/$n" &
 			AppendToPidsFile "$!" "$r_pid_pathfile"
 		done <<< "$(cd "$r_qpkg_bu_path" && ls -l1tr --time-style=+"%Y-%m-%d %H:%M:%S" ./*.config.tar.gz 2> /dev/null | /bin/awk '{print $6" "$7" "$8" "$5}')"
 	fi
@@ -8417,7 +8460,7 @@ ReportDependencies()
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
 		SetQpkgIndex
-		_GenerateDepsReportDataRow_ > "$r_report_rows_path/$n" &
+		_GenerateDepsReportDataRow_ "$n" > "$r_report_rows_path/$n" &
 		AppendToPidsFile "$!" "$r_pid_pathfile"
 	done
 
@@ -8473,7 +8516,7 @@ ReportFeatures()
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
 		SetQpkgIndex
-		_GenerateFeaturesReportDataRow_ > "$r_report_rows_path/$n" &
+		_GenerateFeaturesReportDataRow_ "$n" > "$r_report_rows_path/$n" &
 		AppendToPidsFile "$!" "$r_pid_pathfile"
 	done
 
@@ -8534,7 +8577,7 @@ ReportPackages()
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
 		SetQpkgIndex
-		_GeneratePacksReportDataRow_ "$qpkg_name" > "$r_report_rows_path/$n" &
+		_GeneratePacksReportDataRow_ "$qpkg_name" "$n"> "$r_report_rows_path/$n" &
 		AppendToPidsFile "$!" "$r_pid_pathfile"
 	done
 
@@ -8596,7 +8639,7 @@ ReportRepos()
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
 		SetQpkgIndex
-		_GenerateReposReportDataRow_ > "$r_report_rows_path/$n" &
+		_GenerateReposReportDataRow_ "$n" > "$r_report_rows_path/$n" &
 		AppendToPidsFile "$!" "$r_pid_pathfile"
 	done
 
@@ -8651,7 +8694,7 @@ ReportStatuses()
 		QPKGs-ACstatus-dn.Exist "$qpkg_name" || continue
 		((n++))
 		SetQpkgIndex
-		_GenerateStatusReportDataRow_ > "$r_report_rows_path/$n" &
+		_GenerateStatusReportDataRow_ "$n" > "$r_report_rows_path/$n" &
 		AppendToPidsFile "$!" "$r_pid_pathfile"
 	done
 
@@ -15073,6 +15116,22 @@ IsReportLargerThanViewport()
 
 	}
 
+IsThisAnAlternateLine()
+	{
+
+	# Inputs: (local)
+	#	$1 = integer (report line index) to test.
+
+	# Inputs: (global)
+	#	$alternate_report_lines
+
+	# Outputs: (global)
+	#	$alternate_report_lines
+
+	[[ ${alternate_report_lines:=false} = true ]] && (((${1:-0}+1) % 2 == 0))
+
+	}
+
 UpdateSessionRows()
 	{
 
@@ -17483,7 +17542,8 @@ TextBrightGreen()
 	[[ -n ${1:-} ]] || return
 
 	if [[ $colourful = true ]]; then
-		printf '\033[1;32m%s\033[0m' "$1"
+		printf '\033[1;32m%s\033[39;22m' "$1"
+#		printf '\033[1;32m%s\033[0m' "$1"
 	else
 		printf '%s' "$1"
 	fi
@@ -17505,7 +17565,8 @@ TextBrightYellow()
 	[[ -n ${1:-} ]] || return
 
 	if [[ $colourful = true ]]; then
-		printf '\033[1;33m%s\033[0m' "$1"
+		printf '\033[1;33m%s\033[39;22m' "$1"
+#		printf '\033[1;33m%s\033[0m' "$1"
 	else
 		printf '%s' "$1"
 	fi
@@ -17527,6 +17588,7 @@ TextBrightYellow()
 #	[[ -n ${1:-} ]] || return
 #
 #	if [[ $colourful = true ]]; then
+#		printf '\033[1;5;33m%s\033[39;22m' "$1"
 #		printf '\033[1;5;33m%s\033[0m' "$1"
 #	else
 #		printf '%s' "$1"
@@ -17549,7 +17611,8 @@ TextBrightOrange()
 	[[ -n ${1:-} ]] || return
 
 	if [[ $colourful = true ]]; then
-		printf '\033[1;38;5;214m%s\033[0m' "$1"				# Bright/bold orange.
+		printf '\033[1;38;5;214m%s\033[39;22m' "$1"			# Bright/bold orange.
+#		printf '\033[1;38;5;214m%s\033[0m' "$1"				# Bright/bold orange.
 #		printf '\033[0;33;40m%s\033[0m' "$1"				# Subdued orange (good for 16 colour terminal).
 	else
 		printf '%s' "$1"
@@ -17572,7 +17635,8 @@ TextBrightOrangeBlink()
 	[[ -n ${1:-} ]] || return
 
 	if [[ $colourful = true ]]; then
-		printf '\033[1;5;38;5;214m%s\033[0m' "$1"
+		printf '\033[1;5;38;5;214m%s\033[39;22m' "$1"
+#		printf '\033[1;5;38;5;214m%s\033[0m' "$1"
 	else
 		printf '%s' "$1"
 	fi
@@ -17594,7 +17658,8 @@ TextBrightRed()
 	[[ -n ${1:-} ]] || return
 
 	if [[ $colourful = true ]]; then
-		printf '\033[1;31m%s\033[0m' "$1"
+		printf '\033[1;31m%s\033[39;22m' "$1"
+#		printf '\033[1;31m%s\033[0m' "$1"
 	else
 		printf '%s' "$1"
 	fi
@@ -17616,7 +17681,8 @@ TextBrightRedBlink()
 	[[ -n ${1:-} ]] || return
 
 	if [[ $colourful = true ]]; then
-		printf '\033[1;5;31m%s\033[0m' "$1"
+		printf '\033[1;5;31m%s\033[39;22m' "$1"
+#		printf '\033[1;5;31m%s\033[0m' "$1"
 	else
 		printf '%s' "$1"
 	fi
@@ -17638,7 +17704,31 @@ TextDarkGrey()
 	[[ -n ${1:-} ]] || return
 
 	if [[ $colourful = true ]]; then
-		printf '\033[1;90m%s\033[0m' "$1"
+		printf '\033[1;90m%s\033[39;22m' "$1"
+#		printf '\033[1;90m%s\033[0m' "$1"
+	else
+		printf '%s' "$1"
+	fi
+
+	} 2> /dev/null
+
+TextOnDarkGrey()
+	{
+
+	# Inputs: (local)
+	#	$1 = string.
+
+	# Inputs: (global)
+	#	$colourful
+
+	# Outputs: (local)
+	#	stdout = string.
+
+	[[ -n ${1:-} ]] || return
+
+	if [[ $colourful = true ]]; then
+#		printf '\033[48;5;234m%s\033[49m' "$1"
+		printf '\033[48;5;233m%s\033[49m' "$1"
 	else
 		printf '%s' "$1"
 	fi
@@ -17660,6 +17750,7 @@ TextUnderlinedCyan()
 	[[ -n ${1:-} ]] || return
 
 	if [[ $colourful = true ]]; then
+#		printf '\033[4;36m%s\033[39m' "$1"
 		printf '\033[4;36m%s\033[0m' "$1"
 	else
 		printf '%s' "$1"
@@ -17704,7 +17795,8 @@ TextBrightWhite()
 	[[ -n ${1:-} ]] || return
 
 	if [[ $colourful = true ]]; then
-		printf '\033[1;97m%s\033[0m' "$1"
+		printf '\033[1;97m%s\033[39;22m' "$1"
+#		printf '\033[1;97m%s\033[0m' "$1"
 	else
 		printf '%s' "$1"
 	fi
@@ -17726,7 +17818,8 @@ TextBrightWhiteBlink()
 	[[ -n ${1:-} ]] || return
 
 	if [[ $colourful = true ]]; then
-		printf '\033[1;5;97m%s\033[0m' "$1"
+		printf '\033[1;5;97m%s\033[39;22m' "$1"
+#		printf '\033[1;5;97m%s\033[0m' "$1"
 	else
 		printf '%s' "$1"
 	fi
@@ -18670,7 +18763,7 @@ CaughtSIGINT()
 	ShowAsAbort 'caught SIGINT'
 	CloseMsgPipe
 
-	# TODO: send SIGTERM to each PID in `$r_async_procs_path` here..
+	# TODO: send SIGTERM to each PID in `$r_async_procs_path` here.
 
 	exit
 
