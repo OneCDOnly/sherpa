@@ -6374,8 +6374,11 @@ FormatReportField()
 
 	local a=''
 	local b=''
+	local c=${2:-blank}
 
-	case ${2:-blank} in
+	IsOsCanAutowidthTableColumns || c=blank
+
+	case $c in
 		alert)
 			a=$(TextBrightRedBlink "$r_chars_alert")
 			b=$(TextBrightRedBlink "${1:-}")
