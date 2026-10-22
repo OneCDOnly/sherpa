@@ -1675,7 +1675,7 @@ AssignQpkgsToActions()
 
 	# Don't permit these actions on the sherpa QPKG:
 
-	QPKGs-ACdeactivate-to:Remove sherpa
+#	QPKGs-ACdeactivate-to:Remove sherpa
 	QPKGs-ACuninstall-to:Remove sherpa
 
 	QPKGs-ACsign-to.IsAny && LoadQpkgSigningCert
