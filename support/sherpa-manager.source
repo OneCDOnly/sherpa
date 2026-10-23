@@ -557,7 +557,9 @@ SetCMDs()
 
 		readonly r_gnu_awk_cmd=/opt/bin/awk
 		readonly r_gnu_dd_cmd=/opt/bin/dd
+		readonly r_gnu_df_cmd=/opt/bin/df
 		readonly r_gnu_find_cmd=/opt/bin/find
+		readonly r_gnu_free_cmd=/opt/bin/free
 		readonly r_gnu_grep_cmd=/opt/bin/grep
 		readonly r_gnu_more_cmd=/opt/bin/more
 		readonly r_gnu_nice_cmd=/opt/bin/nice
@@ -582,35 +584,32 @@ IsCMDsOk()
 
 	# Confirm required binaries are present.
 
-	IsCriticalFile /bin/awk || return
-	IsCriticalFile /bin/cat || return
-	IsCriticalFile /bin/date || return
-	IsCriticalFile /bin/df || return
-	IsCriticalFile /bin/grep || return
-	IsCriticalFile /bin/md5sum || return
-	IsCriticalFile /bin/mknod || return
-	IsCriticalFile /bin/mktemp || return
-	IsCriticalFile /bin/more || return
-	IsCriticalFile /bin/ps || return
-	IsCriticalFile /bin/sed || return
-	IsCriticalFile /bin/sh || return
-	IsCriticalFile /bin/sha1sum || return
-	IsCriticalFile /bin/tar || return
-	IsCriticalFile /bin/uname || return
-	IsCriticalFile /bin/uniq || return
-	IsCriticalFile /sbin/curl || return
-	IsCriticalFile /usr/bin/basename || return
-	IsCriticalFile /usr/bin/dirname || return
-	IsCriticalFile /usr/bin/du || return
-	IsCriticalFile /usr/bin/readlink || return
-	IsCriticalFile /usr/bin/stat || return
-	IsCriticalFile /usr/bin/tail || return
-	IsCriticalFile /usr/bin/tee || return
-	IsCriticalFile /usr/bin/unzip || return
-	IsCriticalFile /usr/bin/uptime || return
-	IsCriticalFile /usr/bin/wc || return
-	IsCriticalFile /usr/local/bin/python2 || return
-	IsCriticalFile /usr/sbin/screen || return
+	local -a cmds=()
+	local -a cmdpaths=()
+
+	local a=''
+
+	cmds=(awk busybox cat date df grep ln md5sum mknod mktemp more pidof ping ps renice sed sh sha1sum tar touch uname uniq)
+	cmdpaths+=("${cmds[@]/#//bin/}")
+
+	cmds=(curl getcfg ldd rmcfg setcfg)
+	cmdpaths+=("${cmds[@]/#//sbin/}")
+
+	cmds=(basename dirname du free readlink stat tail tee unzip uptime wc)
+	cmdpaths+=("${cmds[@]/#//usr/bin/}")
+
+	cmds=(python2)
+	cmdpaths+=("${cmds[@]/#//usr/local/bin/}")
+
+	cmds=(7z qpkg_service)
+	cmdpaths+=("${cmds[@]/#//usr/local/sbin/}")
+
+	cmds=(screen)
+	cmdpaths+=("${cmds[@]/#//usr/sbin/}")
+
+	for a in "${cmdpaths[@]}"; do
+		IsCriticalFile "$a" || return
+	done
 
 	return 0
 
@@ -746,7 +745,6 @@ LoadLists()
 	#	$lists_loaded
 
 	# Outputs: (global)
-	#	$lists_loaded
 	#	$ar_ipk_actions[]
 	#	$ar_package_tiers[]
 	#	$ar_pip_actions[]
@@ -756,9 +754,10 @@ LoadLists()
 	#	$ar_qpkg_isnt_groups[]
 	#	$ar_qpkg_isnt_states[]
 	#	$ar_qpkg_service_results[]
-	#	$ar_qpkg_transient_states[]
 	#	$ar_qpkg_tiers[]
+	#	$ar_qpkg_transient_states[]
 	#	$ar_user_qpkg_actions[]
+	#	$lists_loaded
 	#	$r_"$(Lowercase "$action")"_log_file
 
 	[[ ${lists_loaded:=false} = false ]] || return 0
@@ -948,17 +947,51 @@ ClearTempLogPath()
 DebugLogEnv()
 	{
 
-	if [[ $useropt_show_about = false && $useropt_show_aboutall = false ]]; then
+	# Inputs: (global)
+	#	$EUID
+	#	$package_release_version
+	#	$r_cpu_threads
+	#	$r_entware_type
+	#	$r_gnu_df_cmd
+	#	$r_gnu_free_cmd
+	#	$r_kernel_page_size
+	#	$r_nas_firmware_date
+	#	$r_nas_firmware_ver
+	#	$r_nas_firmware_version
+	#	$r_nas_platform
+	#	$r_nas_qpkg_arch
+	#	$r_nas_ram_gb
+	#	$r_objects_epoch
+	#	$r_oom_log_pathfile
+	#	$r_packages_epoch
+	#	$r_ram_freeused_pathfile
+	#	$r_ramfs_freespace_pathfile
+	#	$r_screen_sessions_pathfile
+	#	$r_script_built_epoch
+	#	$r_this_package_ver
+	#	$r_this_script_ver
+	#	$r_websites
+	#	$run_package_actions
+	#	$useropt_debug
+	#	$useropt_show_about
+	#	$useropt_show_aboutall
+	#	$useropt_verbose
+
+	# Outputs: (global)
+	#	$r_objects_epoch
+	#	$r_packages_epoch
+	#	$useropt_debug
+	#	$useropt_verbose
+
+	if [[ $useropt_show_about = true || $useropt_show_aboutall = true ]]; then
+		useropt_debug=true
+		useropt_verbose=true
+	else
 		[[ $run_package_actions = true ]] || return 0
 		IsDebug || return 0
 	fi
 
 	FuncInit
-
-	if [[ $useropt_show_about = true || $useropt_show_aboutall = true ]]; then
-		useropt_debug=true
-		useropt_verbose=true
-	fi
 
 	local a=''
 	local b=''
@@ -1169,11 +1202,25 @@ DebugLogEnv()
 	fi
 
 	DebugInfoMinSepr
-	Executer "/bin/df -h | /bin/grep -iEv '^(devtmpfs|cgroup_root)'" "$r_ramfs_freespace_pathfile"
+
+	if [[ -x $r_gnu_df_cmd ]]; then
+		Executer "$r_gnu_df_cmd --human-readable --print-type -t ext2 -t ext3 -t ext4 -t zfs -t tmpfs" "$r_ramfs_freespace_pathfile" '' 1
+	else
+		Executer "/bin/df -h | /bin/grep -iEv '^(devtmpfs|cgroup_root)'" "$r_ramfs_freespace_pathfile"
+	fi
+
 	DebugInfoMinSepr
 	Executer "/usr/sbin/screen -ls | /bin/sed '/^[[:space:]]*$/d;s/^[[:space:]]*//'" "$r_screen_sessions_pathfile" '' 1
 	DebugInfoMinSepr
-	Executer '/usr/bin/free' "$r_ram_freeused_pathfile" '' 1
+
+	if [[ -x $r_gnu_free_cmd ]]; then
+		Executer "$r_gnu_free_cmd --human --total" "$r_ram_freeused_pathfile" '' 1
+	elif (/usr/bin/free -m &> /dev/null); then
+		Executer '/usr/bin/free -m' "$r_ram_freeused_pathfile" '' 1
+	else
+		Executer '/usr/bin/free' "$r_ram_freeused_pathfile" '' 1
+	fi
+
 	DebugInfoMinSepr
 	Executer "/bin/grep -iE 'out of memory|oom-killer' /mnt/HDA_ROOT/.logs/kmsg" "$r_oom_log_pathfile" '' 1
 	DebugInfoMinSepr
@@ -1181,7 +1228,6 @@ DebugLogEnv()
 	if [[ $useropt_show_aboutall = true ]]; then
 		useropt_debug=false
 		useropt_verbose=false
-		return
 	fi
 
 	FuncExit
@@ -1675,7 +1721,7 @@ AssignQpkgsToActions()
 
 	# Don't permit these actions on the sherpa QPKG:
 
-	QPKGs-ACdeactivate-to:Remove sherpa
+#	QPKGs-ACdeactivate-to:Remove sherpa
 	QPKGs-ACuninstall-to:Remove sherpa
 
 	QPKGs-ACsign-to.IsAny && LoadQpkgSigningCert
@@ -8580,7 +8626,7 @@ ReportPackages()
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
 		SetQpkgIndex
-		_GeneratePacksReportDataRow_ "$qpkg_name" "$n"> "$r_report_rows_path/$n" &
+		_GeneratePacksReportDataRow_ "$qpkg_name" "$n" > "$r_report_rows_path/$n" &
 		AppendToPidsFile "$!" "$r_pid_pathfile"
 	done
 
@@ -11468,7 +11514,7 @@ _QPKG:activate_()
 		Executer "$a \"$r_local_pathfile\" start" "$r_log_pathfile" log:failure-only
 		z=$?
 	elif IsQpkgDbWillLog; then		# Use `qpkg_service` if-possible, so package icon in App Center will dynamically update.
-		Executer "/sbin/qpkg_service $timeout start $qpkg_name" "$r_log_pathfile" log:failure-only
+		Executer "/usr/local/sbin/qpkg_service $timeout start $qpkg_name" "$r_log_pathfile" log:failure-only
 		QpkgServiceResultWasOk && z=0 || z=1
 	else
 		Executer "\"$r_local_pathfile\" start" "$r_log_pathfile" log:failure-only
@@ -11577,7 +11623,7 @@ _QPKG:reactivate_()
 		Executer "$a \"$r_local_pathfile\" restart" "$r_log_pathfile" log:failure-only
 		z=$?
 	elif IsQpkgDbWillLog; then		# Use `qpkg_service` if-possible, so package icon in App Center will dynamically update.
-		Executer "/sbin/qpkg_service $timeout restart $qpkg_name" "$r_log_pathfile" log:failure-only
+		Executer "/usr/local/sbin/qpkg_service $timeout restart $qpkg_name" "$r_log_pathfile" log:failure-only
 		QpkgServiceResultWasOk && z=0 || z=1
 	else
 		Executer "\"$r_local_pathfile\" restart" "$r_log_pathfile" log:failure-only
@@ -11679,7 +11725,7 @@ _QPKG:deactivate_()
 		Executer "$a \"$r_local_pathfile\" stop" "$r_log_pathfile" log:failure-only
 		z=$?
 	elif IsQpkgDbWillLog; then		# Use `qpkg_service` if-possible, so package icon in App Center will dynamically update.
-		Executer "/sbin/qpkg_service $timeout stop $qpkg_name" "$r_log_pathfile" log:failure-only
+		Executer "/usr/local/sbin/qpkg_service $timeout stop $qpkg_name" "$r_log_pathfile" log:failure-only
 		QpkgServiceResultWasOk && z=0 || z=1
 	else
 		Executer "\"$r_local_pathfile\" stop" "$r_log_pathfile" log:failure-only
@@ -11765,7 +11811,7 @@ _QPKG:enable_()
 
 	DebugAsProc "enabling $(FormatPackageName)"
 
-	Executer "/sbin/qpkg_service $timeout enable $qpkg_name" "$r_log_pathfile" log:failure-only
+	Executer "/usr/local/sbin/qpkg_service $timeout enable $qpkg_name" "$r_log_pathfile" log:failure-only
 	SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
 	MarkActionForkAsDoneOk
 	ClearQpkgInstalledAppCenterNotifier
@@ -11830,7 +11876,7 @@ _QPKG:disable_()
 
 	DebugAsProc "disabling $(FormatPackageName)"
 
-	Executer "/sbin/qpkg_service $timeout disable $qpkg_name" "$r_log_pathfile" log:failure-only
+	Executer "/usr/local/sbin/qpkg_service $timeout disable $qpkg_name" "$r_log_pathfile" log:failure-only
 
 	SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
 	MarkActionForkAsDoneOk
@@ -18208,7 +18254,7 @@ ConvertDecimalSecondsToMicroseconds()
 
 	# Convert decimal seconds to microseconds.
 
-	# In pure Bash 3.2 because QTS BusyBox 1.01 `awk` doesn't suppport mathematical calcs like:
+	# In pure Bash 3.2 because QTS BusyBox 1.01 `awk` doesn't support mathematical calcs like:
 	#	awk -v d="$1" 'BEGIN {print d*10^6}'
 	# So, convert the hard way.
 
