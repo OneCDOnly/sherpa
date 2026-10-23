@@ -591,6 +591,7 @@ IsCMDsOk()
 	IsCriticalFile /bin/mknod || return
 	IsCriticalFile /bin/mktemp || return
 	IsCriticalFile /bin/more || return
+	IsCriticalFile /bin/ping || return
 	IsCriticalFile /bin/ps || return
 	IsCriticalFile /bin/sed || return
 	IsCriticalFile /bin/sh || return
