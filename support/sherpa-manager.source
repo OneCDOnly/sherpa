@@ -557,6 +557,7 @@ SetCMDs()
 
 		readonly r_gnu_awk_cmd=/opt/bin/awk
 		readonly r_gnu_dd_cmd=/opt/bin/dd
+		readonly r_gnu_df_cmd=/opt/bin/df
 		readonly r_gnu_find_cmd=/opt/bin/find
 		readonly r_gnu_free_cmd=/opt/bin/free
 		readonly r_gnu_grep_cmd=/opt/bin/grep
@@ -1167,13 +1168,19 @@ DebugLogEnv()
 	fi
 
 	DebugInfoMinSepr
-	Executer "/bin/df -h | /bin/grep -iEv '^(devtmpfs|cgroup_root)'" "$r_ramfs_freespace_pathfile"
+
+	if [[ -x $r_gnu_df_cmd ]]; then
+		Executer "$r_gnu_df_cmd --human-readable --print-type -t ext2 -t ext3 -t ext4 -t zfs -t tmpfs" "$r_ramfs_freespace_pathfile" '' 1
+	else
+		Executer "/bin/df -h | /bin/grep -iEv '^(devtmpfs|cgroup_root)'" "$r_ramfs_freespace_pathfile"
+	fi
+
 	DebugInfoMinSepr
 	Executer "/usr/sbin/screen -ls | /bin/sed '/^[[:space:]]*$/d;s/^[[:space:]]*//'" "$r_screen_sessions_pathfile" '' 1
 	DebugInfoMinSepr
 
 	if [[ -x $r_gnu_free_cmd ]]; then
-		Executer "$r_gnu_free_cmd -ht" "$r_ram_freeused_pathfile" '' 1
+		Executer "$r_gnu_free_cmd --human --total" "$r_ram_freeused_pathfile" '' 1
 	else
 		Executer '/usr/bin/free -m' "$r_ram_freeused_pathfile" '' 1
 	fi
