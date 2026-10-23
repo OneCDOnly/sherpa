@@ -745,7 +745,6 @@ LoadLists()
 	#	$lists_loaded
 
 	# Outputs: (global)
-	#	$lists_loaded
 	#	$ar_ipk_actions[]
 	#	$ar_package_tiers[]
 	#	$ar_pip_actions[]
@@ -755,9 +754,10 @@ LoadLists()
 	#	$ar_qpkg_isnt_groups[]
 	#	$ar_qpkg_isnt_states[]
 	#	$ar_qpkg_service_results[]
-	#	$ar_qpkg_transient_states[]
 	#	$ar_qpkg_tiers[]
+	#	$ar_qpkg_transient_states[]
 	#	$ar_user_qpkg_actions[]
+	#	$lists_loaded
 	#	$r_"$(Lowercase "$action")"_log_file
 
 	[[ ${lists_loaded:=false} = false ]] || return 0
@@ -947,17 +947,51 @@ ClearTempLogPath()
 DebugLogEnv()
 	{
 
-	if [[ $useropt_show_about = false && $useropt_show_aboutall = false ]]; then
+	# Inputs: (global)
+	#	$EUID
+	#	$package_release_version
+	#	$r_cpu_threads
+	#	$r_entware_type
+	#	$r_gnu_df_cmd
+	#	$r_gnu_free_cmd
+	#	$r_kernel_page_size
+	#	$r_nas_firmware_date
+	#	$r_nas_firmware_ver
+	#	$r_nas_firmware_version
+	#	$r_nas_platform
+	#	$r_nas_qpkg_arch
+	#	$r_nas_ram_gb
+	#	$r_objects_epoch
+	#	$r_oom_log_pathfile
+	#	$r_packages_epoch
+	#	$r_ram_freeused_pathfile
+	#	$r_ramfs_freespace_pathfile
+	#	$r_screen_sessions_pathfile
+	#	$r_script_built_epoch
+	#	$r_this_package_ver
+	#	$r_this_script_ver
+	#	$r_websites
+	#	$run_package_actions
+	#	$useropt_debug
+	#	$useropt_show_about
+	#	$useropt_show_aboutall
+	#	$useropt_verbose
+
+	# Outputs: (global)
+	#	$r_objects_epoch
+	#	$r_packages_epoch
+	#	$useropt_debug
+	#	$useropt_verbose
+
+	if [[ $useropt_show_about = true || $useropt_show_aboutall = true ]]; then
+		useropt_debug=true
+		useropt_verbose=true
+	else
 		[[ $run_package_actions = true ]] || return 0
 		IsDebug || return 0
 	fi
 
 	FuncInit
-
-	if [[ $useropt_show_about = true || $useropt_show_aboutall = true ]]; then
-		useropt_debug=true
-		useropt_verbose=true
-	fi
 
 	local a=''
 	local b=''
@@ -1181,8 +1215,10 @@ DebugLogEnv()
 
 	if [[ -x $r_gnu_free_cmd ]]; then
 		Executer "$r_gnu_free_cmd --human --total" "$r_ram_freeused_pathfile" '' 1
-	else
+	elif (/usr/bin/free -m &> /dev/null); then
 		Executer '/usr/bin/free -m' "$r_ram_freeused_pathfile" '' 1
+	else
+		Executer '/usr/bin/free' "$r_ram_freeused_pathfile" '' 1
 	fi
 
 	DebugInfoMinSepr
@@ -1192,7 +1228,6 @@ DebugLogEnv()
 	if [[ $useropt_show_aboutall = true ]]; then
 		useropt_debug=false
 		useropt_verbose=false
-		return
 	fi
 
 	FuncExit
