@@ -583,26 +583,36 @@ IsCMDsOk()
 	# Confirm required binaries are present.
 
 	IsCriticalFile /bin/awk || return
+	IsCriticalFile /bin/busybox || return
 	IsCriticalFile /bin/cat || return
 	IsCriticalFile /bin/date || return
 	IsCriticalFile /bin/df || return
 	IsCriticalFile /bin/grep || return
+	IsCriticalFile /bin/ln || return
 	IsCriticalFile /bin/md5sum || return
 	IsCriticalFile /bin/mknod || return
 	IsCriticalFile /bin/mktemp || return
 	IsCriticalFile /bin/more || return
+	IsCriticalFile /bin/pidof || return
 	IsCriticalFile /bin/ping || return
 	IsCriticalFile /bin/ps || return
+	IsCriticalFile /bin/renice || return
 	IsCriticalFile /bin/sed || return
 	IsCriticalFile /bin/sh || return
 	IsCriticalFile /bin/sha1sum || return
 	IsCriticalFile /bin/tar || return
+	IsCriticalFile /bin/touch || return
 	IsCriticalFile /bin/uname || return
 	IsCriticalFile /bin/uniq || return
 	IsCriticalFile /sbin/curl || return
+	IsCriticalFile /sbin/getcfg || return
+	IsCriticalFile /sbin/ldd || return
+	IsCriticalFile /sbin/rmcfg || return
+	IsCriticalFile /sbin/setcfg || return
 	IsCriticalFile /usr/bin/basename || return
 	IsCriticalFile /usr/bin/dirname || return
 	IsCriticalFile /usr/bin/du || return
+	IsCriticalFile /usr/bin/free || return
 	IsCriticalFile /usr/bin/readlink || return
 	IsCriticalFile /usr/bin/stat || return
 	IsCriticalFile /usr/bin/tail || return
@@ -611,6 +621,8 @@ IsCMDsOk()
 	IsCriticalFile /usr/bin/uptime || return
 	IsCriticalFile /usr/bin/wc || return
 	IsCriticalFile /usr/local/bin/python2 || return
+	IsCriticalFile /usr/local/sbin/7z || return
+	IsCriticalFile /usr/local/sbin/qpkg_service || return
 	IsCriticalFile /usr/sbin/screen || return
 
 	return 0
@@ -11469,7 +11481,7 @@ _QPKG:activate_()
 		Executer "$a \"$r_local_pathfile\" start" "$r_log_pathfile" log:failure-only
 		z=$?
 	elif IsQpkgDbWillLog; then		# Use `qpkg_service` if-possible, so package icon in App Center will dynamically update.
-		Executer "/sbin/qpkg_service $timeout start $qpkg_name" "$r_log_pathfile" log:failure-only
+		Executer "/usr/local/sbin/qpkg_service $timeout start $qpkg_name" "$r_log_pathfile" log:failure-only
 		QpkgServiceResultWasOk && z=0 || z=1
 	else
 		Executer "\"$r_local_pathfile\" start" "$r_log_pathfile" log:failure-only
@@ -11578,7 +11590,7 @@ _QPKG:reactivate_()
 		Executer "$a \"$r_local_pathfile\" restart" "$r_log_pathfile" log:failure-only
 		z=$?
 	elif IsQpkgDbWillLog; then		# Use `qpkg_service` if-possible, so package icon in App Center will dynamically update.
-		Executer "/sbin/qpkg_service $timeout restart $qpkg_name" "$r_log_pathfile" log:failure-only
+		Executer "/usr/local/sbin/qpkg_service $timeout restart $qpkg_name" "$r_log_pathfile" log:failure-only
 		QpkgServiceResultWasOk && z=0 || z=1
 	else
 		Executer "\"$r_local_pathfile\" restart" "$r_log_pathfile" log:failure-only
@@ -11680,7 +11692,7 @@ _QPKG:deactivate_()
 		Executer "$a \"$r_local_pathfile\" stop" "$r_log_pathfile" log:failure-only
 		z=$?
 	elif IsQpkgDbWillLog; then		# Use `qpkg_service` if-possible, so package icon in App Center will dynamically update.
-		Executer "/sbin/qpkg_service $timeout stop $qpkg_name" "$r_log_pathfile" log:failure-only
+		Executer "/usr/local/sbin/qpkg_service $timeout stop $qpkg_name" "$r_log_pathfile" log:failure-only
 		QpkgServiceResultWasOk && z=0 || z=1
 	else
 		Executer "\"$r_local_pathfile\" stop" "$r_log_pathfile" log:failure-only
@@ -11766,7 +11778,7 @@ _QPKG:enable_()
 
 	DebugAsProc "enabling $(FormatPackageName)"
 
-	Executer "/sbin/qpkg_service $timeout enable $qpkg_name" "$r_log_pathfile" log:failure-only
+	Executer "/usr/local/sbin/qpkg_service $timeout enable $qpkg_name" "$r_log_pathfile" log:failure-only
 	SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
 	MarkActionForkAsDoneOk
 	ClearQpkgInstalledAppCenterNotifier
@@ -11831,7 +11843,7 @@ _QPKG:disable_()
 
 	DebugAsProc "disabling $(FormatPackageName)"
 
-	Executer "/sbin/qpkg_service $timeout disable $qpkg_name" "$r_log_pathfile" log:failure-only
+	Executer "/usr/local/sbin/qpkg_service $timeout disable $qpkg_name" "$r_log_pathfile" log:failure-only
 
 	SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
 	MarkActionForkAsDoneOk
