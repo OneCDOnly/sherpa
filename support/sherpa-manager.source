@@ -588,40 +588,22 @@ IsCMDsOk()
 	local a=''
 
 	cmds=(awk busybox cat date df grep ln md5sum mknod mktemp more pidof ping ps renice sed sh sha1sum tar touch uname uniq)
-
-	for a in "${cmds[@]}"; do
-		cmdpaths+=(/bin/$a)
-	done
+	cmdpaths+=("${cmds[@]/#//bin/}")
 
 	cmds=(curl getcfg ldd rmcfg setcfg)
-
-	for a in "${cmds[@]}"; do
-		cmdpaths+=(/sbin/$a)
-	done
+	cmdpaths+=("${cmds[@]/#//sbin/}")
 
 	cmds=(basename dirname du free readlink stat tail tee unzip uptime wc)
-
-	for a in "${cmds[@]}"; do
-		cmdpaths+=(/usr/bin/$a)
-	done
+	cmdpaths+=("${cmds[@]/#//usr/bin/}")
 
 	cmds=(python2)
-
-	for a in "${cmds[@]}"; do
-		cmdpaths+=(/usr/local/bin/$a)
-	done
+	cmdpaths+=("${cmds[@]/#//usr/local/bin/}")
 
 	cmds=(7z qpkg_service)
-
-	for a in "${cmds[@]}"; do
-		cmdpaths+=(/usr/local/sbin/$a)
-	done
+	cmdpaths+=("${cmds[@]/#//usr/local/sbin/}")
 
 	cmds=(screen)
-
-	for a in "${cmds[@]}"; do
-		cmdpaths+=(/usr/sbin/$a)
-	done
+	cmdpaths+=("${cmds[@]/#//usr/sbin/}")
 
 	for a in "${cmdpaths[@]}"; do
 		IsCriticalFile "$a" || return
