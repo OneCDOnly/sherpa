@@ -558,6 +558,7 @@ SetCMDs()
 		readonly r_gnu_awk_cmd=/opt/bin/awk
 		readonly r_gnu_dd_cmd=/opt/bin/dd
 		readonly r_gnu_find_cmd=/opt/bin/find
+		readonly r_gnu_free_cmd=/opt/bin/free
 		readonly r_gnu_grep_cmd=/opt/bin/grep
 		readonly r_gnu_more_cmd=/opt/bin/more
 		readonly r_gnu_nice_cmd=/opt/bin/nice
@@ -1170,7 +1171,13 @@ DebugLogEnv()
 	DebugInfoMinSepr
 	Executer "/usr/sbin/screen -ls | /bin/sed '/^[[:space:]]*$/d;s/^[[:space:]]*//'" "$r_screen_sessions_pathfile" '' 1
 	DebugInfoMinSepr
-	Executer '/usr/bin/free' "$r_ram_freeused_pathfile" '' 1
+
+	if [[ -x $r_gnu_free_cmd ]]; then
+		Executer "$r_gnu_free_cmd -ht" "$r_ram_freeused_pathfile" '' 1
+	else
+		Executer '/usr/bin/free -m' "$r_ram_freeused_pathfile" '' 1
+	fi
+
 	DebugInfoMinSepr
 	Executer "/bin/grep -iE 'out of memory|oom-killer' /mnt/HDA_ROOT/.logs/kmsg" "$r_oom_log_pathfile" '' 1
 	DebugInfoMinSepr
