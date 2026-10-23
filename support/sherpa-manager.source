@@ -582,48 +582,50 @@ IsCMDsOk()
 
 	# Confirm required binaries are present.
 
-	IsCriticalFile /bin/awk || return
-	IsCriticalFile /bin/busybox || return
-	IsCriticalFile /bin/cat || return
-	IsCriticalFile /bin/date || return
-	IsCriticalFile /bin/df || return
-	IsCriticalFile /bin/grep || return
-	IsCriticalFile /bin/ln || return
-	IsCriticalFile /bin/md5sum || return
-	IsCriticalFile /bin/mknod || return
-	IsCriticalFile /bin/mktemp || return
-	IsCriticalFile /bin/more || return
-	IsCriticalFile /bin/pidof || return
-	IsCriticalFile /bin/ping || return
-	IsCriticalFile /bin/ps || return
-	IsCriticalFile /bin/renice || return
-	IsCriticalFile /bin/sed || return
-	IsCriticalFile /bin/sh || return
-	IsCriticalFile /bin/sha1sum || return
-	IsCriticalFile /bin/tar || return
-	IsCriticalFile /bin/touch || return
-	IsCriticalFile /bin/uname || return
-	IsCriticalFile /bin/uniq || return
-	IsCriticalFile /sbin/curl || return
-	IsCriticalFile /sbin/getcfg || return
-	IsCriticalFile /sbin/ldd || return
-	IsCriticalFile /sbin/rmcfg || return
-	IsCriticalFile /sbin/setcfg || return
-	IsCriticalFile /usr/bin/basename || return
-	IsCriticalFile /usr/bin/dirname || return
-	IsCriticalFile /usr/bin/du || return
-	IsCriticalFile /usr/bin/free || return
-	IsCriticalFile /usr/bin/readlink || return
-	IsCriticalFile /usr/bin/stat || return
-	IsCriticalFile /usr/bin/tail || return
-	IsCriticalFile /usr/bin/tee || return
-	IsCriticalFile /usr/bin/unzip || return
-	IsCriticalFile /usr/bin/uptime || return
-	IsCriticalFile /usr/bin/wc || return
-	IsCriticalFile /usr/local/bin/python2 || return
-	IsCriticalFile /usr/local/sbin/7z || return
-	IsCriticalFile /usr/local/sbin/qpkg_service || return
-	IsCriticalFile /usr/sbin/screen || return
+	local -a cmds=()
+	local -a cmdpaths=()
+
+	local a=''
+
+	cmds=(awk busybox cat date df grep ln md5sum mknod mktemp more pidof ping ps renice sed sh sha1sum tar touch uname uniq)
+
+	for a in "${cmds[@]}"; do
+		cmdpaths+=(/bin/$a)
+	done
+
+	cmds=(curl getcfg ldd rmcfg setcfg)
+
+	for a in "${cmds[@]}"; do
+		cmdpaths+=(/sbin/$a)
+	done
+
+	cmds=(basename dirname du free readlink stat tail tee unzip uptime wc)
+
+	for a in "${cmds[@]}"; do
+		cmdpaths+=(/usr/bin/$a)
+	done
+
+	cmds=(python2)
+
+	for a in "${cmds[@]}"; do
+		cmdpaths+=(/usr/local/bin/$a)
+	done
+
+	cmds=(7z qpkg_service)
+
+	for a in "${cmds[@]}"; do
+		cmdpaths+=(/usr/local/sbin/$a)
+	done
+
+	cmds=(screen)
+
+	for a in "${cmds[@]}"; do
+		cmdpaths+=(/usr/sbin/$a)
+	done
+
+	for a in "${cmdpaths[@]}"; do
+		IsCriticalFile "$a" || return
+	done
 
 	return 0
 
