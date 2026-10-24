@@ -1826,8 +1826,9 @@ ProcActions()
 
 	FuncInit
 
-	EndAni
+	PauseAni
 	ShowAsProc 'package actions'
+	ResumeAni
 
 	local -i tier_index=0
 
@@ -1935,6 +1936,8 @@ ProcActions()
 	fi
 
 	IsOsCanManageSignedPackages && ProcAction unsign all QPKG unsign	# For QPKGs that failed to install.
+
+	EndAni
 
 	if IsDebug; then
 		ListQPKGsActions
@@ -2063,6 +2066,7 @@ ProcAction()
 				ShowKeystrokes			# Enable before removing Entware (& GNU `stty`).
 			fi
 
+			PauseAni
 			CreateAndSetPidFile
 			_ExecOneActionWithManyForks_ "_${r_package_type}:${r_action}_" "${a_target_packages[@]}" &
 			pid=$!
@@ -2187,11 +2191,15 @@ ProcAction()
 			CloseMsgPipe
 
 			[[ ${useropt_terse:=true} = false && $useropt_verbose = false ]] && echo
+			ShowAsProc 'package actions'
+			ResumeAni
 			;;
 		IPK|PIP)
 			if [[ $ipks_downgrade = true || $ipks_install = true || $ipks_upgrade = true || $pips_install = true ]]; then
+				PauseAni
 				InitActionForkCounters
 				${r_package_type}s:${r_action}		# Only process these packages in groups, not individually.
+				ResumeAni
 			fi
 	esac
 
@@ -4055,6 +4063,7 @@ CalcIpkDepsToInstall()
 	else
 		DebugAsDone 'no IPKs to exclude'
 	fi
+
 	FuncExit
 
 	}
@@ -4171,6 +4180,7 @@ IPKs:upgrade()
 		fi
 
 		[[ ${useropt_terse:=true} = false && ${useropt_verbose:=false} = false ]] && echo
+		ResumeAni
 	fi
 
 	FuncExit $z
@@ -4282,6 +4292,7 @@ IPKs:install()
 		fi
 
 		[[ ${useropt_terse:=true} = false && ${useropt_verbose:=false} = false ]] && echo
+		ResumeAni
 	fi
 
 	FuncExit $z
@@ -4480,8 +4491,10 @@ PIPs:install()
 		exec_cmd="$r_pip_cmd install --upgrade --no-input $(PIPs-ACinstall-to:List) --cache-dir $r_pip_cache_path --root-user-action=ignore"
 		desc="$total_count auxiliary PIP$(Pluralise "$total_count")"
 
+		EndAni
 		ShowAsPercentProgress "install $desc" '' "$done_ok_count" 0 0 "$total_count"
 		StartAni
+
 		Executer "$exec_cmd" "$log_pathfile" log:failure-only
 		z=$?
 
@@ -4504,6 +4517,7 @@ PIPs:install()
 		ShowAsPercentProgress "install $desc" '' "$done_ok_count" 0 "$done_fail_count" "$total_count"
 
 		[[ ${useropt_terse:=true} = false && ${useropt_verbose:=false} = false ]] && echo
+		StartAni
 	fi
 
 	FuncExit $z
@@ -17372,7 +17386,7 @@ ShowAsPercentProgress()
 		ShowAsProcLong "$r_a" "$r_f"
 	fi
 
-	[[ $((b+c+d)) -ge $e ]] && Pause 0.5
+	[[ $((b+c+d)) -ge $e ]] && Pause 0.1
 
 	return 0
 
