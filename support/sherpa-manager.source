@@ -38,7 +38,7 @@
 set -o nounset
 shopt -s extglob
 [[ $- != *m* ]] || set +m								# Disable job control if-enabled (only needed for QTS 4.2.6).
-[[ -L /dev/fd ]] || ln -fns /proc/self/fd /dev/fd		# KLUDGE: `/dev/fd` isn't always created by QTS.
+[[ -L /dev/fd ]] || /bin/ln -fns /proc/self/fd /dev/fd	# KLUDGE: `/dev/fd` isn't always created by QTS.
 readonly r_args_raw=$*
 
 Init()
@@ -321,17 +321,18 @@ LoadConsts()
 
 	# Fixed-widths for report columns when GNU `awk` isn't available.
 
-		readonly r_report_qpkg_abbreviations_column_width=84
+		readonly r_report_qpkg_abbreviations_column_width=76
 		readonly r_report_qpkg_action_column_width=27
 		readonly r_report_qpkg_active_test_builtin_column_width=9
 		readonly r_report_qpkg_appl_version_column_width=22
+		readonly r_report_qpkg_author_column_width=20
 		readonly r_report_qpkg_auto_update_column_width=11
 		readonly r_report_qpkg_can_backup_column_width=8
 		readonly r_report_qpkg_can_clean_column_width=9
 		readonly r_report_qpkg_can_start_to_update_column_width=9
 		readonly r_report_qpkg_dependencies_column_width=29
-		readonly r_report_qpkg_description_column_width=10
-		readonly r_report_qpkg_install_date_column_width=20
+		readonly r_report_qpkg_description_column_width=100
+		readonly r_report_qpkg_install_date_column_width=11
 		readonly r_report_qpkg_is_complete_column_width=9
 		readonly r_report_qpkg_is_enabled_column_width=8
 		readonly r_report_qpkg_is_enhanced_column_width=9
@@ -343,10 +344,11 @@ LoadConsts()
 		readonly r_report_qpkg_name_column_width=21
 		readonly r_report_qpkg_opt_dependencies_column_width=29
 		readonly r_report_qpkg_os_version_column_width=8
-		readonly r_report_qpkg_path_column_width=48
+		readonly r_report_qpkg_path_column_width=47
 		readonly r_report_qpkg_repo_column_width=42
 		readonly r_report_qpkg_status_column_width=23
 		readonly r_report_qpkg_tier_column_width=9
+		readonly r_report_qpkg_uniqueunpack_column_width=9
 		readonly r_report_qpkg_version_column_width=19
 
 		readonly r_report_lazy_column_width=28				# Use this when I can't be bothered calculating an optimum fixed column width.
@@ -571,9 +573,9 @@ SetCMDs()
 			readonly r_pip_cmd=$r_python3_cmd' -m pip'
 		readonly r_python_cmd=/opt/bin/python
 
-	[[ ! -x /bin/less ]] && ln -sf /bin/busybox /bin/less			# KLUDGE: `/bin/less` isn't always there in QTS.
-	[[ ! -x /usr/bin/sort ]] && ln -sf /bin/busybox /usr/bin/sort	# KLUDGE: `/usr/bin/sort` randomly disappears from QTS.
-	[[ -x $r_python3_cmd && ! -L $r_python_cmd ]] && ln -s "$r_python3_cmd" "$r_python_cmd" # KLUDGE: in-case `python` has disappeared again ... ¯\_(ツ)_/¯
+	[[ ! -x /bin/less ]] && /bin/ln -sf /bin/busybox /bin/less			# KLUDGE: `/bin/less` isn't always there in QTS.
+	[[ ! -x /usr/bin/sort ]] && /bin/ln -sf /bin/busybox /usr/bin/sort	# KLUDGE: `/usr/bin/sort` randomly disappears from QTS.
+	[[ -x $r_python3_cmd && ! -L $r_python_cmd ]] && /bin/ln -s "$r_python3_cmd" "$r_python_cmd" # KLUDGE: in-case `python` has disappeared again ... ¯\_(ツ)_/¯
 
 	SetOsPauseMethod
 
@@ -589,13 +591,13 @@ IsCMDsOk()
 
 	local a=''
 
-	cmds=(awk busybox cat date df grep ln md5sum mknod mktemp more pidof ping ps renice sed sh sha1sum tar touch uname uniq)
+	cmds=(awk busybox cat chmod date df grep ln ls md5sum mkdir mknod mktemp more mv pidof ping ps renice rm rmdir sed sh sha1sum tar touch tr uname uniq)
 	cmdpaths+=("${cmds[@]/#//bin/}")
 
 	cmds=(curl getcfg ldd rmcfg setcfg)
 	cmdpaths+=("${cmds[@]/#//sbin/}")
 
-	cmds=(basename dirname du free readlink stat tail tee unzip uptime wc)
+	cmds=(basename cp cut dirname du free head readlink stat tail tee unzip uptime wc which xargs)
 	cmdpaths+=("${cmds[@]/#//usr/bin/}")
 
 	cmds=(python2)
@@ -727,7 +729,7 @@ ConfigEnv()
 
 		readonly r_external_packages_pathfile=$r_cache_path/Packages
 
-	rm -f "$r_report_output_pathfile" "$r_ramfs_freespace_pathfile" "$r_inhibit_display_pathfile" 2> /dev/null
+	/bin/rm -f "$r_report_output_pathfile" "$r_ramfs_freespace_pathfile" "$r_inhibit_display_pathfile" 2> /dev/null
 
 	readonly r_ani_end_pathfile=$r_animation_path/$r_ani_id.end			# Internal fileflag (to stop animation cleanly).
 	readonly r_ani_frame_pathfile=$r_animation_path/$r_ani_id.frame		# Next frame to be displayed by animator process.
@@ -1003,8 +1005,8 @@ DebugLogEnv()
 	DebugHardware ok 'NAS model' "$(get_display_name)"
 	DebugHardware ok CPU "$(GetHardwareCpuName)"
 	DebugHardware ok 'CPU stepping' "$(GetHardwareCpuStepping)"
-	DebugHardware ok 'available CPU threads' "$r_cpu_threads"
 	DebugHardware ok 'CPU architecture' "$(GetCpuDataWidth)"
+	DebugHardware ok 'available CPU threads' "$r_cpu_threads"
 	DebugHardware ok 'basic CPU SHA1 benchmark' "$(GetHardwareCpuBenchmark)"
 	DebugHardware ok RAM "${r_nas_ram_gb}GiB"
 	DebugKernel ok name "$(GetOsKernelName)"
@@ -1204,9 +1206,11 @@ DebugLogEnv()
 	DebugInfoMinSepr
 
 	if [[ -x $r_gnu_df_cmd ]]; then
-		Executer "$r_gnu_df_cmd --human-readable --print-type -t ext2 -t ext3 -t ext4 -t zfs -t tmpfs" "$r_ramfs_freespace_pathfile" '' 1
+		Executer "$r_gnu_df_cmd --human-readable --local --print-type -t ext2 -t ext3 -t ext4 -t zfs -t tmpfs" "$r_ramfs_freespace_pathfile" '' 1
+	elif (/bin/df -T &> /dev/null); then
+		Executer '/bin/df -hT' "$r_ramfs_freespace_pathfile" '' 1
 	else
-		Executer "/bin/df -h | /bin/grep -iEv '^(devtmpfs|cgroup_root)'" "$r_ramfs_freespace_pathfile"
+		Executer "/bin/df -h | /bin/grep -iEv '^(devtmpfs|cgroup_root)'" "$r_ramfs_freespace_pathfile" '' 1
 	fi
 
 	DebugInfoMinSepr
@@ -1367,7 +1371,7 @@ CheckTasks()
 
 					# Assume first package version is same as remaining package versions.
 
-					installed_version=$($r_opkg_cmd list-installed | /bin/grep "^${a_target_packages%% *} *" | head -n1 | cut -d' ' -f3 | cut -d'-' -f1)
+					installed_version=$($r_opkg_cmd list-installed | /bin/grep "^${a_target_packages%% *} *" | /usr/bin/head -n1 | /usr/bin/cut -d' ' -f3 | /usr/bin/cut -d'-' -f1)
 
 					if [[ ${installed_version//.} -gt 238 ]]; then
 						ipks_downgrade=true
@@ -1386,7 +1390,7 @@ CheckTasks()
 
 				# Assume first package version is same as remaining package versions.
 
-#				installed_version=$($r_opkg_cmd list-installed | /bin/grep "^${a_target_packages%% *} *" | head -n1 | cut -d' ' -f3 | cut -d'-' -f1)
+#				installed_version=$($r_opkg_cmd list-installed | /bin/grep "^${a_target_packages%% *} *" | /usr/bin/head -n1 | /usr/bin/cut -d' ' -f3 | /usr/bin/cut -d'-' -f1)
 
 #				if [[ ${installed_version//.} -gt 2392 ]]; then
 #					ipks_downgrade=true
@@ -1406,7 +1410,7 @@ CheckTasks()
 #
 				# Assume first package version is same as remaining package versions.
 #
-#				installed_version=$($r_opkg_cmd list-installed | /bin/grep "^${a_target_packages%% *} *" | head -n1 | cut -d' ' -f3 | cut -d'-' -f1)
+#				installed_version=$($r_opkg_cmd list-installed | /bin/grep "^${a_target_packages%% *} *" | /usr/bin/head -n1 | /usr/bin/cut -d' ' -f3 | /usr/bin/cut -d'-' -f1)
 #
 #				if [[ ${installed_version//.} -gt 2462 ]]; then
 #					ipks_downgrade=true
@@ -1424,7 +1428,7 @@ CheckTasks()
 
 		# Assume first package version is same as remaining package versions.
 
-#		installed_version=$($r_opkg_cmd list-installed | /bin/grep "^${a_target_packages%% *} *" | head -n1 | cut -d' ' -f3 | cut -d'-' -f1)
+#		installed_version=$($r_opkg_cmd list-installed | /bin/grep "^${a_target_packages%% *} *" | /usr/bin/head -n1 | /usr/bin/cut -d' ' -f3 | /usr/bin/cut -d'-' -f1)
 
 #		if [[ ${installed_version//.} -gt 4041 ]]; then
 #			ipks_downgrade=true
@@ -1461,7 +1465,7 @@ WaitForPidsThenRemove()
 	[[ -s $1 ]] || return
 
 	wait $(< "$1") 2> /dev/null
-	rm -f "$1"
+	/bin/rm -f "$1"
 
 	}
 
@@ -1826,8 +1830,9 @@ ProcActions()
 
 	FuncInit
 
-	EndAni
+	PauseAni
 	ShowAsProc 'package actions'
+	ResumeAni
 
 	local -i tier_index=0
 
@@ -1835,7 +1840,7 @@ ProcActions()
 	local state=''
 	local tier=''
 
-	rm -f "$r_action_results_pathfile" 2> /dev/null
+	/bin/rm -f "$r_action_results_pathfile" 2> /dev/null
 	OpenMsgPipeEnhancedLog								# directive:omit-from-production
 
 	# -> Package preparation phase <-
@@ -1935,6 +1940,8 @@ ProcActions()
 	fi
 
 	IsOsCanManageSignedPackages && ProcAction unsign all QPKG unsign	# For QPKGs that failed to install.
+
+	EndAni
 
 	if IsDebug; then
 		ListQPKGsActions
@@ -2063,6 +2070,7 @@ ProcAction()
 				ShowKeystrokes			# Enable before removing Entware (& GNU `stty`).
 			fi
 
+			PauseAni
 			CreateAndSetPidFile
 			_ExecOneActionWithManyForks_ "_${r_package_type}:${r_action}_" "${a_target_packages[@]}" &
 			pid=$!
@@ -2187,11 +2195,15 @@ ProcAction()
 			CloseMsgPipe
 
 			[[ ${useropt_terse:=true} = false && $useropt_verbose = false ]] && echo
+			ShowAsProc 'package actions'
+			ResumeAni
 			;;
 		IPK|PIP)
 			if [[ $ipks_downgrade = true || $ipks_install = true || $ipks_upgrade = true || $pips_install = true ]]; then
+				PauseAni
 				InitActionForkCounters
 				${r_package_type}s:${r_action}		# Only process these packages in groups, not individually.
+				ResumeAni
 			fi
 	esac
 
@@ -2215,8 +2227,8 @@ OpenMsgPipe()
 	#	$action_msg_pipe_fd
 	#	$backup_stdin_fd
 
-	[[ -p $r_action_msg_pipe ]] && rm -f "$r_action_msg_pipe"
-	[[ ! -d $(/usr/bin/dirname "$r_action_msg_pipe") ]] && mkdir -p "$(/usr/bin/dirname "$r_action_msg_pipe")"
+	[[ -p $r_action_msg_pipe ]] && /bin/rm -f "$r_action_msg_pipe"
+	[[ ! -d $(/usr/bin/dirname "$r_action_msg_pipe") ]] && /bin/mkdir -p "$(/usr/bin/dirname "$r_action_msg_pipe")"
 
 	# Create message pipe.
 
@@ -2268,7 +2280,7 @@ CloseMsgPipe()
 
 	# Delete message pipe.
 
-	[[ -n ${r_action_msg_pipe:-} && -p $r_action_msg_pipe ]] && rm -f "$r_action_msg_pipe"
+	[[ -n ${r_action_msg_pipe:-} && -p $r_action_msg_pipe ]] && /bin/rm -f "$r_action_msg_pipe"
 
 	} 2> /dev/null
 
@@ -3765,9 +3777,9 @@ ResetArchivedLogs()
 #	local b=''
 #
 #	ShowAsQuiz "$a"
-#	IsInTerminal && which stty &> /dev/null && stty igncr	# Ignore CR to prevent an onscreen linefeed (which disrupts same-line rewrite used later, and looks bad).
+#	IsInTerminal && /usr/bin/which stty &> /dev/null && stty igncr	# Ignore CR to prevent an onscreen linefeed (`which` disrupts same-line rewrite used later, and looks bad).
 #	read -rn1 b
-#	IsInTerminal && which stty &> /dev/null && stty -igncr	# Re-allow CR.
+#	IsInTerminal && /usr/bin/which stty &> /dev/null && stty -igncr	# Re-allow CR.
 #	DebugVar b
 #
 #	ShowAsQuizDone "$a: $b"
@@ -3805,13 +3817,13 @@ PatchEntwareService()
 	else
 		# Ensure existing /opt files are moved out-of-the-way before Entware creates new /opt symlink:
 
-		append_text='external_apps_path='$r_external_apps_path' external_apps_temp_path='$r_external_apps_temp_path'; rmdir "$external_apps_path" "$external_apps_temp_path" 2> /dev/null; [[ -d $external_apps_path \&\& ! -L $external_apps_path \&\& ! -d $external_apps_temp_path ]] \&\& mv "$external_apps_path" "$external_apps_temp_path"'
+		append_text='external_apps_path='$r_external_apps_path' external_apps_temp_path='$r_external_apps_temp_path'; /bin/rmdir "$external_apps_path" "$external_apps_temp_path" 2> /dev/null; [[ -d $external_apps_path \&\& ! -L $external_apps_path \&\& ! -d $external_apps_temp_path ]] \&\& /bin/mv "$external_apps_path" "$external_apps_temp_path"'
 		match_text='# sym-link $QPKG_DIR to /opt'
 		/bin/sed -i "s|$match_text|${match_text}\n\n${r_char_tab}${r_prefix}\n${r_char_tab}${append_text}\n|" "$r_package_init_pathfile"
 
 		# ... then restored afterward:
 
-		append_text='(shopt -s dotglob; [[ -L $external_apps_path \&\& -d $external_apps_temp_path ]] \&\& { mv "$external_apps_temp_path"/* "$external_apps_path"/; rm -rf "${external_apps_temp_path:?no path specified}" ;})'
+		append_text='(shopt -s dotglob; [[ -L $external_apps_path \&\& -d $external_apps_temp_path ]] \&\& { /bin/mv "$external_apps_temp_path"/* "$external_apps_path"/; /bin/rm -rf "${external_apps_temp_path:?no path specified}" ;})'
 		match_text='/bin/ln -sf $QPKG_DIR /opt'
 		/bin/sed -i "s|$match_text|${match_text}\n\n${r_char_tab}${r_prefix}\n${r_char_tab}${append_text}\n|" "$r_package_init_pathfile"
 
@@ -3881,7 +3893,7 @@ SaveIpkAndPipList()
 	#	$r_prev_ipk_list_pathfile
 	#	$r_prev_pip_list_pathfile
 
-	$r_pip_cmd freeze | cut -d'=' -f1 > "$r_prev_pip_list_pathfile"
+	$r_pip_cmd freeze | /usr/bin/cut -d'=' -f1 > "$r_prev_pip_list_pathfile"
 	[[ -s $r_prev_pip_list_pathfile ]] && DebugAsDone "saved current PIP list to $(FormatFileName "$r_prev_pip_list_pathfile")"
 
 	$r_opkg_cmd list-installed > "$r_prev_ipk_list_pathfile"
@@ -4055,6 +4067,7 @@ CalcIpkDepsToInstall()
 	else
 		DebugAsDone 'no IPKs to exclude'
 	fi
+
 	FuncExit
 
 	}
@@ -4130,7 +4143,7 @@ IPKs:upgrade()
 	IPKs-ACupgrade-to:Init
 	IPKs-ACdownload-to:Init
 
-	IPKs-ACupgrade-to:Add "$($r_opkg_cmd list-upgradable | cut -f1 -d' ')"
+	IPKs-ACupgrade-to:Add "$($r_opkg_cmd list-upgradable | /usr/bin/cut -f1 -d' ')"
 
 	# Don't upgrade IPKs that must remain downgraded.
 
@@ -4171,6 +4184,7 @@ IPKs:upgrade()
 		fi
 
 		[[ ${useropt_terse:=true} = false && ${useropt_verbose:=false} = false ]] && echo
+		ResumeAni
 	fi
 
 	FuncExit $z
@@ -4223,7 +4237,7 @@ IPKs:install()
 
 		if [[ -s $r_prev_ipk_list_pathfile && $useropt_fix = false ]]; then		# Don't load previous IPK list during 'check'.
 			LoadIpkList
-			mv -f "$r_prev_ipk_list_pathfile" "$r_prev_ipk_list_pathfile.installing"
+			/bin/mv -f "$r_prev_ipk_list_pathfile" "$r_prev_ipk_list_pathfile.installing"
 		fi
 	fi
 
@@ -4271,17 +4285,18 @@ IPKs:install()
 			HideKeystrokes
 			SetCapabilities
 
-			rm -f "$r_prev_ipk_list_pathfile.installing" 2> /dev/null
+			/bin/rm -f "$r_prev_ipk_list_pathfile.installing" 2> /dev/null
 		else
 			NoteIpkAcAsEr "$(IPKs-ACdownload-to:Array)" install
 			SaveActionResultMetrics IPK auxiliary install "$total_count" er "$z"
 
 			if [[ -s $r_prev_ipk_list_pathfile.installing ]]; then
-				mv -f "$r_prev_ipk_list_pathfile.installing" "$r_prev_ipk_list_pathfile"
+				/bin/mv -f "$r_prev_ipk_list_pathfile.installing" "$r_prev_ipk_list_pathfile"
 			fi
 		fi
 
 		[[ ${useropt_terse:=true} = false && ${useropt_verbose:=false} = false ]] && echo
+		ResumeAni
 	fi
 
 	FuncExit $z
@@ -4472,7 +4487,7 @@ PIPs:install()
 
 		if [[ -s $r_prev_pip_list_pathfile && $useropt_fix = false ]]; then		# Don't load previous PIP list during 'check'.
 			LoadPipList
-			mv -f "$r_prev_pip_list_pathfile" "$r_prev_pip_list_pathfile.installing"
+			/bin/mv -f "$r_prev_pip_list_pathfile" "$r_prev_pip_list_pathfile.installing"
 		fi
 
 		((total_count++))
@@ -4480,8 +4495,10 @@ PIPs:install()
 		exec_cmd="$r_pip_cmd install --upgrade --no-input $(PIPs-ACinstall-to:List) --cache-dir $r_pip_cache_path --root-user-action=ignore"
 		desc="$total_count auxiliary PIP$(Pluralise "$total_count")"
 
+		EndAni
 		ShowAsPercentProgress "install $desc" '' "$done_ok_count" 0 0 "$total_count"
 		StartAni
+
 		Executer "$exec_cmd" "$log_pathfile" log:failure-only
 		z=$?
 
@@ -4490,13 +4507,13 @@ PIPs:install()
 			DebugAsDone "installed $desc"
 			SaveActionResultMetrics PIP auxiliary install "$done_ok_count" ok
 
-			rm -f "$r_prev_pip_list_pathfile.installing" 2> /dev/null
+			/bin/rm -f "$r_prev_pip_list_pathfile.installing" 2> /dev/null
 		else
 			((done_fail_count++))
 			SaveActionResultMetrics PIP auxiliary install "$done_fail_count" er "$z"
 
 			if [[ -s $r_prev_pip_list_pathfile.installing ]]; then
-				mv -f "$r_prev_pip_list_pathfile.installing" "$r_prev_pip_list_pathfile"
+				/bin/mv -f "$r_prev_pip_list_pathfile.installing" "$r_prev_pip_list_pathfile"
 			fi
 		fi
 
@@ -4504,6 +4521,7 @@ PIPs:install()
 		ShowAsPercentProgress "install $desc" '' "$done_ok_count" 0 "$done_fail_count" "$total_count"
 
 		[[ ${useropt_terse:=true} = false && ${useropt_verbose:=false} = false ]] && echo
+		StartAni
 	fi
 
 	FuncExit $z
@@ -4554,7 +4572,7 @@ CloseIpkArchive()
 	# Inputs: (global)
 	#	$r_external_packages_pathfile
 
-	rm -f "$r_external_packages_pathfile"
+	/bin/rm -f "$r_external_packages_pathfile"
 
 	} 2> /dev/null
 
@@ -5099,6 +5117,7 @@ _GeneratePacksReportDataRow_()
 	#	$qpkg_name
 	#	$r_report_flags_path
 	#	$r_report_qpkg_appl_version_column_width
+	#	$r_report_qpkg_description_column_width
 	#	$r_report_qpkg_name_column_width
 
 	local -a a_column_vars=(app_ver description name)
@@ -5149,7 +5168,7 @@ _GeneratePacksReportDataRow_()
 
 	if IsOsCanAutowidthTableColumns; then
 		if IsThisAnAlternateLine "$2"; then
-			TextOnDarkGrey "$(printf '%s' "$name_msg|$app_ver_msg|$description_msg")"
+			TextOnDarkGrey "$(printf '%s' "$name_msg|$app_ver_msg|$(FormatReportFieldWidth "$description_msg" "$r_report_qpkg_description_column_width")")"
 		else
 			printf '%s' "$name_msg|$app_ver_msg|$description_msg"
 		fi
@@ -5445,7 +5464,7 @@ _GenerateStatusReportDataRow_()
 
 	if IsOsCanAutowidthTableColumns; then
 		if IsThisAnAlternateLine "$1"; then
-			TextOnDarkGrey "$(printf '%s' "$name_msg|$status_msg|$action_msg|$ver_msg|$app_ver_msg|$path_msg")"
+			TextOnDarkGrey "$(printf '%s' "$name_msg|$status_msg|$action_msg|$ver_msg|$app_ver_msg|$(FormatReportFieldWidth "$path_msg" "$r_report_qpkg_path_column_width")")"
 		else
 			printf '%s' "$name_msg|$status_msg|$action_msg|$ver_msg|$app_ver_msg|$path_msg"
 		fi
@@ -5602,12 +5621,13 @@ _GenerateReposReportDataRow_()
 
 	if IsOsCanAutowidthTableColumns; then
 		if IsThisAnAlternateLine "$1"; then
-			TextOnDarkGrey "$(printf '%s' "$name_msg|$assigned_repo_msg|$install_date_msg")"
+			TextOnDarkGrey "$(printf '%s' "$name_msg|$assigned_repo_msg|$(FormatReportFieldWidth "$install_date_msg" "$r_report_qpkg_install_date_column_width")")"
 		else
 			printf '%s' "$name_msg|$assigned_repo_msg|$install_date_msg"
 		fi
 	else
 		if [[ -z $auxiliary_msg ]]; then
+
 			FormatReportFieldWidth "$name_msg" "$r_report_qpkg_name_column_width"
 			printf ' %s' "$assigned_repo_msg"
 		else
@@ -5704,6 +5724,7 @@ _GenerateAbsReportDataRow_()
 
 			if [[ $auxiliary != false ]]; then
 				auxiliary_msg=$(FormatReportField "not installable, $auxiliary" alert_mute)
+				abs_msg=$(FormatReportField N/A normal_mute)
 			else
 				abs_msg=$(FormatReportField "$abs" normal_mute)
 			fi
@@ -5725,7 +5746,7 @@ _GenerateAbsReportDataRow_()
 
 	if IsOsCanAutowidthTableColumns; then
 		if IsThisAnAlternateLine "$1"; then
-			TextOnDarkGrey "$(printf '%s' "$name_msg|$installed_msg|$abs_msg")"
+			TextOnDarkGrey "$(printf '%s' "$name_msg|$installed_msg|$(FormatReportFieldWidth "$abs_msg" "$r_report_qpkg_abbreviations_column_width")")"
 		else
 			printf '%s' "$name_msg|$installed_msg|$abs_msg"
 		fi
@@ -6076,7 +6097,7 @@ _GenerateDepsReportDataRow_()
 
 	if IsOsCanAutowidthTableColumns; then
 		if IsThisAnAlternateLine "$1"; then
-			TextOnDarkGrey "$(printf '%s' "$name_msg|$deps_msg|$opt_deps_msg|$prohibited_msg|$installed_msg|$enabled_msg|$complete_msg|$managed_msg|$signed_msg|$min_ram_msg|$min_os_msg|$max_os_msg|$author_msg")"
+			TextOnDarkGrey "$(printf '%s' "$name_msg|$deps_msg|$opt_deps_msg|$prohibited_msg|$installed_msg|$enabled_msg|$complete_msg|$managed_msg|$signed_msg|$min_ram_msg|$min_os_msg|$max_os_msg|$(FormatReportFieldWidth "$author_msg" "$r_report_qpkg_author_column_width")")"
 		else
 			printf '%s' "$name_msg|$deps_msg|$opt_deps_msg|$prohibited_msg|$installed_msg|$enabled_msg|$complete_msg|$managed_msg|$signed_msg|$min_ram_msg|$min_os_msg|$max_os_msg|$author_msg"
 		fi
@@ -6093,7 +6114,7 @@ _GenerateDepsReportDataRow_()
 		FormatReportFieldWidth "$min_ram_msg" "$r_report_qpkg_min_ram_column_width"
 		FormatReportFieldWidth "$min_os_msg" "$r_report_qpkg_os_version_column_width"
 		FormatReportFieldWidth "$max_os_msg" "$r_report_qpkg_os_version_column_width"
-		FormatReportFieldWidth "$author_msg" "$r_report_lazy_column_width"
+		FormatReportFieldWidth "$author_msg" "$r_report_qpkg_author_column_width"
 	fi
 
 	printf '\n'
@@ -6288,7 +6309,7 @@ _GenerateFeaturesReportDataRow_()
 
 	if IsOsCanAutowidthTableColumns; then
 		if IsThisAnAlternateLine "$1"; then
-			TextOnDarkGrey "$(printf '%s' "$name_msg|$independent_msg|$optional_msg|$dependent_msg|$enhanced_msg|$backup_msg|$clean_msg|$restart_to_update_msg|$autoupdate_msg|$active_test_msg|$uniqueunpack_msg")"
+			TextOnDarkGrey "$(printf '%s' "$name_msg|$independent_msg|$optional_msg|$dependent_msg|$enhanced_msg|$backup_msg|$clean_msg|$restart_to_update_msg|$autoupdate_msg|$active_test_msg|$(FormatReportFieldWidth "$uniqueunpack_msg" "$r_report_qpkg_uniqueunpack_column_width")")"
 		else
 			printf '%s' "$name_msg|$independent_msg|$optional_msg|$dependent_msg|$enhanced_msg|$backup_msg|$clean_msg|$restart_to_update_msg|$autoupdate_msg|$active_test_msg|$uniqueunpack_msg"
 		fi
@@ -6303,7 +6324,7 @@ _GenerateFeaturesReportDataRow_()
 		FormatReportFieldWidth "$restart_to_update_msg" "$r_report_qpkg_can_start_to_update_column_width"
 		FormatReportFieldWidth "$autoupdate_msg" "$r_report_qpkg_auto_update_column_width"
 		FormatReportFieldWidth "$active_test_msg" "$r_report_qpkg_active_test_builtin_column_width"
-		FormatReportFieldWidth "$uniqueunpack_msg" "$r_report_lazy_column_width"
+		FormatReportFieldWidth "$uniqueunpack_msg" "$r_report_qpkg_uniqueunpack_column_width"
 	fi
 
 	printf '\n'
@@ -6511,7 +6532,7 @@ DisplayAsHelpTitle()
 	# Inputs: (global)
 	#	$r_chars_bullet
 
-	printf '\n%s\n' "${r_chars_bullet}$(Capitalise "${1:-}" | tr -s ' ')"
+	printf '\n%s\n' "${r_chars_bullet}$(Capitalise "${1:-}" | /bin/tr -s ' ')"
 
 	}
 
@@ -7163,10 +7184,10 @@ CalcReportFirstColumnWidth()
 	a=$(/bin/sed '/^#[[:space:]].*/d;/#$/d;s/[[:space:]]#[[:space:]].*//' < "$1")	# Remove comment lines and line comments.
 	a=$(/bin/sed 's/[[:space:]]*$//' <<< "$a")										# Remove line trailing whitespace.
 	a=$(/bin/sed '/^$/d' <<< "$a")													# Remove empty lines.
-	a=$(head -n1 <<< "$a")															# Only use header row (column titles).
+	a=$(/usr/bin/head -n1 <<< "$a")													# Only use header row (column titles).
 	a=$(StripANSICodes "$a")														# Remove ANSI codes to calculate column width for `less`.
 
-	b=$(cut -f2 -d: <<< "$a"):														# Grab second field characters.
+	b=$(/usr/bin/cut -f2 -d: <<< "$a"):												# Grab second field characters.
 	b=$(/bin/sed 's/^[[:space:]]*//' <<< "$b")										# Remove leading whitespace.
 
 	# shellcheck disable=2295
@@ -7187,7 +7208,7 @@ GetLogSessStartLine()
 
 	local -i a=0
 
-	a=$(($(/bin/grep -n 'SCRIPT:.*started:' "$r_session_tail_pathfile" | /usr/bin/tail -n${1:-1} | head -n1 | cut -d':' -f1)-1))
+	a=$(($(/bin/grep -n 'SCRIPT:.*started:' "$r_session_tail_pathfile" | /usr/bin/tail -n${1:-1} | /usr/bin/head -n1 | /usr/bin/cut -d':' -f1)-1))
 	[[ $a -lt 1 ]] && a=1
 	printf '%s' "$a"
 
@@ -7204,7 +7225,7 @@ GetLogSessFinishLine()
 
 	local -i a=0
 
-	a=$(($(/bin/grep -n 'SCRIPT:.*finished:' "$r_session_tail_pathfile" | /usr/bin/tail -n${1:-1} | cut -d':' -f1)+2))
+	a=$(($(/bin/grep -n 'SCRIPT:.*finished:' "$r_session_tail_pathfile" | /usr/bin/tail -n${1:-1} | /usr/bin/cut -d':' -f1)+2))
 	[[ $a -eq 2 ]] && a=3
 	printf '%s' "$a"
 
@@ -7235,7 +7256,7 @@ ArchivePriorSessLog()
 	for f in "$r_log_path"/session.*.active.log; do
 		if [[ -f $f && $f != "$session_active_log_pathfile" ]]; then
 			/bin/cat "$f" >> "$r_session_archive_log_pathfile"
-			rm -f "$f"
+			/bin/rm -f "$f"
 		fi
 	done
 
@@ -7247,7 +7268,7 @@ ResetActiveSessLog()
 	# Inputs: (global)
 	#	$session_active_log_pathfile
 
-	rm -f "$session_active_log_pathfile"
+	/bin/rm -f "$session_active_log_pathfile"
 
 	} 2> /dev/null
 
@@ -7278,7 +7299,7 @@ ExtractPrevSessFromTail()
 
 		/bin/sed "$start_line,$end_line!d" "$r_session_tail_pathfile" > "$r_session_last_pathfile"
 	else
-		rm -f "$r_session_last_pathfile"
+		/bin/rm -f "$r_session_last_pathfile"
 	fi
 
 	return 0
@@ -7296,7 +7317,7 @@ ExtractTailFromLog()
 	if [[ -s $r_session_archive_log_pathfile ]]; then
 		/usr/bin/tail -n${r_log_tail_lines} "$r_session_archive_log_pathfile" > "$r_session_tail_pathfile"	# Trim main log first so there's less to `grep`.
 	else
-		rm -f "$r_session_tail_pathfile"
+		/bin/rm -f "$r_session_tail_pathfile"
 	fi
 
 	return 0
@@ -7435,7 +7456,7 @@ RefreshDirSizeCount()
 	[[ -d $dir_location ]] || exit
 	IsCriticalFile $r_gnu_find_cmd || exit
 
-	current_bytes=$($r_gnu_find_cmd "$dir_location" -type f -name '*.ipk' -exec /usr/bin/du --bytes --total --apparent-size {} + 2> /dev/null | /bin/grep total$ | cut -f1)
+	current_bytes=$($r_gnu_find_cmd "$dir_location" -type f -name '*.ipk' -exec /usr/bin/du --bytes --total --apparent-size {} + 2> /dev/null | /bin/grep total$ | /usr/bin/cut -f1)
 	[[ -z $current_bytes ]] && current_bytes=0
 
 	} &> /dev/null
@@ -7449,8 +7470,8 @@ EraseForkCountPaths()
 	#	$r_action_counts_path
 
 	ClearPath "$r_action_counts_path" "$proc_counts_path"
-	rmdir "$proc_counts_path"
-	[[ -e $r_abort_actions_pathfile ]] && rm -f "$r_abort_actions_pathfile"
+	/bin/rmdir "$proc_counts_path"
+	[[ -e $r_abort_actions_pathfile ]] && /bin/rm -f "$r_abort_actions_pathfile"
 
 	} &> /dev/null
 
@@ -8033,7 +8054,7 @@ CheckSystemLoad()
 	elif IsThisLoadAverageHigh "$a"; then
 		ShowAsWarn 'the NAS has an unusually-high system-load, so this may take a while'
 	elif IsThisLoadAverageElevated "$a"; then
-		ShowAsNote 'the NAS has an elevated system-load, so this may take a little longer than usual'
+		ShowAsNote 'the NAS has an elevated system-load, so this may take longer than usual'
 	fi
 
 	FuncExit
@@ -8455,7 +8476,7 @@ ReportBackups()
 			((n++))
 			_GenerateBacksReportItemLine_ "$epoch_time" "$file_name" "$file_bytes" "$r_report_highlight_backups_older_than" "$n" > "$r_report_rows_path/$n" &
 			AppendToPidsFile "$!" "$r_pid_pathfile"
-		done <<< "$(cd "$r_qpkg_bu_path" && ls -l1tr --time-style=+"%Y-%m-%d %H:%M:%S" ./*.config.tar.gz 2> /dev/null | /bin/awk '{print $6" "$7" "$8" "$5}')"
+		done <<< "$(cd "$r_qpkg_bu_path" && /bin/ls -l1tr --time-style=+"%Y-%m-%d %H:%M:%S" ./*.config.tar.gz 2> /dev/null | /bin/awk '{print $6" "$7" "$8" "$5}')"
 	fi
 
 	m=$n
@@ -9366,33 +9387,33 @@ ReadFromMsgPipe()
 
 	eval "$1='${_msg1_key:-null}' $2='${_msg1_value:-null}' $3='${_msg2_key:-null}' $4='${_msg2_value:-null}'"
 
-	AppendToMsgPipeEnhancedLog																# directive:omit-from-production
+	AppendToMsgPipeEnhancedLog																	# directive:omit-from-production
 
 	return 0
 
 	}
 
-OpenMsgPipeEnhancedLog()																	# directive:omit-from-production
-	{																						# directive:omit-from-production
+OpenMsgPipeEnhancedLog()																		# directive:omit-from-production
+	{																							# directive:omit-from-production
 
 	# Inputs: (global)
 	#	$r_action_msg_pipe_log_pathfile
 
-	[[ -e $r_action_msg_pipe_log_pathfile ]] && rm -f "$r_action_msg_pipe_log_pathfile"		# directive:omit-from-production
+	[[ -e $r_action_msg_pipe_log_pathfile ]] && /bin/rm -f "$r_action_msg_pipe_log_pathfile"	# directive:omit-from-production
 
-	AppendToMsgPipeEnhancedLog 'opened new log session.'									# directive:omit-from-production
+	AppendToMsgPipeEnhancedLog 'opened new log session.'										# directive:omit-from-production
 
-	}																						# directive:omit-from-production
+	}																							# directive:omit-from-production
 
-CloseMsgPipeEnhancedLog()																	# directive:omit-from-production
-	{																						# directive:omit-from-production
+CloseMsgPipeEnhancedLog()																		# directive:omit-from-production
+	{																							# directive:omit-from-production
 
-	AppendToMsgPipeEnhancedLog 'closed log session.'										# directive:omit-from-production
+	AppendToMsgPipeEnhancedLog 'closed log session.'											# directive:omit-from-production
 
-	}																						# directive:omit-from-production
+	}																							# directive:omit-from-production
 
-AppendToMsgPipeEnhancedLog()																# directive:omit-from-production
-	{																						# directive:omit-from-production
+AppendToMsgPipeEnhancedLog()																	# directive:omit-from-production
+	{																							# directive:omit-from-production
 
 	# Inputs: (global)
 	#	$r_action
@@ -9495,7 +9516,7 @@ MarkActionForkAsQueued()
 MarkActionForkAsEntry()
 	{
 
-	[[ -n ${proc_queued_pathfile:-} && -e $proc_queued_pathfile ]] && mv "$proc_queued_pathfile" "$proc_working_pathfile"
+	[[ -n ${proc_queued_pathfile:-} && -e $proc_queued_pathfile ]] && /bin/mv "$proc_queued_pathfile" "$proc_working_pathfile"
 	SendActionStateUpdate en
 
 	}
@@ -9510,7 +9531,7 @@ MarkActionForkAsExit()
 MarkActionForkAsDoneOk()
 	{
 
-	[[ -n $proc_working_pathfile && -e $proc_working_pathfile && -n $proc_done_ok_pathfile ]] && mv "$proc_working_pathfile" "$proc_done_ok_pathfile"
+	[[ -n $proc_working_pathfile && -e $proc_working_pathfile && -n $proc_done_ok_pathfile ]] && /bin/mv "$proc_working_pathfile" "$proc_done_ok_pathfile"
 	SendActionStateUpdate ok
 
 	}
@@ -9518,7 +9539,7 @@ MarkActionForkAsDoneOk()
 MarkActionForkAsDoneError()
 	{
 
-	[[ -n $proc_working_pathfile && -e $proc_working_pathfile && -n $proc_done_fail_pathfile ]] && mv "$proc_working_pathfile" "$proc_done_fail_pathfile"
+	[[ -n $proc_working_pathfile && -e $proc_working_pathfile && -n $proc_done_fail_pathfile ]] && /bin/mv "$proc_working_pathfile" "$proc_done_fail_pathfile"
 	SendActionStateUpdate er
 
 	}
@@ -9526,7 +9547,7 @@ MarkActionForkAsDoneError()
 MarkActionForkAsSkippedOk()
 	{
 
-	[[ -n $proc_working_pathfile && -e $proc_working_pathfile && -n $proc_skip_ok_pathfile ]] && mv "$proc_working_pathfile" "$proc_skip_ok_pathfile"
+	[[ -n $proc_working_pathfile && -e $proc_working_pathfile && -n $proc_skip_ok_pathfile ]] && /bin/mv "$proc_working_pathfile" "$proc_skip_ok_pathfile"
 	SendActionStateUpdate sk
 
 	}
@@ -9534,7 +9555,7 @@ MarkActionForkAsSkippedOk()
 MarkActionForkAsSkippedAbort()
 	{
 
-	[[ -n $proc_working_pathfile && -e $proc_working_pathfile && -n $proc_skip_abort_pathfile ]] && mv "$proc_working_pathfile" "$proc_skip_abort_pathfile"
+	[[ -n $proc_working_pathfile && -e $proc_working_pathfile && -n $proc_skip_abort_pathfile ]] && /bin/mv "$proc_working_pathfile" "$proc_skip_abort_pathfile"
 	SendActionStateUpdate sa
 
 	}
@@ -9542,7 +9563,7 @@ MarkActionForkAsSkippedAbort()
 MarkActionForkAsSkippedError()
 	{
 
-	[[ -n $proc_working_pathfile && -e $proc_working_pathfile && -n $proc_skip_error_pathfile ]] && mv "$proc_working_pathfile" "$proc_skip_error_pathfile"
+	[[ -n $proc_working_pathfile && -e $proc_working_pathfile && -n $proc_skip_error_pathfile ]] && /bin/mv "$proc_working_pathfile" "$proc_skip_error_pathfile"
 	SendActionStateUpdate se
 
 	}
@@ -9806,7 +9827,7 @@ GetFirstLineSecondField()
 
 	[[ -n "$1" ]] || return 1
 
-	head -n1 <<< "$1" | /bin/sed 's/^.*: //' | tr -s ' '
+	/usr/bin/head -n1 <<< "$1" | /bin/sed 's/^.*: //' | /bin/tr -s ' '
 
 	}
 
@@ -9847,7 +9868,7 @@ GetHardwareCpuBenchmark()
 		/bin/renice 0 $$ &> /dev/null
 	fi
 
-	c=$(/bin/grep copied <<< "$c" | cut -d, -f4)
+	c=$(/bin/grep copied <<< "$c" | /usr/bin/cut -d, -f4)
 	c=${c//[[:blank:]]/}
 
 	if [[ -z $c ]]; then
@@ -9882,7 +9903,7 @@ GetHardwareVolumeBenchmark()
 	d=$(GetUserDefVol)/zero
 
 	if [[ -d $(/usr/bin/dirname "$d") ]]; then
-		[[ -e $d ]] && rm -f "$d"
+		[[ -e $d ]] && /bin/rm -f "$d"
 
 		if [[ ! -x $r_gnu_dd_cmd ]]; then
 			printf "unable to measure, GNU 'dd' is unavailable"
@@ -9900,10 +9921,10 @@ GetHardwareVolumeBenchmark()
 			/bin/renice 0 $$ &> /dev/null
 		fi
 
-		[[ -e $d ]] && rm -f "$d"
+		[[ -e $d ]] && /bin/rm -f "$d"
 	fi
 
-	b=$(/bin/grep copied <<< "$b" | cut -d, -f4)
+	b=$(/bin/grep copied <<< "$b" | /usr/bin/cut -d, -f4)
 	b=${b//[[:blank:]]/}
 
 	if [[ -z $b ]]; then
@@ -9989,7 +10010,7 @@ GetOsKernelPageSize()
 		a=$(/sbin/hal_app --get_pagesize)B
 		[[ $a = 4096B ]] && printf 4kiB || printf '%s' "$a"
 	else
-		/bin/grep KernelPageSize /proc/1/smaps | head -n1 | cut -f2 -d':' | tr -d ' ' | /bin/sed 's/kB/kiB/'
+		/bin/grep KernelPageSize /proc/1/smaps | /usr/bin/head -n1 | /usr/bin/cut -f2 -d':' | /bin/tr -d ' ' | /bin/sed 's/kB/kiB/'
 	fi
 
 	}
@@ -10045,7 +10066,7 @@ GetUserLIBC()
 
 	local a=''
 
-	a=$(/sbin/ldd --version | head -n1)
+	a=$(/sbin/ldd --version | /usr/bin/head -n1)
 
 	printf '%s' "${a:4}"	# Trim 'ldd ' from front of string.
 
@@ -10061,14 +10082,14 @@ GetUserLIBCCopyright()
 GetBusyBoxVersion()
 	{
 
-	/bin/busybox | head -n1
+	/bin/busybox | /usr/bin/head -n1
 
 	}
 
 GetBusyBoxCopyright()
 	{
 
-	/bin/busybox | head -n2 | tail -n1
+	/bin/busybox | /usr/bin/head -n2 | /usr/bin/tail -n1
 
 	}
 
@@ -10376,7 +10397,7 @@ GetLessVersion()
 	{
 
 	if [[ -x $r_less_cmd ]]; then
-		$r_less_cmd -V | head -n1 | cut -d' ' -f2
+		$r_less_cmd -V | /usr/bin/head -n1 | /usr/bin/cut -d' ' -f2
 	else
 		printf unknown
 	fi
@@ -10445,7 +10466,7 @@ ReleaseLockfile()
 	#	$r_lock_pathfile
 
 	[[ ${release_lock:=true} = true ]] || return
-	[[ -n ${r_lock_pathfile:-} ]] && rm -f "$r_lock_pathfile" 2> /dev/null
+	[[ -n ${r_lock_pathfile:-} ]] && /bin/rm -f "$r_lock_pathfile" 2> /dev/null
 
 	}
 
@@ -10873,7 +10894,7 @@ _QPKG:download_()
 			z=2
 		else
 			DebugInfo "deleting $(FormatFileName "$r_local_filename") as checksum is incorrect"
-			rm -f "$r_local_pathfile" 2> /dev/null
+			/bin/rm -f "$r_local_pathfile" 2> /dev/null
 		fi
 	fi
 
@@ -10888,7 +10909,7 @@ _QPKG:download_()
 
 		IsOsCanSecureDownload || curl_insecure_opt='--insecure'
 
-		rm -f "$r_log_pathfile" 2> /dev/null
+		/bin/rm -f "$r_log_pathfile" 2> /dev/null
 
 		Executer "/sbin/curl $curl_insecure_opt --location --output \"$r_local_pathfile\" \"$r_remote_url\"" "$r_log_pathfile" log:failure-only
 		z=$?
@@ -10984,7 +11005,7 @@ _QPKG:install_()
 			# Shift all files from /opt into temporary path.
 
 			DebugAsProc "move-aside $r_external_apps_path"
-			mv "$r_external_apps_path" "$r_external_apps_temp_path"
+			/bin/mv "$r_external_apps_path" "$r_external_apps_temp_path"
 			DebugAsDone complete
 		fi
 	fi
@@ -11020,8 +11041,8 @@ _QPKG:install_()
 				# Shift all files from temporary path back into /opt
 
 				DebugAsProc "restore-into $r_external_apps_path"
-				(shopt -s dotglob; mv "$r_external_apps_temp_path"/* "$r_external_apps_path"/)
-				rm -rf "${r_external_apps_temp_path:?${FUNCNAME[0]}(): $e_nopth}"
+				(shopt -s dotglob; /bin/mv "$r_external_apps_temp_path"/* "$r_external_apps_path"/)
+				/bin/rm -rf "${r_external_apps_temp_path:?${FUNCNAME[0]}(): $e_nopth}"
 				DebugAsDone complete
 			fi
 		fi
@@ -14345,9 +14366,9 @@ IsQpkgBackupExist()
 		# If it's larger than this, move it (to copy it would take an unacceptably long time).
 
 		if [[ $(/usr/bin/stat -c %s "$old") -le $((500*(2**20))) ]]; then
-			cp "$old" "$new"
+			/usr/bin/cp "$old" "$new"
 		else
-			mv "$old" "$new"
+			/bin/mv "$old" "$new"
 		fi
 	fi
 
@@ -15187,7 +15208,7 @@ UpdateSessionRows()
 	# Outputs: (global)
 	#	$sess_rows
 
-	if IsInTerminal && which stty; then
+	if IsInTerminal && /usr/bin/which stty; then
 		local a=''
 
 		a=$(stty size)
@@ -15204,7 +15225,7 @@ UpdateSessionColumns()
 	# Outputs: (global)
 	#	$sess_columns
 
-	if IsInTerminal && which stty; then
+	if IsInTerminal && /usr/bin/which stty; then
 		local a=''
 
 		a=$(stty size)
@@ -15268,7 +15289,7 @@ RemovePidFile()
 
 	[[ -n ${pidfile:-} && -e $pidfile ]] || return
 
-	rm -f "$pidfile"
+	/bin/rm -f "$pidfile"
 
 	}
 
@@ -15384,7 +15405,7 @@ MakePath()
 	ConfirmVarIsDefined 1 "${1:-}" "$e_nopth" || return
 	ConfirmVarIsDefined 2 "${2:-}" "$e_norea" || return
 
-	if ! mkdir -p "$1"; then
+	if ! /bin/mkdir -p "$1"; then
 		ShowAsError "unable to create $2 path $(FormatFileName "$1") $(FormatExitcode "$?")"
 		show_suggest_raise_issue=true
 
@@ -15416,7 +15437,7 @@ ClearPath()
 
 	ConfirmVarIsDefined target "${target:-}" "$e_nopth" || return
 
-	[[ -d $parent/$target ]] && rm -rf "${parent:?}/${target:?}"/*
+	[[ -d $parent/$target ]] && /bin/rm -rf "${parent:?}/${target:?}"/*
 
 	}
 
@@ -15485,9 +15506,9 @@ PidLogger()														# directive:omit-from-production
 		return													# directive:omit-from-production
 	fi															# directive:omit-from-production
 
-	printf "[%s] stage: '%-20s' ppid: '%-5s' pid: '%-5s' cmd: '%s'\n" "$(date)" "$1" "$3" "$2" "$4" >> "$a"		# directive:omit-from-production
-# printf "[%s] stage: '%-20s' pid: '%-5s' cmdline: '%s'\n" "$(date)" "$1" "$2" "$(tr '\0' ' ' < /proc/$2/cmdline)" >> $r_sys_log_path/sherpa/pids/PidLogger-pid-$2.log	# directive:omit-from-production
-# printf "[%s] stage: '%-20s' ppid: '%-5s' cmdline: '%s'\n" "$(date)" "$1" "$3" "$(tr '\0' ' ' < /proc/$3/cmdline)" >> $r_sys_log_path/sherpa/pids/PidLogger-pid-$3.log	# directive:omit-from-production
+	printf "[%s] stage: '%-20s' ppid: '%-5s' pid: '%-5s' cmd: '%s'\n" "$(/bin/date)" "$1" "$3" "$2" "$4" >> "$a"	# directive:omit-from-production
+# printf "[%s] stage: '%-20s' pid: '%-5s' cmdline: '%s'\n" "$(/bin/date)" "$1" "$2" "$(/bin/tr '\0' ' ' < /proc/$2/cmdline)" >> $r_sys_log_path/sherpa/pids/PidLogger-pid-$2.log	# directive:omit-from-production
+# printf "[%s] stage: '%-20s' ppid: '%-5s' cmdline: '%s'\n" "$(/bin/date)" "$1" "$3" "$(/bin/tr '\0' ' ' < /proc/$3/cmdline)" >> $r_sys_log_path/sherpa/pids/PidLogger-pid-$3.log	# directive:omit-from-production
 
 	}															# directive:omit-from-production
 
@@ -15525,7 +15546,7 @@ Executer()
 	local r_executer_log_pipe=''
 	local r_log_pathfile=''
 
-	a=$(tr -s ' ' <<< "$1")
+	a=$(/bin/tr -s ' ' <<< "$1")
 	r_log_pathfile=$(/bin/mktemp $r_run_logs_path/${FUNCNAME[0]}_XXXXXX)
 
 	local -r r_log_pathfile
@@ -15552,7 +15573,7 @@ Executer()
 		eval "$1" > "$r_executer_log_pipe" 2>&1
 		z=$?
 
-		rm "$r_executer_log_pipe"
+		/bin/rm "$r_executer_log_pipe"
 	else
 		eval "$a" > "$r_log_pathfile" 2>&1
 		z=$?
@@ -15562,7 +15583,7 @@ Executer()
 		ShowAsResultAndStdout "$z" "$(< "$r_log_pathfile")" >> "$2"
 
 		if false; then								# directive:omit-from-production
-			rm -f "$r_log_pathfile" 2> /dev/null
+			/bin/rm -f "$r_log_pathfile" 2> /dev/null
 		fi											# directive:omit-from-production
 	else
 		ShowAsResultAndStdout "$z" '<null>' >> "$2"
@@ -15579,7 +15600,7 @@ Executer()
 			DebugAsDone "$exec_msg OK ($z)"
 
 			if false; then							# directive:omit-from-production
-				IsNtDebug && rm -f "$2" 2> /dev/null
+				IsNtDebug && /bin/rm -f "$2" 2> /dev/null
 			fi										# directive:omit-from-production
 			;;
 		"${4:-}")
@@ -15590,7 +15611,7 @@ Executer()
 			DebugAsWarn "$exec_msg with permitted errors ($z)"
 
 			if false; then							# directive:omit-from-production
-				IsNtDebug && rm -f "$2" 2> /dev/null
+				IsNtDebug && /bin/rm -f "$2" 2> /dev/null
 			fi										# directive:omit-from-production
 			;;
 		*)
@@ -15620,7 +15641,7 @@ KludgeExecuter()
 
 	local a=''
 
-	a=$(tr -s ' ' <<< "$1")
+	a=$(/bin/tr -s ' ' <<< "$1")
 
 	if IsVerbose; then
 		eval "$a 2>&1 | /usr/bin/tee $2" &				# Force background process here, and capture PID. NOTE: stdout is buffered here.
@@ -15703,7 +15724,7 @@ DeDupeWords()
 
 	[[ -n ${1:-} ]] || return
 
-	tr ' ' '\n' <<< "$1" | /usr/bin/sort | /bin/uniq | tr '\n' ' ' | /bin/sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'
+	/bin/tr ' ' '\n' <<< "$1" | /usr/bin/sort | /bin/uniq | /bin/tr '\n' ' ' | /bin/sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'
 
 	}
 
@@ -15763,7 +15784,7 @@ GenerateMD5()
 	#	stdout = MD5 checksum.
 	#	$? = false if file not found.
 
-	[[ -e ${1:?${FUNCNAME[0]}(): $e_nopfi} ]] && /bin/md5sum "${1:?${FUNCNAME[0]}(): $e_nopfi}" | cut -f1 -d' '
+	[[ -e ${1:?${FUNCNAME[0]}(): $e_nopfi} ]] && /bin/md5sum "${1:?${FUNCNAME[0]}(): $e_nopfi}" | /usr/bin/cut -f1 -d' '
 
 	}
 
@@ -15819,7 +15840,7 @@ Uppercase()
 
 	[[ -n ${1:-} ]] || return
 
-	tr 'a-z' 'A-Z' <<< "$1"
+	/bin/tr 'a-z' 'A-Z' <<< "$1"
 
 	}
 
@@ -15828,7 +15849,7 @@ Lowercase()
 
 	[[ -n ${1:-} ]] || return
 
-	tr 'A-Z' 'a-z' <<< "$1"
+	/bin/tr 'A-Z' 'a-z' <<< "$1"
 
 	}
 
@@ -16580,7 +16601,7 @@ FuncForkInit()
 
 	[[ -n ${pidfile:?${FUNCNAME[0]}(): $e_nopfi} ]] || return
 
-	trap '[[ -n ${pidfile:-} && -e $pidfile ]] && rm -f "$pidfile" 2> /dev/null; exit' SIGINT
+	trap '[[ -n ${pidfile:-} && -e $pidfile ]] && /bin/rm -f "$pidfile" 2> /dev/null; exit' SIGINT
 
 	# Redirect debug output to a temporary log, then add it to session log before exiting. This will keep action log lines in-order.
 
@@ -16625,7 +16646,7 @@ FuncForkExit()
 			/bin/cat "$session_active_log_pathfile" >> "$orig_session_active_log_pathfile"
 		fi
 
-		rm -f "$session_active_log_pathfile"
+		/bin/rm -f "$session_active_log_pathfile"
 	fi
 
 	RemovePidFile
@@ -16688,7 +16709,7 @@ ConvertSecondsToTime()
 	# Outputs: (local)
 	#	stdout = time component only.
 
-	/bin/date -d @"${1:-}" '+%-l:%M:%S %p' | tr -s ' '
+	/bin/date -d @"${1:-}" '+%-l:%M:%S %p' | /bin/tr -s ' '
 
 	} 2> /dev/null
 
@@ -17372,7 +17393,7 @@ ShowAsPercentProgress()
 		ShowAsProcLong "$r_a" "$r_f"
 	fi
 
-	[[ $((b+c+d)) -ge $e ]] && Pause 0.5
+	[[ $((b+c+d)) -ge $e ]] && Pause 0.1
 
 	return 0
 
@@ -18180,14 +18201,14 @@ HideKeystrokes()
 	# Inputs: (global)
 	#	$useropt_verbose
 
-	[[ ${useropt_verbose:=false} = false ]] && IsInTerminal && which stty && stty '-echo'
+	[[ ${useropt_verbose:=false} = false ]] && IsInTerminal && /usr/bin/which stty && stty '-echo'
 
 	} &> /dev/null
 
 ShowKeystrokes()
 	{
 
-	IsInTerminal && which stty && stty 'echo'
+	IsInTerminal && /usr/bin/which stty && stty 'echo'
 
 	} &> /dev/null
 
@@ -18205,10 +18226,10 @@ SetOsPauseMethod()
 
 	[[ ${_pause_method:=unset} = unset ]] || return 0
 
-	if which usleep; then
-		_pause_method='usleep'
-	elif which sleep && sleep 0.001; then
-		_pause_method='sleep'
+	if [[ -x /bin/usleep ]]; then
+		_pause_method='/bin/usleep'
+	elif /bin/sleep 0.001; then
+		_pause_method='/bin/sleep'
 	fi
 
 	[[ $_pause_method != unset ]] || return
@@ -18236,7 +18257,7 @@ Pause()
 	[[ -n ${1:-} ]] || return
 
 	if [[ $1 != "${_pause_previous_duration:=0}" ]]; then		# Don't recalculate unless specified duration is different to previous.
-		if [[ $_pause_method = usleep ]]; then
+		if [[ $_pause_method = /bin/usleep ]]; then
 			_pause_translated_duration=$(ConvertDecimalSecondsToMicroseconds "$1")
 		else
 			_pause_translated_duration=$1
@@ -18454,7 +18475,7 @@ LoadObjects()
 
 	# Source elements from `objects` file.
 
-	. "$r_objects_pathfile"
+	source "$r_objects_pathfile"
 	objects_loaded=true
 
 	# Lock list arrays and values.
@@ -18541,7 +18562,7 @@ LoadDatabase()
 
 	# Source elements from `packages` file.
 
-	. "$r_packages_pathfile"
+	source "$r_packages_pathfile"
 	packages_loaded=true
 
 	# Lock list arrays and values.
@@ -18604,7 +18625,7 @@ StartAni()
 	IsNtDebug || return							# Don't start an animation in debug mode.
 	[[ ! -e $r_ani_pid_pathfile ]] || return	# Never start a second animation.
 	ClearAnimationFiles
-	touch "$r_ani_pid_pathfile"
+	/bin/touch "$r_ani_pid_pathfile"
 
 	_Animator_ &
 	: # This is only here to prevent Squeeze() combining the end-of-function brace below with the line above.
@@ -18615,12 +18636,12 @@ PauseAni()
 	{
 
 	[[ -s ${r_ani_pid_pathfile:-} ]] || return	# Don't try to stop an animation without a PID.
-	touch "$r_ani_end_pathfile"
+	/bin/touch "$r_ani_end_pathfile"
 
 	wait $(< "$r_ani_pid_pathfile") 2> /dev/null
 
 	ClearAnimationFiles
-	touch "$r_ani_resume_pathfile"
+	/bin/touch "$r_ani_resume_pathfile"
 
 	}
 
@@ -18631,7 +18652,7 @@ ResumeAni()
 	[[ ! -e $r_ani_pid_pathfile ]] || return	# Never start a second animation.
 	[[ -e $r_ani_resume_pathfile ]] || return
 	ClearAnimationFiles
-	touch "$r_ani_pid_pathfile"
+	/bin/touch "$r_ani_pid_pathfile"
 
 	_Animator_ &
 	: # This is only here to prevent Squeeze() combining the line below with the line above.
@@ -18646,7 +18667,7 @@ EndAni()
 	#	$r_ani_pid_pathfile
 
 	[[ -s ${r_ani_pid_pathfile:-} ]] || return	# Don't try to stop an animation without a PID.
-	touch "$r_ani_end_pathfile"
+	/bin/touch "$r_ani_end_pathfile"
 
 	wait $(< "$r_ani_pid_pathfile") 2> /dev/null
 
@@ -18663,7 +18684,7 @@ ClearAnimationFiles()
 	#	$r_ani_pid_pathfile
 	#	$r_ani_resume_pathfile
 
-	rm -f "$r_ani_end_pathfile" "$r_ani_frame_pathfile" "$r_ani_pid_pathfile" "$r_ani_resume_pathfile"
+	/bin/rm -f "$r_ani_end_pathfile" "$r_ani_frame_pathfile" "$r_ani_pid_pathfile" "$r_ani_resume_pathfile"
 
 	}
 
@@ -18707,7 +18728,7 @@ _Animator_()
 
 	if [[ -e $r_ani_frame_pathfile ]]; then
 		ani_start_frame=$(< "$r_ani_frame_pathfile")
-		rm -f "$r_ani_frame_pathfile"
+		/bin/rm -f "$r_ani_frame_pathfile"
 	fi
 
 	while true; do
@@ -18770,7 +18791,7 @@ IsSiteUp()
 
 	local a=''
 
-	a=$(cut -d'/' -f3 <<< "$1" | cut -d':' -f1)
+	a=$(/usr/bin/cut -d'/' -f3 <<< "$1" | /usr/bin/cut -d':' -f1)
 
 	ConfirmVarIsDefined a "${a:-}" "$e_nourl" || return
 
