@@ -256,6 +256,7 @@ DebugLogInit()
 	{
 
 	# Inputs: (global)
+	#	$$
 	#	$r_script_startseconds
 	#	$r_this_package_ver
 	#	$r_this_script_ver
@@ -357,7 +358,7 @@ LoadConsts()
 		if true; then												# directive:omit-from-production
 			readonly r_debug_log_first_column_width=10				# directive:omit-from-production
 			readonly r_debug_log_second_column_width=26				# directive:omit-from-production
-			readonly r_report_qpkg_description_column_width=100		# directive:omit-from-production
+			readonly r_report_qpkg_description_column_width=225		# directive:omit-from-production
 		else														# directive:omit-from-production
 			readonly r_debug_log_first_column_width='<?debug_log_first_column_width?>'
 			readonly r_debug_log_second_column_width='<?debug_log_second_column_width?>'
