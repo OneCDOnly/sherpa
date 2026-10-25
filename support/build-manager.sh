@@ -8,6 +8,13 @@ manager_epoch=$(date +%s)
 manager_version=$(ConvertSecondsToDatecode "$manager_epoch")
 package_release_version=$(cd "$qpkgs_root_path"; gh release view --json name --jq '.name')
 
+# report_qpkg_description_column_width=100
+declare -i report_qpkg_description_column_width=0
+
+while IFS= read -r line; do
+	(( ${#line} > report_qpkg_description_column_width )) && report_qpkg_description_column_width=$((${#line}+2))
+done <<< $(grep --no-filename '^r_qpkg_description' $qpkgs_support_path/*.packages.source | sed 's|^r_qpkg_description+=(||;s|)$||' | sort | uniq)
+
 SwapTags "$a" "$b"
 
 if grep -q '<?\|?>' "$b"; then
