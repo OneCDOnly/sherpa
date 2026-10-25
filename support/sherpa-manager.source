@@ -150,6 +150,7 @@ ShowResults()
 			ReportFeatures
 			Display
 		elif [[ $useropt_show_packages = true ]]; then
+			ReleaseLockfile
 			ReportPackages
 			Display
 		elif [[ $useropt_show_repos = true ]]; then
@@ -181,7 +182,6 @@ ShowResults()
 	fi
 
 	if [[ ${generate_help_report:=false} = true ]]; then
-		ReleaseLockfile
 		IsAnsiStrippingSupported || colourful=false
 
 		if [[ $useropt_help_tips = true ]]; then
@@ -210,6 +210,8 @@ ShowResults()
 
 		Display
 	fi
+
+	ReleaseLockfile
 
 	if [[ ${show_action_results_report:=false} = true ]]; then
 		ReportAllActionResults
@@ -10468,7 +10470,7 @@ ReleaseLockfile()
 	#	$r_lock_pathfile
 
 	[[ ${release_lock:=true} = true ]] || return
-	[[ -n ${r_lock_pathfile:-} ]] && /bin/rm -f "$r_lock_pathfile" 2> /dev/null
+	[[ -n ${r_lock_pathfile:-} ]] && /bin/rm -f "$r_lock_pathfile"
 
 	}
 
