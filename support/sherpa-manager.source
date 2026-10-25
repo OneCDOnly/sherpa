@@ -321,17 +321,18 @@ LoadConsts()
 
 	# Fixed-widths for report columns when GNU `awk` isn't available.
 
-		readonly r_report_qpkg_abbreviations_column_width=84
+		readonly r_report_qpkg_abbreviations_column_width=76
 		readonly r_report_qpkg_action_column_width=27
 		readonly r_report_qpkg_active_test_builtin_column_width=9
 		readonly r_report_qpkg_appl_version_column_width=22
+		readonly r_report_qpkg_author_column_width=20
 		readonly r_report_qpkg_auto_update_column_width=11
 		readonly r_report_qpkg_can_backup_column_width=8
 		readonly r_report_qpkg_can_clean_column_width=9
 		readonly r_report_qpkg_can_start_to_update_column_width=9
 		readonly r_report_qpkg_dependencies_column_width=29
-		readonly r_report_qpkg_description_column_width=10
-		readonly r_report_qpkg_install_date_column_width=20
+		readonly r_report_qpkg_description_column_width=100
+		readonly r_report_qpkg_install_date_column_width=11
 		readonly r_report_qpkg_is_complete_column_width=9
 		readonly r_report_qpkg_is_enabled_column_width=8
 		readonly r_report_qpkg_is_enhanced_column_width=9
@@ -343,10 +344,11 @@ LoadConsts()
 		readonly r_report_qpkg_name_column_width=21
 		readonly r_report_qpkg_opt_dependencies_column_width=29
 		readonly r_report_qpkg_os_version_column_width=8
-		readonly r_report_qpkg_path_column_width=48
+		readonly r_report_qpkg_path_column_width=47
 		readonly r_report_qpkg_repo_column_width=42
 		readonly r_report_qpkg_status_column_width=23
 		readonly r_report_qpkg_tier_column_width=9
+		readonly r_report_qpkg_uniqueunpack_column_width=9
 		readonly r_report_qpkg_version_column_width=19
 
 		readonly r_report_lazy_column_width=28				# Use this when I can't be bothered calculating an optimum fixed column width.
@@ -589,13 +591,13 @@ IsCMDsOk()
 
 	local a=''
 
-	cmds=(awk busybox cat date df grep ln ls md5sum mkdir mknod mktemp more mv pidof ping ps renice rm rmdir sed sh sha1sum tar touch tr uname uniq)
+	cmds=(awk busybox cat chmod date df grep ln ls md5sum mkdir mknod mktemp more mv pidof ping ps renice rm rmdir sed sh sha1sum tar touch tr uname uniq)
 	cmdpaths+=("${cmds[@]/#//bin/}")
 
 	cmds=(curl getcfg ldd rmcfg setcfg)
 	cmdpaths+=("${cmds[@]/#//sbin/}")
 
-	cmds=(basename cp cut dirname du free head readlink stat tail tee unzip uptime wc which)
+	cmds=(basename cp cut dirname du free head readlink stat tail tee unzip uptime wc which xargs)
 	cmdpaths+=("${cmds[@]/#//usr/bin/}")
 
 	cmds=(python2)
@@ -1204,9 +1206,11 @@ DebugLogEnv()
 	DebugInfoMinSepr
 
 	if [[ -x $r_gnu_df_cmd ]]; then
-		Executer "$r_gnu_df_cmd --human-readable --print-type -t ext2 -t ext3 -t ext4 -t zfs -t tmpfs" "$r_ramfs_freespace_pathfile" '' 1
+		Executer "$r_gnu_df_cmd --human-readable --local --print-type -t ext2 -t ext3 -t ext4 -t zfs -t tmpfs" "$r_ramfs_freespace_pathfile" '' 1
+	elif (/bin/df -T &> /dev/null); then
+		Executer '/bin/df -hT' "$r_ramfs_freespace_pathfile" '' 1
 	else
-		Executer "/bin/df -h | /bin/grep -iEv '^(devtmpfs|cgroup_root)'" "$r_ramfs_freespace_pathfile"
+		Executer "/bin/df -h | /bin/grep -iEv '^(devtmpfs|cgroup_root)'" "$r_ramfs_freespace_pathfile" '' 1
 	fi
 
 	DebugInfoMinSepr
@@ -5113,6 +5117,7 @@ _GeneratePacksReportDataRow_()
 	#	$qpkg_name
 	#	$r_report_flags_path
 	#	$r_report_qpkg_appl_version_column_width
+	#	$r_report_qpkg_description_column_width
 	#	$r_report_qpkg_name_column_width
 
 	local -a a_column_vars=(app_ver description name)
@@ -5163,7 +5168,7 @@ _GeneratePacksReportDataRow_()
 
 	if IsOsCanAutowidthTableColumns; then
 		if IsThisAnAlternateLine "$2"; then
-			TextOnDarkGrey "$(printf '%s' "$name_msg|$app_ver_msg|$description_msg")"
+			TextOnDarkGrey "$(printf '%s' "$name_msg|$app_ver_msg|$(FormatReportFieldWidth "$description_msg" "$r_report_qpkg_description_column_width")")"
 		else
 			printf '%s' "$name_msg|$app_ver_msg|$description_msg"
 		fi
@@ -5459,7 +5464,7 @@ _GenerateStatusReportDataRow_()
 
 	if IsOsCanAutowidthTableColumns; then
 		if IsThisAnAlternateLine "$1"; then
-			TextOnDarkGrey "$(printf '%s' "$name_msg|$status_msg|$action_msg|$ver_msg|$app_ver_msg|$path_msg")"
+			TextOnDarkGrey "$(printf '%s' "$name_msg|$status_msg|$action_msg|$ver_msg|$app_ver_msg|$(FormatReportFieldWidth "$path_msg" "$r_report_qpkg_path_column_width")")"
 		else
 			printf '%s' "$name_msg|$status_msg|$action_msg|$ver_msg|$app_ver_msg|$path_msg"
 		fi
@@ -5616,12 +5621,13 @@ _GenerateReposReportDataRow_()
 
 	if IsOsCanAutowidthTableColumns; then
 		if IsThisAnAlternateLine "$1"; then
-			TextOnDarkGrey "$(printf '%s' "$name_msg|$assigned_repo_msg|$install_date_msg")"
+			TextOnDarkGrey "$(printf '%s' "$name_msg|$assigned_repo_msg|$(FormatReportFieldWidth "$install_date_msg" "$r_report_qpkg_install_date_column_width")")"
 		else
 			printf '%s' "$name_msg|$assigned_repo_msg|$install_date_msg"
 		fi
 	else
 		if [[ -z $auxiliary_msg ]]; then
+
 			FormatReportFieldWidth "$name_msg" "$r_report_qpkg_name_column_width"
 			printf ' %s' "$assigned_repo_msg"
 		else
@@ -5718,6 +5724,7 @@ _GenerateAbsReportDataRow_()
 
 			if [[ $auxiliary != false ]]; then
 				auxiliary_msg=$(FormatReportField "not installable, $auxiliary" alert_mute)
+				abs_msg=$(FormatReportField N/A normal_mute)
 			else
 				abs_msg=$(FormatReportField "$abs" normal_mute)
 			fi
@@ -5739,7 +5746,7 @@ _GenerateAbsReportDataRow_()
 
 	if IsOsCanAutowidthTableColumns; then
 		if IsThisAnAlternateLine "$1"; then
-			TextOnDarkGrey "$(printf '%s' "$name_msg|$installed_msg|$abs_msg")"
+			TextOnDarkGrey "$(printf '%s' "$name_msg|$installed_msg|$(FormatReportFieldWidth "$abs_msg" "$r_report_qpkg_abbreviations_column_width")")"
 		else
 			printf '%s' "$name_msg|$installed_msg|$abs_msg"
 		fi
@@ -6090,7 +6097,7 @@ _GenerateDepsReportDataRow_()
 
 	if IsOsCanAutowidthTableColumns; then
 		if IsThisAnAlternateLine "$1"; then
-			TextOnDarkGrey "$(printf '%s' "$name_msg|$deps_msg|$opt_deps_msg|$prohibited_msg|$installed_msg|$enabled_msg|$complete_msg|$managed_msg|$signed_msg|$min_ram_msg|$min_os_msg|$max_os_msg|$author_msg")"
+			TextOnDarkGrey "$(printf '%s' "$name_msg|$deps_msg|$opt_deps_msg|$prohibited_msg|$installed_msg|$enabled_msg|$complete_msg|$managed_msg|$signed_msg|$min_ram_msg|$min_os_msg|$max_os_msg|$(FormatReportFieldWidth "$author_msg" "$r_report_qpkg_author_column_width")")"
 		else
 			printf '%s' "$name_msg|$deps_msg|$opt_deps_msg|$prohibited_msg|$installed_msg|$enabled_msg|$complete_msg|$managed_msg|$signed_msg|$min_ram_msg|$min_os_msg|$max_os_msg|$author_msg"
 		fi
@@ -6107,7 +6114,7 @@ _GenerateDepsReportDataRow_()
 		FormatReportFieldWidth "$min_ram_msg" "$r_report_qpkg_min_ram_column_width"
 		FormatReportFieldWidth "$min_os_msg" "$r_report_qpkg_os_version_column_width"
 		FormatReportFieldWidth "$max_os_msg" "$r_report_qpkg_os_version_column_width"
-		FormatReportFieldWidth "$author_msg" "$r_report_lazy_column_width"
+		FormatReportFieldWidth "$author_msg" "$r_report_qpkg_author_column_width"
 	fi
 
 	printf '\n'
@@ -6302,7 +6309,7 @@ _GenerateFeaturesReportDataRow_()
 
 	if IsOsCanAutowidthTableColumns; then
 		if IsThisAnAlternateLine "$1"; then
-			TextOnDarkGrey "$(printf '%s' "$name_msg|$independent_msg|$optional_msg|$dependent_msg|$enhanced_msg|$backup_msg|$clean_msg|$restart_to_update_msg|$autoupdate_msg|$active_test_msg|$uniqueunpack_msg")"
+			TextOnDarkGrey "$(printf '%s' "$name_msg|$independent_msg|$optional_msg|$dependent_msg|$enhanced_msg|$backup_msg|$clean_msg|$restart_to_update_msg|$autoupdate_msg|$active_test_msg|$(FormatReportFieldWidth "$uniqueunpack_msg" "$r_report_qpkg_uniqueunpack_column_width")")"
 		else
 			printf '%s' "$name_msg|$independent_msg|$optional_msg|$dependent_msg|$enhanced_msg|$backup_msg|$clean_msg|$restart_to_update_msg|$autoupdate_msg|$active_test_msg|$uniqueunpack_msg"
 		fi
@@ -6317,7 +6324,7 @@ _GenerateFeaturesReportDataRow_()
 		FormatReportFieldWidth "$restart_to_update_msg" "$r_report_qpkg_can_start_to_update_column_width"
 		FormatReportFieldWidth "$autoupdate_msg" "$r_report_qpkg_auto_update_column_width"
 		FormatReportFieldWidth "$active_test_msg" "$r_report_qpkg_active_test_builtin_column_width"
-		FormatReportFieldWidth "$uniqueunpack_msg" "$r_report_lazy_column_width"
+		FormatReportFieldWidth "$uniqueunpack_msg" "$r_report_qpkg_uniqueunpack_column_width"
 	fi
 
 	printf '\n'
@@ -8047,7 +8054,7 @@ CheckSystemLoad()
 	elif IsThisLoadAverageHigh "$a"; then
 		ShowAsWarn 'the NAS has an unusually-high system-load, so this may take a while'
 	elif IsThisLoadAverageElevated "$a"; then
-		ShowAsNote 'the NAS has an elevated system-load, so this may take a little longer than usual'
+		ShowAsNote 'the NAS has an elevated system-load, so this may take longer than usual'
 	fi
 
 	FuncExit
@@ -18468,7 +18475,7 @@ LoadObjects()
 
 	# Source elements from `objects` file.
 
-	. "$r_objects_pathfile"
+	source "$r_objects_pathfile"
 	objects_loaded=true
 
 	# Lock list arrays and values.
@@ -18555,7 +18562,7 @@ LoadDatabase()
 
 	# Source elements from `packages` file.
 
-	. "$r_packages_pathfile"
+	source "$r_packages_pathfile"
 	packages_loaded=true
 
 	# Lock list arrays and values.
