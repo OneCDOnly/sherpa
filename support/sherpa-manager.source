@@ -15989,9 +15989,9 @@ ShowTitleArt()
 	echo -e " \033[0;34;44m \033[0;34m▄\033[0;34;44m \033[0;34m▄  \033[0;94;44m▀▄\033[0;34m█▀\033[0;37m \033[0;34;44m   \033[0;34m   \033[0;34;44m   \033[0;34m  \033[0;34m \033[0;34;44m   \033[0;34m▄   ▄▄▀ \033[0;94;44m█▀\033[0;34m█        ██\033[0;94;44m▄\033[0;34m   \033[0;94m▀     \033[0;34m▀██  ▄███ ▄\033[0m" # directive:dont-squeeze
 	echo -e "  \033[0;34m▀▀██▀▀    ▀▀     ▀▀▀\033[0;37m \033[0;34m  ▀▀▀▀▀▀    ▀█▄        \033[0;34m▄██        \033[0;34m    ▀▀ ▀▀ ▀\033[0m" # directive:dont-squeeze
 	echo -e "                                               \033[0;34m▀█\033[0m" # directive:dont-squeeze
-	echo -e "     \033[0;96m█\033[0m $(ShowAsDescription)" # directive:dont-squeeze
-	echo -e "     \033[0;36m█\033[0m $(ShowAsCopyrightBasic)" # directive:dont-squeeze
-	echo -e "     \033[0;90m█\033[0m $(ShowAsVersion)" # directive:dont-squeeze
+	echo -e " \033[0;96m█\033[0m $(ShowAsDescription)" # directive:dont-squeeze
+	echo -e " \033[0;36m█\033[0m $(ShowAsCopyrightBasic)" # directive:dont-squeeze
+	echo -e " \033[0;90m█\033[0m $(ShowAsVersion)" # directive:dont-squeeze
 
 	}
 
