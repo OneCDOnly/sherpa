@@ -384,8 +384,6 @@ LoadConsts()
 
 	# Report, help and onscreen messages.
 
-		readonly r_char_tab=$'\t'
-
 		readonly r_chars_alert='! '
 		readonly r_chars_attention='* '
 		readonly r_chars_blank='  '
@@ -417,15 +415,31 @@ LoadConsts()
 
 	# Animation.
 
-		local -r blue='\033[94m'
-		local -r cyan='\033[96m'
-		local -r green='\033[92m'
-		local -r orange='\033[1;38;5;214m'
-		local -r red='\033[91m'
-		local -r white='\033[97m'
-		local -r yellow='\033[93m'
+#		local r_blue
+#		local r_cyan
+#		local r_green
+		local r_orange
+#		local r_red
+#		local r_white
+#		local r_yellow
 
-		readonly r_ani_colour=$orange
+#		r_blue='\033[94m'
+#		r_cyan='\033[96m'
+#		r_green='\033[92m'
+		r_orange='\033[1;38;5;214m'
+#		r_red='\033[91m'
+#		r_white='\033[97m'
+#		r_yellow='\033[93m'
+
+#		local -r r_blue
+#		local -r r_cyan
+#		local -r r_green
+		local -r r_orange
+#		local -r r_red
+#		local -r r_white
+#		local -r r_yellow
+
+		readonly r_ani_colour=$r_orange
 		readonly r_ani_frame_duration=0.06				# In decimal seconds.
 		readonly r_ani_id=1
 		readonly r_ani_reverse_motion=false				# Set 'true' to run animation backwards.
@@ -590,31 +604,34 @@ IsCMDsOk()
 
 	# Confirm required binaries are present.
 
-	local -a cmds=()
-	local -a cmdpaths=()
+	local -a a
+	local -a b
+	local c
 
-	local a=''
+	a=()
+	b=()
+	c=''
 
-	cmds=(awk busybox cat chmod date df grep ln ls md5sum mkdir mknod mktemp more mv pidof ping ps renice rm rmdir sed sh sha1sum tar touch tr uname uniq)
-	cmdpaths+=("${cmds[@]/#//bin/}")
+	a=(awk busybox cat chmod date df grep ln ls md5sum mkdir mknod mktemp more mv pidof ping ps renice rm rmdir sed sh sha1sum tar touch tr uname uniq)
+	b+=("${a[@]/#//bin/}")
 
-	cmds=(curl getcfg ldd rmcfg setcfg)
-	cmdpaths+=("${cmds[@]/#//sbin/}")
+	a=(curl getcfg ldd rmcfg setcfg)
+	b+=("${a[@]/#//sbin/}")
 
-	cmds=(basename cp cut dirname du free head readlink stat tail tee unzip uptime wc which xargs)
-	cmdpaths+=("${cmds[@]/#//usr/bin/}")
+	a=(basename cp cut dirname du free head readlink stat tail tee unzip uptime wc which xargs)
+	b+=("${a[@]/#//usr/bin/}")
 
-	cmds=(python2)
-	cmdpaths+=("${cmds[@]/#//usr/local/bin/}")
+	a=(python2)
+	b+=("${a[@]/#//usr/local/bin/}")
 
-	cmds=(7z qpkg_service)
-	cmdpaths+=("${cmds[@]/#//usr/local/sbin/}")
+	a=(7z qpkg_service)
+	b+=("${a[@]/#//usr/local/sbin/}")
 
-	cmds=(screen)
-	cmdpaths+=("${cmds[@]/#//usr/sbin/}")
+	a=(screen)
+	b+=("${a[@]/#//usr/sbin/}")
 
-	for a in "${cmdpaths[@]}"; do
-		IsCriticalFile "$a" || return
+	for c in "${b[@]}"; do
+		IsCriticalFile "$c" || return
 	done
 
 	return 0
@@ -629,18 +646,19 @@ ConfigEnv()
 	SetNasArch
 	SetQpkgArch
 
+	local default_vol_mount_point
+	local r_sherpa_packages_base_url
 	readonly r_concurrency=$r_cpu_threads		# Maximum concurrent package actions to run. Should probably make this account for CPU speed too.
-
-	local -r r_sherpa_packages_base_url='<?sherpa_packages_base_url?>'
-
-	local default_vol_mount_point=''
 
 	a_args=()
 	a_args_incomplete=()
+	default_vol_mount_point=''
 	qpkg_index=0
 	r_entware_type=$(GetQpkgEntwareType)
+	r_sherpa_packages_base_url='<?sherpa_packages_base_url?>'
 	r_this_package_ver=$(GetQpkgInstalledVer)
 
+	local -r r_sherpa_packages_base_url
 	readonly r_entware_type
 	readonly r_this_package_ver
 
@@ -814,7 +832,9 @@ LoadLists()
 
 	readonly ar_user_qpkg_actions
 
-	local a=''
+	local a
+
+	a=''
 
 	for a in "${ar_qpkg_actions[@]}" debug downgrade fix; do
 		readonly r_"$(Lowercase "$a")"_log_file=$a.log
@@ -999,8 +1019,13 @@ DebugLogEnv()
 
 	FuncInit
 
-	local a=''
-	local b=''
+	local a
+	local b
+	local -i n
+
+	a=''
+	b=''
+	n=0
 
 	SetHardwarePlatform
 	SetOsKernelPageSize
@@ -1195,8 +1220,6 @@ DebugLogEnv()
 		return
 	fi
 
-	local -i n=0
-
 	if [[ -n ${r_websites:-} ]]; then
 		for ((n=0; n<${#r_websites[@]}; n++)); do
 			if IsSiteUp ${r_websites[n]}; then
@@ -1266,7 +1289,7 @@ CheckTasks()
 	local group=''
 	local state=''
 	local installed_version=''
-	local a_target_packages=''
+	local target_packages=''
 	local -r r_pid_pathfile=$(CreatePidFilePathName)
 
 	if [[ $useropt_fix = true || $useropt_show_status = true ]]; then
@@ -1371,18 +1394,18 @@ CheckTasks()
 				#	https://forum.qnap.com/viewtopic.php?p=850945#p850945
 
 				if IsOsNonStdKernelPageSize; then
-					a_target_packages='ar binutils libbfd libctf libopcodes objdump'
+					target_packages='ar binutils libbfd libctf libopcodes objdump'
 
 					# Assume first package version is same as remaining package versions.
 
-					installed_version=$($r_opkg_cmd list-installed | /bin/grep "^${a_target_packages%% *} *" | /usr/bin/head -n1 | /usr/bin/cut -d' ' -f3 | /usr/bin/cut -d'-' -f1)
+					installed_version=$($r_opkg_cmd list-installed | /bin/grep "^${target_packages%% *} *" | /usr/bin/head -n1 | /usr/bin/cut -d' ' -f3 | /usr/bin/cut -d'-' -f1)
 
 					if [[ ${installed_version//.} -gt 238 ]]; then
 						ipks_downgrade=true
 						ShowAsNote "various IPKs will be downgraded to suit $r_kernel_page_size kernel page size"
-						IPKs-ACdowngrade-to:Add "$a_target_packages"
+						IPKs-ACdowngrade-to:Add "$target_packages"
 					else
-						IPKs-ACdowngrade-sk:Add "$a_target_packages"
+						IPKs-ACdowngrade-sk:Add "$target_packages"
 					fi
 				fi
 
@@ -1390,18 +1413,18 @@ CheckTasks()
 				#	https://github.com/Entware/Entware/issues/1072
 				#	NOTE: this issue has been fixed.
 
-#				a_target_packages='git git-http'
+#				target_packages='git git-http'
 
 				# Assume first package version is same as remaining package versions.
 
-#				installed_version=$($r_opkg_cmd list-installed | /bin/grep "^${a_target_packages%% *} *" | /usr/bin/head -n1 | /usr/bin/cut -d' ' -f3 | /usr/bin/cut -d'-' -f1)
+#				installed_version=$($r_opkg_cmd list-installed | /bin/grep "^${target_packages%% *} *" | /usr/bin/head -n1 | /usr/bin/cut -d' ' -f3 | /usr/bin/cut -d'-' -f1)
 
 #				if [[ ${installed_version//.} -gt 2392 ]]; then
 #					ipks_downgrade=true
 #					ShowAsNote "git IPKs will be downgraded back to a working version"
-#					IPKs-ACdowngrade-to:Add "$a_target_packages"
+#					IPKs-ACdowngrade-to:Add "$target_packages"
 #				else
-#					IPKs-ACdowngrade-sk:Add "$a_target_packages"
+#					IPKs-ACdowngrade-sk:Add "$target_packages"
 #				fi
 		esac
 
@@ -1410,36 +1433,36 @@ CheckTasks()
 				# These must be downgraded as 2.50.1 versions are inoperative.
 				#	https://github.com/Entware/Entware/issues/1241
 #
-#				a_target_packages='git git-http'
+#				target_packages='git git-http'
 #
 				# Assume first package version is same as remaining package versions.
 #
-#				installed_version=$($r_opkg_cmd list-installed | /bin/grep "^${a_target_packages%% *} *" | /usr/bin/head -n1 | /usr/bin/cut -d' ' -f3 | /usr/bin/cut -d'-' -f1)
+#				installed_version=$($r_opkg_cmd list-installed | /bin/grep "^${target_packages%% *} *" | /usr/bin/head -n1 | /usr/bin/cut -d' ' -f3 | /usr/bin/cut -d'-' -f1)
 #
 #				if [[ ${installed_version//.} -gt 2462 ]]; then
 #					ipks_downgrade=true
 #					ShowAsNote "git IPKs will be downgraded back to working versions"
-#					IPKs-ACdowngrade-to:Add "$a_target_packages"
+#					IPKs-ACdowngrade-to:Add "$target_packages"
 #				else
-#					IPKs-ACdowngrade-sk:Add "$a_target_packages"
+#					IPKs-ACdowngrade-sk:Add "$target_packages"
 #				fi
 #		esac
 
 		# Downgrade Transmission as 4.0.6 has an undefined issue.
 		#	https://github.com/OneCDOnly/sherpa/issues/306
 
-#		a_target_packages='transmission-daemon transmission-web'
+#		target_packages='transmission-daemon transmission-web'
 
 		# Assume first package version is same as remaining package versions.
 
-#		installed_version=$($r_opkg_cmd list-installed | /bin/grep "^${a_target_packages%% *} *" | /usr/bin/head -n1 | /usr/bin/cut -d' ' -f3 | /usr/bin/cut -d'-' -f1)
+#		installed_version=$($r_opkg_cmd list-installed | /bin/grep "^${target_packages%% *} *" | /usr/bin/head -n1 | /usr/bin/cut -d' ' -f3 | /usr/bin/cut -d'-' -f1)
 
 #		if [[ ${installed_version//.} -gt 4041 ]]; then
 #			ipks_downgrade=true
 #			ShowAsNote "Transmission IPKs will be downgraded back to working versions"
-#			IPKs-ACdowngrade-to:Add "$a_target_packages"
+#			IPKs-ACdowngrade-to:Add "$target_packages"
 #		else
-#			IPKs-ACdowngrade-sk:Add "$a_target_packages"
+#			IPKs-ACdowngrade-sk:Add "$target_packages"
 #		fi
 	fi
 
@@ -2010,32 +2033,53 @@ ProcAction()
 
 	FuncInit
 
+	local -a a_target_packages
+	local -i package_index
+	local -i pid
+	local group
+	local msg1_key
+	local msg1_value
+	local msg2_key
+	local msg2_value
+	local package
+	local r_action
+	local r_action_intransitive_msg
+	local r_package_type
+	local r_pid_pathfile
+	local r_tier
+	local re
+	local state
+	local target_object_name
+
+	a_target_packages=()
+	group=''
+	msg1_key=''
+	msg1_value=''
+	msg2_key=''
+	msg2_value=''
+	package=''
+	package_index=0
+	pid=0
+	re=''
+	state=''
+	target_object_name=''
 	total_count=0
 
-	local -a a_target_packages=()
+	r_action=${1:?${FUNCNAME[0]}(): $e_noact}
+	r_action_intransitive_msg=${4:?${FUNCNAME[0]}(): $e_noact message}
+	r_package_type=${3:?${FUNCNAME[0]}(): $e_nopty}
+	r_pid_pathfile=$(CreatePidFilePathName)
+	r_tier=${2:?${FUNCNAME[0]}(): $e_notir}
 
-	local -i package_index=0
-	local -i pid=0
-
-	local -r r_action=${1:?${FUNCNAME[0]}(): $e_noact}
-	local -r r_action_intransitive_msg=${4:?${FUNCNAME[0]}(): $e_noact message}
-	local -r r_package_type=${3:?${FUNCNAME[0]}(): $e_nopty}
-	local -r r_pid_pathfile=$(CreatePidFilePathName)
-	local -r r_tier=${2:?${FUNCNAME[0]}(): $e_notir}
-
-	local group=''
-	local msg1_key=''
-	local msg1_value=''
-	local msg2_key=''
-	local msg2_value=''
-	local package=''
-	local re=''
-	local state=''
-	local target_object_name=''
+	local -r r_action
+	local -r r_action_intransitive_msg
+	local -r r_package_type
+	local -r r_pid_pathfile
+	local -r r_tier
 
 	DebugVar r_action
-	DebugVar r_tier
 	DebugVar r_package_type
+	DebugVar r_tier
 
 	case $r_package_type in
 		QPKG)
@@ -2302,9 +2346,10 @@ SetMaxForks()
 	# Outputs: (global)
 	#	$max_forks
 
-	local default_forks=$r_concurrency
+	local default_forks
 
-	max_forks=$default_forks
+	default_forks=$r_concurrency
+		max_forks=$default_forks
 
 	[[ -n ${1:-} ]] || return
 
@@ -2364,10 +2409,10 @@ PrepareArgs()
 	ShowAsProc args
 	StartAni
 
-	local a=''
+	local a
 
 	a=$(Lowercase "${r_args_raw//,/ }")
-	a_args=(${a/--/})
+		a_args=(${a/--/})
 	arg_problem=false
 
 	DebugArray a_args ${a_args[@]+"${a_args[@]}"}		# directive:omit-from-production
@@ -2403,16 +2448,25 @@ ParseManagementArgs()
 
 	FuncInit
 
-	local -a a_args_remaining=()
+	local -a a_args_remaining
+	local action
+	local arg
+	local awaiting_group
+	local current_action
+	local group
+	local potential_action
+	local requires_group
+	local user_action
 
-	local action=''					# Internal, nice, simple, action name. Only one per-action.
-	local arg=''
-	local awaiting_group=false
-	local current_action=''
-	local group=''
-	local potential_action=''		# A user arg that might be an action.
-	local requires_group=false
-	local user_action=''			# The original user argument, detected as an action. There may be many variants per-action.
+	a_args_remaining=()
+	action=''				# Internal, nice, simple, action name. Only one per-action.
+	arg=''
+	awaiting_group=false
+	current_action=''
+	group=''
+	potential_action=''		# A user arg that might be an action.
+	requires_group=false
+	user_action=''			# The original user argument, detected as an action. There may be many variants per-action.
 
 	for arg in ${a_args[@]+"${a_args[@]}"}; do
 		[[ -n $arg ]] || continue
@@ -2550,16 +2604,25 @@ ParseHelpArgs()
 
 	FuncInit
 
-	local -a a_args_remaining=()
+	local -a a_args_remaining
+	local action
+	local arg
+	local awaiting_group
+	local current_action
+	local group
+	local potential_action
+	local requires_group
+	local user_action
 
-	local action=''					# Internal, nice, simple, action name. Only one per-action.
-	local arg=''
-	local awaiting_group=false
-	local current_action=''
-	local group=''
-	local potential_action=''		# A user arg that might be an action.
-	local requires_group=false
-	local user_action=''			# The original user argument, detected as an action. There may be many variants per-action.
+	a_args_remaining=()
+	action=''				# Internal, nice, simple, action name. Only one per-action.
+	arg=''
+	awaiting_group=false
+	current_action=''
+	group=''
+	potential_action=''		# A user arg that might be an action.
+	requires_group=false
+	user_action=''			# The original user argument, detected as an action. There may be many variants per-action.
 
 	for arg in ${a_args[@]+"${a_args[@]}"}; do
 		[[ -n $arg ]] || continue
@@ -2749,16 +2812,25 @@ ParseShowArgs()
 
 	FuncInit
 
-	local -a a_args_remaining=()
+	local -a a_args_remaining
+	local action
+	local arg
+	local awaiting_group
+	local current_action
+	local group
+	local potential_action
+	local requires_group
+	local user_action
 
-	local action=''					# Internal, nice, simple, action name. Only one per-action.
-	local arg=''
-	local awaiting_group=false
-	local current_action=''
-	local group=''
-	local potential_action=''		# A user arg that might be an action.
-	local requires_group=false
-	local user_action=''			# The original user argument, detected as an action. There may be many variants per-action.
+	a_args_remaining=()
+	action=''				# Internal, nice, simple, action name. Only one per-action.
+	arg=''
+	awaiting_group=false
+	current_action=''
+	group=''
+	potential_action=''		# A user arg that might be an action.
+	requires_group=false
+	user_action=''			# The original user argument, detected as an action. There may be many variants per-action.
 
 	for arg in ${a_args[@]+"${a_args[@]}"}; do
 		[[ -n $arg ]] || continue
@@ -2965,16 +3037,25 @@ ParseListArgs()
 
 	FuncInit
 
-	local -a a_args_remaining=()
+	local -a a_args_remaining
+	local action
+	local arg
+	local awaiting_group
+	local current_action
+	local group
+	local potential_action
+	local requires_group
+	local user_action
 
-	local action=''					# Internal, nice, simple, action name. Only one per-action.
-	local arg=''
-	local awaiting_group=false
-	local current_action=''
-	local group=''
-	local potential_action=''		# A user arg that might be an action.
-	local requires_group=false
-	local user_action=''			# The original user argument, detected as an action. There may be many variants per-action.
+	a_args_remaining=()
+	action=''				# Internal, nice, simple, action name. Only one per-action.
+	arg=''
+	awaiting_group=false
+	current_action=''
+	group=''
+	potential_action=''		# A user arg that might be an action.
+	requires_group=false
+	user_action=''			# The original user argument, detected as an action. There may be many variants per-action.
 
 	for arg in ${a_args[@]+"${a_args[@]}"}; do
 		[[ -n $arg ]] || continue
@@ -3099,16 +3180,25 @@ ParseActionArgs()
 
 	FuncInit
 
-	local -a a_args_remaining=()
+	local -a a_args_remaining
+	local action
+	local arg
+	local awaiting_group
+	local current_action
+	local group
+	local potential_action
+	local requires_group
+	local user_action
 
-	local action=''					# Internal, nice, simple, action name. Only one per-action.
-	local arg=''
-	local awaiting_group=false
-	local current_action=''
-	local group=''
-	local potential_action=''		# A user arg that might be an action.
-	local requires_group=false
-	local user_action=''			# The original user argument, detected as an action. There may be many variants per-action.
+	a_args_remaining=()
+	action=''				# Internal, nice, simple, action name. Only one per-action.
+	arg=''
+	awaiting_group=false
+	current_action=''
+	group=''
+	potential_action=''		# A user arg that might be an action.
+	requires_group=false
+	user_action=''			# The original user argument, detected as an action. There may be many variants per-action.
 
 	[[ -n ${a_args[*]+"${a_args[*]}"} ]] && LoadDatabase
 
@@ -3444,9 +3534,11 @@ ShowArgSuggestions()
 
 	FuncInit
 
-	local -a a_args_remaining=()
+	local -a a_args_remaining
+	local arg
 
-	local arg=''
+	a_args_remaining=()
+	arg=''
 
 	CreateReportPaths
 
@@ -3626,8 +3718,11 @@ AllocPackGroupsToAcs()
 	ShowAsProc 'package groups'
 	ResumeAni
 
-	local action=''
-	local group=''
+	local action
+	local group
+
+	action=''
+	group=''
 
 	for action in "${ar_user_qpkg_actions[@]}"; do
 		# Process group-based user-actions.
@@ -3678,9 +3773,13 @@ AllocPackStatesToAcs()
 	ShowAsProc 'conditional package states'
 	ResumeAni
 
-	local action=''
-	local check_later=false
-	local state=''
+	local action
+	local check_later
+	local state
+
+	action=''
+	check_later=false
+	state=''
 
 	for action in "${ar_user_qpkg_actions[@]}"; do
 		# Process state-based user-actions.
@@ -3802,19 +3901,21 @@ PatchEntwareService()
 	{
 
 	# Inputs: (global)
-	#	$r_char_tab
 	#	$r_external_apps_path
 	#	$r_external_apps_temp_path
 
-	local -r r_prefix='# The following line was inserted by sherpa: https://git.io/sherpa'
+	local append_text
+	local match_text
+	local r_package_init_pathfile
+	local r_prefix
 
-	local append_text=''
-	local match_text=''
-	local r_package_init_pathfile=''
-
+	append_text=''
+	match_text=''
 	r_package_init_pathfile=$(GetQpkgServicePathFile Entware)
+	r_prefix='# The following line was inserted by sherpa: https://git.io/sherpa'
 
 	local -r r_package_init_pathfile
+	local -r r_prefix
 
 	if /bin/grep "$r_external_apps_temp_path" "$r_package_init_pathfile" &> /dev/null; then
 		DebugInfo 'patch: "'$r_external_apps_path' shuffle" - already done'
@@ -3823,13 +3924,13 @@ PatchEntwareService()
 
 		append_text='external_apps_path='$r_external_apps_path' external_apps_temp_path='$r_external_apps_temp_path'; /bin/rmdir "$external_apps_path" "$external_apps_temp_path" 2> /dev/null; [[ -d $external_apps_path \&\& ! -L $external_apps_path \&\& ! -d $external_apps_temp_path ]] \&\& /bin/mv "$external_apps_path" "$external_apps_temp_path"'
 		match_text='# sym-link $QPKG_DIR to /opt'
-		/bin/sed -i "s|$match_text|${match_text}\n\n${r_char_tab}${r_prefix}\n${r_char_tab}${append_text}\n|" "$r_package_init_pathfile"
+		/bin/sed -i "s|$match_text|${match_text}\n\n\t${r_prefix}\n\t${append_text}\n|" "$r_package_init_pathfile"
 
 		# ... then restored afterward:
 
 		append_text='(shopt -s dotglob; [[ -L $external_apps_path \&\& -d $external_apps_temp_path ]] \&\& { /bin/mv "$external_apps_temp_path"/* "$external_apps_path"/; /bin/rm -rf "${external_apps_temp_path:?no path specified}" ;})'
 		match_text='/bin/ln -sf $QPKG_DIR /opt'
-		/bin/sed -i "s|$match_text|${match_text}\n\n${r_char_tab}${r_prefix}\n${r_char_tab}${append_text}\n|" "$r_package_init_pathfile"
+		/bin/sed -i "s|$match_text|${match_text}\n\n\t${r_prefix}\n\t${append_text}\n|" "$r_package_init_pathfile"
 
 		DebugAsDone 'patch: "'$r_external_apps_path' shuffle"'
 	fi
@@ -3858,7 +3959,9 @@ _UpdateEntwarePackageList_()
 		exit 1
 	fi
 
-	local -i z=0
+	local -i z
+
+	z=0
 
 	# If Entware package list was recently updated, don't update again.
 
@@ -3919,9 +4022,7 @@ LoadIpkList()
 		DebugInfo "IPKs are being loaded from $(FormatFileName "$r_prev_ipk_list_pathfile")"
 
 		while read -r name separator version; do
-			name=$(Lowercase "$name")
-
-			IPKs-ACinstall-to:Add "$name"
+			IPKs-ACinstall-to:Add "$(Lowercase "$name")"
 		done < "$r_prev_ipk_list_pathfile"
 	fi
 
@@ -18802,13 +18903,14 @@ IsSiteUp()
 
 	ConfirmVarIsDefined 1 "${1:-}" "$e_nourl" || return
 
-	local a=''
+	local a
+	local -i n
 
 	a=$(/usr/bin/cut -d'/' -f3 <<< "$1" | /usr/bin/cut -d':' -f1)
 
 	ConfirmVarIsDefined a "${a:-}" "$e_nourl" || return
 
-	local -i n=0
+	n=0
 
 	for ((n=0; n<=2; n++)); do
 		/bin/ping -c 1 -w 1 "$a" && return 0
