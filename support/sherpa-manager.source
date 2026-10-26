@@ -3956,7 +3956,7 @@ _UpdateEntwarePackageList_()
 	if IsNtCriticalFile $r_opkg_cmd; then
 		DisplayAsProjSynExam 'try reactivating Entware' 'reactivate ew'
 
-		exit 1
+		return 1
 	fi
 
 	local -i z
@@ -3987,7 +3987,7 @@ _UpdateEntwarePackageList_()
 
 	IsFile "$r_external_packages_archive_pathfile" && IsNtFile "$r_external_packages_pathfile" && OpenIpkArchive
 
-	exit 0
+	return 0
 
 	}
 
