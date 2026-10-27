@@ -281,11 +281,21 @@ LoadConsts()
 
 	# Various.
 
-		readonly r_cert_db_pathfile=/etc/config/nas_sign_qpkg.db
-		readonly r_entware_packages_last_updated=20260407
-		readonly r_file_change_threshold_minutes=60
-		readonly r_script_built_epoch='<?manager_epoch?>'
-		readonly r_this_script_ver='<?manager_version?>'
+		r_cert_db_pathfile=/etc/config/nas_sign_qpkg.db
+		r_entware_packages_last_updated=20260407
+		r_file_change_threshold_minutes=60
+		r_regex_get_ram='s/.*: //;s/kB//;s/ //g'
+		r_regex_strip_ansi='s/\x1b\[[0-9;]*m//g'
+		r_script_built_epoch='<?manager_epoch?>'
+		r_this_script_ver='<?manager_version?>'
+
+		readonly r_cert_db_pathfile
+		readonly r_entware_packages_last_updated
+		readonly r_file_change_threshold_minutes
+		readonly r_regex_get_ram
+		readonly r_regex_strip_ansi
+		readonly r_script_built_epoch
+		readonly r_this_script_ver
 
 	# Error messages.
 
@@ -10255,7 +10265,7 @@ GetHardwareInstalledRAMkb()
 	# Outputs: (local)
 	#	stdout = string.
 
-	/bin/grep MemTotal /proc/meminfo | /bin/sed 's/.*: //;s/kB//;s/ //g'
+	/bin/grep MemTotal /proc/meminfo | /bin/sed "$r_regex_get_ram"
 
 	}
 
@@ -10267,7 +10277,7 @@ GetHardwareInstalledRAMgb()
 
 	local a=''
 
-	a=$(/bin/grep MemTotal /proc/meminfo | /bin/sed 's/.*: //;s/kB//;s/ //g')
+	a=$(/bin/grep MemTotal /proc/meminfo | /bin/sed "$r_regex_get_ram")
 
 	local b=$((((a/1024)*1000)/1024))
 	local c=${b%???}.${b:${#b}<3?0:-3}
@@ -11052,8 +11062,9 @@ _QPKG:install_()
 	# Inputs: (global)
 	#	$a_QPKGs_were_installed_name[]
 	#	$qpkg_name
-	#	$r_external_apps_temp_path
+	#	$r_action_log_path
 	#	$r_external_apps_path
+	#	$r_external_apps_temp_path
 	#	$r_install_log_file
 	#	$r_log_path
 	#	$r_nas_arch
@@ -11066,14 +11077,22 @@ _QPKG:install_()
 
 	FuncForkInit
 
-	local -i z=0
+	local -i z
+	local a
+	local action
+	local b
+	local r_local_pathfile
+	local r_log_pathfile
 
-	local action=install
-	local r_local_pathfile=''
-
+	a='INSTALL_QPKG=true '
+	action=install
+	b=''
 	r_local_pathfile=$(GetQpkgDbPathFilename)
+	r_log_pathfile=$r_action_log_path/$qpkg_name.$r_install_log_file
+	z=0
 
 	local -r r_local_pathfile
+	local -r r_log_pathfile
 
 	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
@@ -11117,10 +11136,6 @@ _QPKG:install_()
 
 	DebugAsProc "installing $(FormatPackageName)"
 
-	local a='INSTALL_QPKG=true '
-
-	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_install_log_file
-
 	IsDebug && a+='DEBUG_QPKG=true '
 	[[ ${a_QPKGs_were_installed_name[*]:-} = *"$qpkg_name"* ]] && a+="QINSTALL_PATH=$(GetQpkgInstalledOriginalPath "$qpkg_name") "
 
@@ -11155,10 +11170,7 @@ _QPKG:install_()
 		MarkActionForkAsDoneOk
 		z=0		# Remap to zero.
 	else
-		local b=''
-
 		b=$(GetQpkgServiceExplanation) || b=$z
-
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
 #		IsOsCanManageSignedPackages && IsQpkgSigned && SendParentCommand "QPKGs-ACunsign-to:Add $qpkg_name"
 		MarkActionForkAsDoneError
@@ -11179,6 +11191,7 @@ _QPKG:reinstall_()
 
 	# Inputs: (global)
 	#	$qpkg_name
+	#	$r_action_log_path
 	#	$r_log_path
 	#	$r_opkg_cmd
 	#	$r_reinstall_log_file
@@ -11189,14 +11202,22 @@ _QPKG:reinstall_()
 
 	FuncForkInit
 
-	local -i z=0
+	local -i z
+	local a
+	local action
+	local b
+	local r_local_pathfile
+	local r_log_pathfile
 
-	local action=reinstall
-	local r_local_pathfile=''
-
+	a='REINSTALL_QPKG=true '
+	action=reinstall
+	b=''
 	r_local_pathfile=$(GetQpkgDbPathFilename)
+	r_log_pathfile=$r_action_log_path/$qpkg_name.$r_reinstall_log_file
+	z=0
 
 	local -r r_local_pathfile
+	local -r r_log_pathfile
 
 	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
@@ -11226,10 +11247,6 @@ _QPKG:reinstall_()
 
 	DebugAsProc "reinstalling $(FormatPackageName)"
 
-	local a='REINSTALL_QPKG=true '
-
-	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_reinstall_log_file
-
 	IsDebug && a+='DEBUG_QPKG=true '
 	IsValidQpkgInstalled && a+="QINSTALL_PATH=$(/usr/bin/dirname "$(GetQpkgInstalledPath)") "
 
@@ -11249,10 +11266,7 @@ _QPKG:reinstall_()
 		MarkActionForkAsDoneOk
 		z=0		# Remap to zero.
 	else
-		local b=''
-
 		b=$(GetQpkgServiceExplanation) || b=$z
-
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
 		MarkActionForkAsDoneError
 	fi
@@ -11272,6 +11286,7 @@ _QPKG:update_()
 
 	# Inputs: (global)
 	#	$qpkg_name
+	#	$r_action_log_path
 	#	$r_log_path
 	#	$r_update_log_file
 	#	$useropt_debug
@@ -11281,14 +11296,22 @@ _QPKG:update_()
 
 	FuncForkInit
 
-	local -i z=0
+	local -i z
+	local a
+	local action
+	local b
+	local r_local_pathfile
+	local r_log_pathfile
 
-	local action=update
-	local r_local_pathfile=''
-
+	a=''
+	action=update
+	b=''
 	r_local_pathfile=$(GetQpkgServicePathFile)
+	r_log_pathfile=$r_action_log_path/$qpkg_name.$r_update_log_file
+	z=0
 
 	local -r r_local_pathfile
+	local -r r_log_pathfile
 
 	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
@@ -11322,10 +11345,6 @@ _QPKG:update_()
 
 	DebugAsProc "updating $(FormatPackageName)"
 
-	local a=''
-
-	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_update_log_file
-
 	IsDebug && a+='DEBUG_QPKG=true '
 
 	Executer "$a \"$r_local_pathfile\" update" "$r_log_pathfile" log:failure-only
@@ -11338,10 +11357,7 @@ _QPKG:update_()
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
 		MarkActionForkAsDoneOk
 	else
-		local b=''
-
 		b=$(GetQpkgServiceExplanation) || b=$z
-
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
 		MarkActionForkAsDoneError
 		# TODO: if debug mode, save action log to session log.
@@ -11362,6 +11378,7 @@ _QPKG:upgrade_()
 
 	# Inputs: (global)
 	#	$qpkg_name
+	#	$r_action_log_path
 	#	$r_log_path
 	#	$r_upgrade_log_file
 	#	$useropt_debug
@@ -11372,13 +11389,24 @@ _QPKG:upgrade_()
 	FuncForkInit
 
 	local -i z=0
+	local a
+	local action
+	local b
+	local current_ver
+	local prev_ver
+	local r_local_pathfile
+	local r_log_pathfile
 
-	local action=upgrade
-	local r_local_pathfile=''
-
+	a='UPGRADE_QPKG=true '
+	action=upgrade
+	b=''
+	prev_ver=''
 	r_local_pathfile=$(GetQpkgDbPathFilename)
+	r_log_pathfile=$r_action_log_path/$qpkg_name.$r_upgrade_log_file
+	z=0
 
 	local -r r_local_pathfile
+	local -r r_log_pathfile
 
 	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
@@ -11412,11 +11440,6 @@ _QPKG:upgrade_()
 
 	DebugAsProc "upgrading $(FormatPackageName)"
 
-	local a='UPGRADE_QPKG=true '
-	local prev_ver=''
-
-	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_upgrade_log_file
-
 	prev_ver=$(GetQpkgInstalledVer)
 	IsDebug && a+='DEBUG_QPKG=true '
 	IsValidQpkgInstalled && a+="QINSTALL_PATH=$(/usr/bin/dirname "$(GetQpkgInstalledPath "$qpkg_name")") "
@@ -11436,8 +11459,6 @@ _QPKG:upgrade_()
 		SendParentCommand "QPKGs-ACupdate-to:Remove $qpkg_name"
 		IsQpkgDbCanClean && SendParentCommand "QPKGs-ACclean-to:Add $qpkg_name"
 
-		local current_ver=''
-
 		current_ver=$(GetQpkgInstalledVer)
 
 		if [[ $current_ver = "$prev_ver" ]]; then
@@ -11449,10 +11470,7 @@ _QPKG:upgrade_()
 		MarkActionForkAsDoneOk
 		z=0		# Remap to zero.
 	else
-		local b=''
-
 		b=$(GetQpkgServiceExplanation) || b=$z
-
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
 		MarkActionForkAsDoneError
 	fi
@@ -11472,6 +11490,7 @@ _QPKG:uninstall_()
 
 	# Inputs: (global)
 	#	$qpkg_name
+	#	$r_action_log_path
 	#	$r_log_path
 	#	$r_uninstall_log_file
 	#	$useropt_debug
@@ -11481,14 +11500,23 @@ _QPKG:uninstall_()
 
 	FuncForkInit
 
-	local -i z=0
+	local -i z
+	local a
+	local action
+	local b
+	local current_ver
+	local r_local_pathfile
+	local r_log_pathfile
 
-	local action=uninstall
-	local r_local_pathfile=''
-
+	a='UNINSTALL_QPKG=true '
+	action=uninstall
+	b=''
 	r_local_pathfile=$(GetQpkgInstalledPath)/.uninstall.sh
+	r_log_pathfile=$r_action_log_path/$qpkg_name.$r_uninstall_log_file
+	z=0
 
 	local -r r_local_pathfile
+	local -r r_log_pathfile
 
 	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
@@ -11524,15 +11552,9 @@ _QPKG:uninstall_()
 
 	[[ $qpkg_name = Entware ]] && SaveIpkAndPipList
 
-	local current_ver=''
-
 	current_ver=$(GetQpkgInstalledVer)
 
 	DebugAsProc "uninstalling $(FormatPackageName)"
-
-	local a='UNINSTALL_QPKG=true '
-
-	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_uninstall_log_file
 
 	IsDebug && a+='DEBUG_QPKG=true '
 
@@ -11556,8 +11578,6 @@ _QPKG:uninstall_()
 		SendPackageStateChange ISNTactive
 		MarkActionForkAsDoneOk
 	else
-		local b=''
-
 		b=$(GetQpkgServiceExplanation) || b=$z
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
 		MarkActionForkAsDoneError
@@ -11576,6 +11596,7 @@ _QPKG:activate_()
 
 	# Inputs: (global)
 	#	$qpkg_name
+	#	$r_action_log_path
 	#	$r_activate_log_file
 	#	$r_log_path
 	#	$r_qpkg_start_timeout_seconds
@@ -11586,14 +11607,24 @@ _QPKG:activate_()
 
 	FuncForkInit
 
-	local -i z=0
+	local -i z
+	local a
+	local action
+	local b
+	local r_local_pathfile
+	local r_log_pathfile
+	local timeout
 
-	local action=activate
-	local r_local_pathfile=''
-
+	a=''
+	action=activate
+	b=''
 	r_local_pathfile=$(GetQpkgServicePathFile)
+	r_log_pathfile=$r_action_log_path/$qpkg_name.$r_activate_log_file
+	timeout=''
+	z=0
 
 	local -r r_local_pathfile
+	local -r r_log_pathfile
 
 	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
@@ -11627,11 +11658,6 @@ _QPKG:activate_()
 
 	DebugAsProc "activating $(FormatPackageName)"
 
-	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_activate_log_file
-
-	local a=''
-	local timeout=''
-
 	IsOsCanQpkgTimeout && timeout='-t '$r_qpkg_start_timeout_seconds
 
 	if IsDebug; then
@@ -11662,8 +11688,6 @@ _QPKG:activate_()
 		SendPackageStateChange ISactive
 		MarkActionForkAsDoneOk
 	else
-		local b=''
-
 		b=$(GetQpkgServiceExplanation) || b=$z
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
 		SendPackageStateChange ISNTactive
@@ -11685,6 +11709,7 @@ _QPKG:reactivate_()
 
 	# Inputs: (global)
 	#	$qpkg_name
+	#	$r_action_log_path
 	#	$r_log_path
 	#	$r_qpkg_restart_timeout_seconds
 	#	$r_reactivate_log_file
@@ -11695,14 +11720,24 @@ _QPKG:reactivate_()
 
 	FuncForkInit
 
-	local -i z=0
+	local -i z
+	local a
+	local action
+	local b
+	local r_local_pathfile
+	local r_log_pathfile
+	local timeout
 
-	local action=reactivate
-	local r_local_pathfile=''
-
+	a=''
+	action=reactivate
+	b=''
 	r_local_pathfile=$(GetQpkgServicePathFile)
+	r_log_pathfile=$r_action_log_path/$qpkg_name.$r_reactivate_log_file
+	timeout=''
+	z=0
 
 	local -r r_local_pathfile
+	local -r r_log_pathfile
 
 	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
@@ -11736,11 +11771,6 @@ _QPKG:reactivate_()
 
 	DebugAsProc "reactivating $(FormatPackageName)"
 
-	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_reactivate_log_file
-
-	local a=''
-	local timeout=''
-
 	IsOsCanQpkgTimeout && timeout='-t '$r_qpkg_restart_timeout_seconds
 
 	if IsDebug; then
@@ -11764,10 +11794,7 @@ _QPKG:reactivate_()
 		SendParentCommand "QPKGs-ACactivate-to:Remove $qpkg_name"
 		MarkActionForkAsDoneOk
 	else
-		local b=''
-
 		b=$(GetQpkgServiceExplanation) || b=$z
-
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
 		MarkActionForkAsDoneError
 	fi
@@ -11797,12 +11824,21 @@ _QPKG:deactivate_()
 
 	FuncForkInit
 
-	local -i z=0
+	local -i z
+	local r_log_pathfile
+	local a
+	local action
+	local b
+	local r_local_pathfile
+	local timeout
 
-	local action=deactivate
-	local r_local_pathfile=''
-
+	a=''
+	action=deactivate
+	b=''
 	r_local_pathfile=$(GetQpkgServicePathFile)
+	r_log_pathfile=$r_action_log_path/$qpkg_name.$r_deactivate_log_file
+	timeout=''
+	z=0
 
 	local -r r_local_pathfile
 
@@ -11836,11 +11872,6 @@ _QPKG:deactivate_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_deactivate_log_file
-
-	local a=''
-	local timeout=''
-
 	IsOsCanQpkgTimeout && timeout='-t '$r_qpkg_stop_timeout_seconds
 
 	DebugAsProc "deactivating $(FormatPackageName)"
@@ -11873,10 +11904,7 @@ _QPKG:deactivate_()
 		SendPackageStateChange ISNTactive
 		MarkActionForkAsDoneOk
 	else
-		local b=''
-
 		b=$(GetQpkgServiceExplanation) || b=$z
-
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
 		MarkActionForkAsDoneError
 	fi
@@ -11894,6 +11922,7 @@ _QPKG:enable_()
 
 	# Inputs: (global)
 	#	$qpkg_name
+	#	$r_action_log_path
 	#	$r_enable_log_file
 	#	$r_log_path
 	#	$r_qpkg_enable_timeout_seconds
@@ -11904,8 +11933,16 @@ _QPKG:enable_()
 	FuncForkInit
 
 	local -i z=0
+	local action
+	local r_log_pathfile
+	local timeout
 
-	local action=enable
+	action=enable
+	r_log_pathfile=$r_action_log_path/$qpkg_name.$r_enable_log_file
+	timeout=''
+	z=0
+
+	local -r r_log_pathfile
 
 	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
@@ -11929,10 +11966,6 @@ _QPKG:enable_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_enable_log_file
-
-	local timeout=''
-
 	IsOsCanQpkgTimeout && timeout='-t '$r_qpkg_enable_timeout_seconds
 
 	DebugAsProc "enabling $(FormatPackageName)"
@@ -11955,6 +11988,7 @@ _QPKG:disable_()
 
 	# Inputs: (global)
 	#	$qpkg_name
+	#	$r_action_log_path
 	#	$r_disable_log_file
 	#	$r_log_path
 	#	$r_qpkg_disable_timeout_seconds
@@ -11964,9 +11998,17 @@ _QPKG:disable_()
 
 	FuncForkInit
 
-	local -i z=0
+	local -i z
+	local action
+	local r_log_pathfile
+	local timeout
 
-	local action=disable
+	action=disable
+	r_log_pathfile=$r_action_log_path/$qpkg_name.$r_disable_log_file
+	timeout=''
+	z=0
+
+	local -r r_log_pathfile
 
 	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
@@ -11994,10 +12036,6 @@ _QPKG:disable_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_disable_log_file
-
-	local timeout=''
-
 	IsOsCanQpkgTimeout && timeout='-t '$r_qpkg_disable_timeout_seconds
 
 	DebugAsProc "disabling $(FormatPackageName)"
@@ -12021,6 +12059,7 @@ _QPKG:enableau_()
 
 	# Inputs: (global)
 	#	$qpkg_name
+	#	$r_action_log_path
 	#	$r_enableau_log_file
 	#	$r_log_path
 	#	$useropt_debug
@@ -12030,14 +12069,22 @@ _QPKG:enableau_()
 
 	FuncForkInit
 
-	local -i z=0
+	local -i z
+	local a
+	local action
+	local b
+	local r_local_pathfile
+	local r_log_pathfile
 
-	local action=enableau
-	local r_local_pathfile=''
-
+	a=''
+	action=enableau
+	b=''
 	r_local_pathfile=$(GetQpkgServicePathFile)
+	r_log_pathfile=$r_action_log_path/$qpkg_name.$r_enableau_log_file
+	z=0
 
 	local -r r_local_pathfile
+	local -r r_log_pathfile
 
 	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
@@ -12075,10 +12122,6 @@ _QPKG:enableau_()
 
 	DebugAsProc "enabling auto-update $(FormatPackageName)"
 
-	local a=''
-
-	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_enableau_log_file
-
 	IsDebug && a+='DEBUG_QPKG=true '
 
 	Executer "$a \"$r_local_pathfile\" enable-auto-update" "$r_log_pathfile" log:failure-only
@@ -12091,8 +12134,6 @@ _QPKG:enableau_()
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
 		MarkActionForkAsDoneOk
 	else
-		local b=''
-
 		b=$(GetQpkgServiceExplanation) || b=$z
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
 		MarkActionForkAsDoneError
@@ -12111,6 +12152,7 @@ _QPKG:disableau_()
 
 	# Inputs: (global)
 	#	$qpkg_name
+	#	$r_action_log_path
 	#	$r_disableau_log_file
 	#	$r_log_path
 	#	$useropt_debug
@@ -12120,14 +12162,22 @@ _QPKG:disableau_()
 
 	FuncForkInit
 
-	local -i z=0
+	local -i z
+	local a
+	local action
+	local b
+	local r_local_pathfile
+	local r_log_pathfile
 
-	local action=disableau
-	local r_local_pathfile=''
-
+	a=''
+	action=disableau
+	b=''
 	r_local_pathfile=$(GetQpkgServicePathFile)
+	r_log_pathfile=$r_action_log_path/$qpkg_name.$r_disableau_log_file
+	z=0
 
 	local -r r_local_pathfile
+	local -r r_log_pathfile
 
 	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
@@ -12165,10 +12215,6 @@ _QPKG:disableau_()
 
 	DebugAsProc "disabling auto-update $(FormatPackageName)"
 
-	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_disableau_log_file
-
-	local a=''
-
 	IsDebug && a+='DEBUG_QPKG=true '
 
 	Executer "$a \"$r_local_pathfile\" disable-auto-update" "$r_log_pathfile" log:failure-only
@@ -12181,10 +12227,7 @@ _QPKG:disableau_()
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
 		MarkActionForkAsDoneOk
 	else
-		local b=''
-
 		b=$(GetQpkgServiceExplanation) || b=$z
-
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
 		MarkActionForkAsDoneError
 	fi
@@ -12202,6 +12245,7 @@ _QPKG:backup_()
 
 	# Inputs: (global)
 	#	$qpkg_name
+	#	$r_action_log_path
 	#	$r_backup_log_file
 	#	$r_log_path
 	#	$useropt_debug
@@ -12211,14 +12255,22 @@ _QPKG:backup_()
 
 	FuncForkInit
 
-	local -i z=0
+	local -i z
+	local a
+	local action
+	local b
+	local r_local_pathfile
+	local r_log_pathfile
 
-	local action=backup
-	local r_local_pathfile=''
-
+	a=''
+	action=backup
+	b=''
 	r_local_pathfile=$(GetQpkgServicePathFile)
+	r_log_pathfile=$r_action_log_path/$qpkg_name.$r_backup_log_file
+	z=0
 
 	local -r r_local_pathfile
+	local -r r_log_pathfile
 
 	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
@@ -12252,10 +12304,6 @@ _QPKG:backup_()
 
 	DebugAsProc "backing-up $(FormatPackageName) configuration"
 
-	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_backup_log_file
-
-	local a=''
-
 	IsDebug && a+='DEBUG_QPKG=true '
 
 	Executer "$a \"$r_local_pathfile\" backup" "$r_log_pathfile" log:failure-only
@@ -12269,10 +12317,7 @@ _QPKG:backup_()
 		SendPackageStateChange ISbackedup
 		MarkActionForkAsDoneOk
 	else
-		local b=''
-
 		b=$(GetQpkgServiceExplanation) || b=$z
-
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
 		SendParentCommand "QPKGs-ACuninstall-to:Remove $qpkg_name"
 		SendParentCommand "QPKGs-ACrestore-to:Remove $qpkg_name"
@@ -12292,6 +12337,7 @@ _QPKG:restore_()
 
 	# Inputs: (global)
 	#	$qpkg_name
+	#	$r_action_log_path
 	#	$r_log_path
 	#	$r_restore_log_file
 	#	$useropt_debug
@@ -12301,14 +12347,22 @@ _QPKG:restore_()
 
 	FuncForkInit
 
-	local -i z=0
+	local -i z
+	local a
+	local action
+	local b
+	local r_local_pathfile
+	local r_log_pathfile
 
-	local action=restore
-	local r_local_pathfile=''
-
+	a=''
+	action=restore
+	b=''
 	r_local_pathfile=$(GetQpkgServicePathFile)
+	r_log_pathfile=$r_action_log_path/$qpkg_name.$r_restore_log_file
+	z=0
 
 	local -r r_local_pathfile
+	local -r r_log_pathfile
 
 	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
@@ -12351,10 +12405,6 @@ _QPKG:restore_()
 
 	DebugAsProc "restoring $(FormatPackageName) configuration"
 
-	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_restore_log_file
-
-	local a=''
-
 	IsDebug && a+='DEBUG_QPKG=true '
 
 	Executer "$a \"$r_local_pathfile\" restore" "$r_log_pathfile" log:failure-only
@@ -12368,10 +12418,7 @@ _QPKG:restore_()
 #		SendPackageStateChange ISrestored		# TODO: this doesn't yet exist as an object.
 		MarkActionForkAsDoneOk
 	else
-		local b=''
-
 		b=$(GetQpkgServiceExplanation) || b=$z
-
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
 		MarkActionForkAsDoneError
 	fi
@@ -12389,6 +12436,7 @@ _QPKG:clean_()
 
 	# Inputs: (global)
 	#	$qpkg_name
+	#	$r_action_log_path
 	#	$r_clean_log_file
 	#	$r_log_path
 	#	$useropt_debug
@@ -12398,14 +12446,22 @@ _QPKG:clean_()
 
 	FuncForkInit
 
-	local -i z=0
+	local -i z
+	local a
+	local action
+	local b
+	local r_local_pathfile
+	local r_log_pathfile
 
-	local action=clean
-	local r_local_pathfile=''
-
+	a=''
+	action=clean
+	b=''
 	r_local_pathfile=$(GetQpkgServicePathFile)
+	r_log_pathfile=$r_action_log_path/$qpkg_name.$r_clean_log_file
+	z=0
 
 	local -r r_local_pathfile
+	local -r r_log_pathfile
 
 	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
@@ -12439,10 +12495,6 @@ _QPKG:clean_()
 
 	DebugAsProc "cleaning $(FormatPackageName)"
 
-	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_clean_log_file
-
-	local a=''
-
 	IsDebug && a+='DEBUG_QPKG=true '
 
 	Executer "$a \"$r_local_pathfile\" clean" "$r_log_pathfile" log:failure-only
@@ -12462,10 +12514,7 @@ _QPKG:clean_()
 		MarkActionForkAsDoneOk
 		SendParentCommand "QPKGs-ACupdate-to:Remove $qpkg_name"
 	else
-		local b=''
-
 		b=$(GetQpkgServiceExplanation) || b=$z
-
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
 		MarkActionForkAsDoneError
 		# TODO: if debug mode, save action log to session log.
@@ -12502,9 +12551,14 @@ _QPKG:sign_()
 
 	FuncForkInit
 
-	local -i z=0
+	local -i retries
+	local -i z
+	local a
+	local action
+	local b
 
-	local action='"sign"'
+	action='"sign"'
+	z=0
 
 	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
@@ -12529,11 +12583,6 @@ _QPKG:sign_()
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	DebugAsProc "\"signing\" $(FormatPackageName)"
-
-	local -i retries=0
-
-	local a=''
-	local b=''
 
 	# https://pynative.com/python-sqlite-insert-into-table/
 
@@ -12607,9 +12656,14 @@ _QPKG:unsign_()
 
 	FuncForkInit
 
-	local -i z=0
+	local -i retries
+	local -i z
+	local a
+	local action
+	local b
 
-	local action='"unsign"'
+	action='"unsign"'
+	z=0
 
 	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
@@ -12634,11 +12688,6 @@ _QPKG:unsign_()
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	DebugAsProc "\"unsigning\" $(FormatPackageName)"
-
-	local -i retries=0
-
-	local a=''
-	local b=''
 
 	# https://pynative.com/python-sqlite-delete-from-table/
 
@@ -12718,9 +12767,12 @@ LogQpkgServiceResult()
 
 	# Inputs: (global)
 	#	$qpkg_name
+	#	$r_qpkg_service_result_path
 
-	local a=$r_qpkg_service_result_path/$qpkg_name.log
-	local b=''
+	local a
+	local b
+
+	a=$r_qpkg_service_result_path/$qpkg_name.log
 
 	if ! b=$(GetQpkgServiceResult); then
 		DebugAsWarn "unable to get status of $(FormatPackageName) service. It may be a non-sherpa package, or a sherpa package earlier than 200816c that doesn't support service results."
@@ -12758,6 +12810,7 @@ GetQpkgInstalledPath()
 	#	$1 (optional) = QPKG name.
 
 	# Inputs: (global)
+	#	$e_nopnm
 	#	$qpkg_name (default)
 
 	# Outputs:
@@ -12775,6 +12828,7 @@ GetQpkgServicePathFile()
 	#	$1 (optional) = QPKG name.
 
 	# Inputs: (global)
+	#	$e_nopnm
 	#	$qpkg_name (default)
 
 	# Outputs: (local)
@@ -12791,19 +12845,20 @@ GetQpkgDbApplVer()
 	# Returns the version number of the application contained within a QPKG.
 
 	# Inputs: (global)
-	#	$r_qpkg_appl_version
 	#	$qpkg_index
 	#	$qpkg_name
-	#	$r_qpkg_name
-	#	$r_qpkg_version
+	#	$r_qpkg_appl_version[]
+	#	$r_qpkg_name[]
+	#	$r_qpkg_version[]
 
 	# Outputs: (local)
 	#	stdout = application version
-	#	$? = 0 if found, !0 if not
+	#	$? = 0 if found, !0 if not.
 
-	local -i i=0
+	local -i i
+	local a
 
-	local a=''
+	a=''
 
 	if [[ $qpkg_index -gt 0 ]]; then
 		a=${r_qpkg_appl_version[qpkg_index]}
@@ -12836,16 +12891,20 @@ GetQpkgDbVer()
 	# Returns the version number of an available (not-installed) QPKG.
 
 	# Inputs: (global)
+	#	$e_nopnm
 	#	$qpkg_index
 	#	$qpkg_name
+	#	$r_qpkg_name[]
+	#	$r_qpkg_version[]
 
 	# Outputs: (local)
 	#	stdout = package version
-	#	$? = 0 if found, !0 if not
+	#	$? = 0 if found, !0 if not.
 
-	local -i i=0
+	local -i i
+	local a
 
-	local a=''
+	a=''
 
 #	if [[ $qpkg_index -gt 0 ]]; then
 #		a=${r_qpkg_version[qpkg_index]}
@@ -12878,7 +12937,8 @@ GetQpkgInstalledVer()
 	# Returns the version number of an installed QPKG.
 
 	# Inputs: (global)
-	#	$qpkg_name.
+	#	$e_nopnm
+	#	$qpkg_name
 
 	# Outputs:
 	#	stdout = package version string.
@@ -12897,7 +12957,8 @@ GetQpkgInstalledStoreID()
 	#	$1 (optional) = QPKG name.
 
 	# Inputs: (global)
-	#	$qpkg_name (default).
+	#	$e_nopnm
+	#	$qpkg_name (default)
 
 	# Outputs: (local)
 	#	stdout = package store ID string.
@@ -12916,7 +12977,8 @@ GetQpkgInstalledDate()
 	#	$1 (optional) = QPKG name.
 
 	# Inputs: (global)
-	#	$qpkg_name (default).
+	#	$e_nopnm
+	#	$qpkg_name (default)
 
 	# Outputs: (local)
 	#	stdout = package installation date string.
@@ -12933,15 +12995,19 @@ GetQpkgInstalledOriginalPath()
 	#	$1 (optional) = QPKG name.
 
 	# Inputs: (global)
+	#	$a_QPKGs_were_installed_name[]
+	#	$a_QPKGs_were_installed_path[]
+	#	$e_nopnm
 	#	$qpkg_name (default)
 
 	# Outputs: (local)
 	#	stdout = the original installation path of this QPKG (even if it was migrated to another volume).
 	#	$? = 0 if successful, 1 if failed
 
-	local -i i=0
+	local -i i
+	local a
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}
+	a=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}
 
 	if [[ ${#a_QPKGs_were_installed_name[@]} -gt 0 ]]; then
 		for i in "${!a_QPKGs_were_installed_name[@]}"; do
@@ -12964,15 +13030,13 @@ GetQpkgDbPathFilename()
 
 	# Outputs: (local)
 	#	stdout = pathfilename.
-	#	$? = 0 if found, !0 if not
+	#	$? = 0 if found, !0 if not.
 
-	local a=''
+	local a
 
 	a=$(GetQpkgDbURL)
 	[[ -n $a ]] || return
-
 	[[ $(Lowercase "${a##*.}") != qpkg ]] && a=${a%.*}.qpkg		# Swap 'zip' for 'qpkg' here (only for compatibilty with 'QDK.zip').
-
 	printf '%s' "$r_qpkg_download_path/$(/usr/bin/basename "$a")"
 
 	return 0
@@ -12984,15 +13048,16 @@ GetQpkgDbHash()
 
 	# Inputs: (global)
 	#	$qpkg_index
-	#	$qpkg_name
+	#	$qpkg_name (default)
+	#	$r_qpkg_hash[]
 
 	# Outputs: (local)
 	#	stdout = QPKG MD5
-	#	$? = 0 if found, !0 if not
+	#	$? = 0 if found, !0 if not.
 
 	[[ -n $qpkg_name && $qpkg_index -gt 0 ]] || return
 
-	local a=''
+	local a
 
 	a=${r_qpkg_hash[qpkg_index]}
 	[[ $a != none ]] || return
@@ -13013,15 +13078,18 @@ GetQpkgDbURL()
 
 	# Inputs: (global)
 	#	$qpkg_index
-	#	$qpkg_name
+	#	$qpkg_name (default)
+	#	$r_qpkg_name[]
+	#	$r_qpkg_url[]
 
 	# Outputs: (local)
 	#	stdout = QPKG remote URL.
-	#	$? = 0 if found, !0 if not
+	#	$? = 0 if found, !0 if not.
 
-	local -i i=0
+	local -i i
+	local a
 
-	local a=''
+	a=''
 
 	if [[ -n ${1:-} ]]; then
 		for i in "${!r_qpkg_name[@]}"; do
@@ -13052,15 +13120,18 @@ GetQpkgDbMinRAM()
 
 	# Inputs: (global)
 	#	$qpkg_index
-	#	$qpkg_name
+	#	$qpkg_name (default)
+	#	$r_qpkg_min_ram_kb[]
+	#	$r_qpkg_name[]
 
 	# Outputs: (local)
 	#	stdout = minimum installed RAM required.
-	#	$? = 0 if found, !0 if not
+	#	$? = 0 if found, !0 if not.
 
-	local -i i=0
+	local -i i
+	local a
 
-	local a=''
+	a=''
 
 	if [[ -n ${1:-} ]]; then
 		for i in "${!r_qpkg_name[@]}"; do
@@ -13089,15 +13160,18 @@ GetQpkgDbMinOSVer()
 
 	# Inputs: (global)
 	#	$qpkg_index
-	#	$qpkg_name
+	#	$qpkg_name (default)
+	#	$r_qpkg_min_os_version[]
+	#	$r_qpkg_name[]
 
 	# Outputs: (local)
 	#	stdout = minimum QTS/QuTS version required by this QPKG.
-	#	$? = 0 if found, !0 if not
+	#	$? = 0 if found, !0 if not.
 
-	local -i i=0
+	local -i i
+	local a
 
-	local a=''
+	a=''
 
 	if [[ -n ${1:-} ]]; then
 		for i in "${!r_qpkg_name[@]}"; do
@@ -13126,15 +13200,18 @@ GetQpkgDbMaxOSVer()
 
 	# Inputs: (global)
 	#	$qpkg_index
-	#	$qpkg_name
+	#	$qpkg_name (default)
+	#	$r_qpkg_max_os_version[]
+	#	$r_qpkg_name[]
 
 	# Outputs: (local)
 	#	stdout = maximum QTS/QuTS version required by this QPKG.
-	#	$? = 0 if found, !0 if not
+	#	$? = 0 if found, !0 if not.
 
-	local -i i=0
+	local -i i
+	local a
 
-	local a=''
+	a=''
 
 	if [[ -n ${1:-} ]]; then
 		for i in "${!r_qpkg_name[@]}"; do
@@ -13164,19 +13241,19 @@ GetQpkgDbAuthor()
 	#	$1 (optional) = QPKG name.
 
 	# Inputs: (global)
+	#	$e_nopnm
 	#	$qpkg_name (default)
+	#	$r_qpkg_author[]
+	#	$r_qpkg_name[]
 
 	# Outputs: (local)
 	#	stdout = QPKG author.
 	#	$? = 0 (found), !0 (not-found)
 
-	local -i i=0
-
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}
+	local -i i
 
 	for i in "${!r_qpkg_name[@]}"; do
-		[[ ${r_qpkg_name[i]} = "$a" ]] || continue
-
+		[[ ${r_qpkg_name[i]} = "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}" ]] || continue
 		printf '%s' "${r_qpkg_author[i]}"
 
 		return 0
@@ -13195,6 +13272,7 @@ GetQpkgAuthor()
 	#	$1 (optional) = QPKG name.
 
 	# Inputs: (global)
+	#	$e_nopnm
 	#	$qpkg_name (default)
 
 	# Outputs: (local)
@@ -13207,18 +13285,23 @@ GetQpkgAuthor()
 GetQpkgDbDesc()
 	{
 
-	# Inputs:
+	# Inputs: (local)
 	#	$1 (optional) = QPKG name - if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
-	#	$qpkg_index (global)
-	#	$qpkg_name (global)
 
-	# Outputs:
+	# Inputs: (global)
+	#	$qpkg_index
+	#	$qpkg_name
+	#	$r_qpkg_description[]
+	#	$r_qpkg_name[]
+
+	# Outputs: (local)
 	#	stdout = QPKG description.
-	#	$? = 0 if found, !0 if not
+	#	$? = 0 if found, !0 if not.
 
-	local -i i=0
+	local -i i
+	local a
 
-	local a=''
+	a=''
 
 	if [[ -n ${1:-} ]]; then
 		for i in "${!r_qpkg_name[@]}"; do
@@ -13253,11 +13336,12 @@ GetQpkgDbAbbrvs()
 
 	# Outputs: (local)
 	#	stdout = list of abbreviations that may be used to specify this package
-	#	$? = 0 if found, !0 if not
+	#	$? = 0 if found, !0 if not.
 
-	local -i i=0
+	local -i i
+	local a
 
-	local a=''
+	a=''
 
 	if [[ -n ${1:-} ]]; then
 		for i in "${!r_qpkg_name[@]}"; do
@@ -13290,15 +13374,21 @@ GetQpkgDbDependencies()
 	#	stdout = list of QPKGs $qpkg_name depends-upon.
 	#	$? = 0 (found), !0 (not-found)
 
-	local alt=''
-	local first=''
-	local found=false
-	local g=''
-	local oldIFS=$IFS
-	local out=''
-	local x=''
+	local alt
+	local first
+	local found
+	local g
+	local oldIFS
+	local out
+	local x
 
+	alt=''
+	first=''
+	found=false
 	g=${r_qpkg_depends_on[qpkg_index]}
+	oldIFS=$IFS
+	out=''
+
 	[[ $g = none ]] && return 1
 
 	if [[ $g != *'|'* ]]; then		# No alternatives were listed.
@@ -13365,18 +13455,24 @@ GetQpkgDbOptDependencies()
 	#	stdout = list of QPKGs $qpkg_name optionally depends-upon.
 	#	$? = 0 (found), !0 (not-found)
 
-	local alt=''
-	local first=''
-	local found=false
-	local g=''
-	local oldIFS=$IFS
-	local out=''
-	local x=''
+	local alt
+	local first
+	local found
+	local g
+	local oldIFS
+	local out
+	local x
 
+	alt=''
+	first=''
+	found=false
 	g=${r_qpkg_opt_depends_on[qpkg_index]}
+	oldIFS=$IFS
+	out=''
+
 	[[ $g = none ]] && return 1
 
-	if [[ $g != *'|'* ]]; then		# No alternatives were listed.
+	if [[ $g != *'|'* ]]; then		# No alternatives were found.
 		printf '%s' "$g"
 
 		return 0
@@ -13443,11 +13539,11 @@ GetQpkgDbDependents()
 
 	[[ -n $qpkg_name && $qpkg_index -gt 0 ]] || return
 
-	local -a a_ar=()
+	local -a a_ar
+	local -i i
+	local re
 
-	local -i i=-1			# Default to not-found.
-
-	local re=\\b${qpkg_name}\\b
+	re=\\b${qpkg_name}\\b
 
 	if QPKGs-GRindependent.Exist "$qpkg_name"; then
 		for i in "${!r_qpkg_name[@]}"; do
@@ -13482,11 +13578,11 @@ GetQpkgDbOptionals()
 
 	[[ -n $qpkg_name && $qpkg_index -gt 0 ]] || return
 
-	local -a a_ar=()
+	local -a a_ar
+	local -i i
+	local re
 
-	local -i i=-1			# Default to not-found.
-
-	local re=\\b${qpkg_name}\\b
+	re=\\b${qpkg_name}\\b
 
 	if QPKGs-GRoptional.Exist "$qpkg_name"; then
 		for i in "${!r_qpkg_name[@]}"; do
@@ -13522,9 +13618,10 @@ GetQpkgConflicts()
 	#	stdout = string of space-separated QPKGs that conflict with this QPKG.
 	#	$? = 0 (found), !0 (not-found)
 
-	local -i i=0
+	local -i i
+	local a
 
-	local a=''
+	a=''
 
 	if [[ -n ${1:-} ]]; then
 		for i in "${!r_qpkg_name[@]}"; do
@@ -13560,7 +13657,9 @@ GetQpkgDbIPKs()
 
 	[[ -n $qpkg_name && $qpkg_index -gt 0 ]] || return
 
-	local a=${r_qpkg_requires_ipks[qpkg_index]}
+	local a
+
+	a=${r_qpkg_requires_ipks[qpkg_index]}
 
 	[[ $a = none ]] && return 1
 
@@ -13586,7 +13685,9 @@ GetQpkgDbActiveTest()
 
 	[[ -n $qpkg_name && $qpkg_index -gt 0 ]] || return
 
-	local a=${r_qpkg_test_for_active[qpkg_index]}
+	local a
+
+	a=${r_qpkg_test_for_active[qpkg_index]}
 
 	[[ $a = none ]] && return 1
 
@@ -13603,17 +13704,20 @@ GetQpkgServiceAction()
 	#	$1 (optional) = QPKG name.
 
 	# Inputs: (global)
+	#	$e_nopnm
 	#	$qpkg_name (default)
+	#	$r_qpkg_service_result_path
 
 	# Outputs: (local)
 	#	$stdout = previous action requested.
 	#	$? = 0 (found), !0 (not-found)
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}
-	local b=$r_qpkg_service_result_path/$a.action
+	local a
 
-	if [[ -s $b ]]; then
-		printf '%s' "$(< "$b")"
+	a=$r_qpkg_service_result_path/${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}.action
+
+	if [[ -s $a ]]; then
+		printf '%s' "$(< "$a")"
 
 		return 0
 	else
@@ -13631,17 +13735,20 @@ GetQpkgServiceExplanation()
 	#	$1 (optional) = QPKG name.
 
 	# Inputs: (global)
+	#	$e_nopnm
 	#	$qpkg_name (default)
+	#	$r_qpkg_service_result_path
 
 	# Outputs: (local)
 	#	$stdout = previous action explanation requested.
 	#	$? = 0 (found), !0 (not-found)
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}
-	local b=$r_qpkg_service_result_path/$a.explanation
+	local a
 
-	if [[ -s $b ]]; then
-		printf '%s' "$(< "$b")"
+	a=$r_qpkg_service_result_path/${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}.explanation
+
+	if [[ -s $a ]]; then
+		printf '%s' "$(< "$a")"
 
 		return 0
 	else
@@ -13659,17 +13766,20 @@ GetQpkgServiceResult()
 	#	$1 (optional) = QPKG name.
 
 	# Inputs: (global)
+	#	$e_nopnm
 	#	$qpkg_name (default)
+	#	$r_qpkg_service_result_path
 
 	# Outputs: (local)
 	#	$stdout = last known package service status.
 	#	$? = 0 (found), !0 (not-found)
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}
-	local b=$r_qpkg_service_result_path/$a.result
+	local a
 
-	if [[ -s $b ]]; then
-		printf '%s' "$(< "$b")"
+	a=$r_qpkg_service_result_path/${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}.result
+
+	if [[ -s $a ]]; then
+		printf '%s' "$(< "$a")"
 
 		return 0
 	else
@@ -13683,7 +13793,7 @@ GetQpkgServiceResult()
 GetQpkgsIsInstalled()
 	{
 
-	local qpkg_name=''
+	local qpkg_name
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		IsQpkgInstalled || continue
@@ -13695,7 +13805,7 @@ GetQpkgsIsInstalled()
 GetQpkgsIsValidInstalled()
 	{
 
-	local qpkg_name=''
+	local qpkg_name
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		IsValidQpkgInstalled || continue
@@ -13707,7 +13817,7 @@ GetQpkgsIsValidInstalled()
 GetQpkgsNtInstalled()
 	{
 
-	local qpkg_name=''
+	local qpkg_name
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		IsNtQpkgInstalled || continue
@@ -13719,7 +13829,7 @@ GetQpkgsNtInstalled()
 GetQpkgsIsEnabled()
 	{
 
-	local qpkg_name=''
+	local qpkg_name
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		IsQpkgEnabled || continue
@@ -13731,7 +13841,7 @@ GetQpkgsIsEnabled()
 GetQpkgsNtEnabled()
 	{
 
-	local qpkg_name=''
+	local qpkg_name
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		IsValidQpkgInstalled || continue
@@ -13744,7 +13854,7 @@ GetQpkgsNtEnabled()
 GetQpkgsIsComplete()
 	{
 
-	local qpkg_name=''
+	local qpkg_name
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		IsQpkgComplete || continue
@@ -13756,7 +13866,7 @@ GetQpkgsIsComplete()
 GetQpkgsNtComplete()
 	{
 
-	local qpkg_name=''
+	local qpkg_name
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		IsQpkgInstalled || continue
@@ -13799,11 +13909,12 @@ QpkgMatchAbbrv()
 
 	[[ -n ${1:-} ]] || return
 
-	local -a a_ar=()
+	local -a a_ar
+	local -i i
+	local -i j
+	local -i z
 
-	local -i i=0
-	local -i j=0
-	local -i z=1			# Default to 'unmatched'.
+	z=1			# Default to 'unmatched'.
 
 	for i in "${!r_qpkg_name[@]}"; do
 		a_ar=(${r_qpkg_abbrvs[i]})
@@ -13859,12 +13970,17 @@ IsCriticalFile()
 	# Inputs: (local)
 	#	$1 = pathfile to check
 
+	# Inputs: (global)
+	#	$e_nopfi
+
 	# Outputs: (local)
 	#	$? = 0 (exists) or 1 (not exists)
 
 	[[ -n ${1:?${FUNCNAME[0]}(): $e_nopfi} ]] || exit
 
-	local a=${1%% *}		# Extract first word-group.
+	local a
+
+	a=${1%% *}		# Extract first word-group.
 
 	if ! [[ -f $a || -L $a ]]; then
 		ShowAsAbort "a required NAS system file $(FormatFileName "$a") is missing"
@@ -13882,6 +13998,9 @@ IsNtCriticalFile()
 	# Inputs: (local)
 	#	$1 = pathfile to check
 
+	# Inputs: (global)
+	#	$e_nopfi
+
 	# Outputs: (local)
 	#	$? = 0 (not exists) or 1 (exists)
 
@@ -13893,14 +14012,19 @@ IsFile()
 	{
 
 	# Inputs: (local)
-	#	$1 = pathfile to check
+	#	$1 = pathfile to check.
+
+	# Inputs: (global)
+	#	$e_nopfi
 
 	# Outputs: (local)
-	#	$? = 0 (exists and is non-zero bytes) or 1 (not exists or is zero bytes)
+	#	$? = 0 (exists and is non-zero bytes) or 1 (not exists or is zero bytes).
 
 	[[ -n ${1:?${FUNCNAME[0]}(): $e_nopfi} ]] || exit
 
-	local a=${1%% *}	# Extract first word-group.
+	local a
+
+	a=${1%% *}	# Extract first word-group.
 
 	[[ -f $a && -s $a ]]
 
@@ -13910,10 +14034,13 @@ IsNtFile()
 	{
 
 	# Inputs: (local)
-	#	$1 = pathfile to check
+	#	$1 = pathfile to check.
+
+	# Inputs: (global)
+	#	$e_nopfi
 
 	# Outputs: (local)
-	#	$? = 0 (not exists or is zero bytes) or 1 (exists and is non-zero bytes)
+	#	$? = 0 (not exists or is zero bytes) or 1 (exists and is non-zero bytes).
 
 	! IsFile "${1:?${FUNCNAME[0]}(): $e_nopfi}"
 
@@ -13960,6 +14087,9 @@ IsUrl()
 	# Inputs: (local)
 	#	$1 = URL to check.
 
+	# Inputs: (global)
+	#	$e_nourl
+
 	# Outputs: (local)
 	#	$? = 0 (valid) or 1 (invalid).
 
@@ -13975,6 +14105,9 @@ IsNtUrl()
 	# Inputs: (local)
 	#	$1 = URL to check.
 
+	# Inputs: (global)
+	#	$e_nourl
+
 	# Outputs: (local)
 	#	$? = 0 (invalid) or 1 (valid).
 
@@ -13985,7 +14118,11 @@ IsNtUrl()
 IsEntwareUpgradable()
 	{
 
-	local a=''
+	# Inputs: (global)
+	#	$r_entware_packages_last_updated
+	#	$r_nas_arch
+
+	local a
 
 	a=$(GetQpkgInstalledDate Entware)
 
@@ -14015,7 +14152,7 @@ IsEntwareSiteUp()
 IsNonStatusActionRequested()
 	{
 
-	local action=''
+	local action
 
 	for action in "${ar_qpkg_actions[@]}"; do
 		if QPKGs-AC${action}-to.IsAny; then
@@ -14210,9 +14347,9 @@ IsOsCanSudo()
 IsOsCanSedExtRegex()
 	{
 
-	# Test if QTS `/bin/sed` can handle extended regexes (early BusyBox versions cannot):
+	# Test if QTS `/bin/sed` can handle extended regexes (early BusyBox versions like 1.01 cannot):
 
-	[[ $(echo -en "\033[1;97ma" | /bin/sed -r 's/\x1b\[[0-9;]*m//g' | /usr/bin/wc -c) -eq 1 ]]
+	[[ $(echo -en "\033[1;97ma" | /bin/sed -r "$r_regex_strip_ansi" | /usr/bin/wc -c) -eq 1 ]]
 
 	}
 
@@ -14350,12 +14487,12 @@ IsThisLoadAverageAboveTrigger()
 	# Inputs: (global)
 	#	$r_cpu_threads.
 
-	local -i a=0
+	local -i a
+	local b
 
-	local b=${1:-1}
-
-	b=$((10#${b/./}))
 	a=$((r_cpu_threads*${2:-1}*100))
+	b=${1:-1}
+	b=$((10#${b/./}))
 
 	[[ $b -ge $a ]]
 
@@ -14365,6 +14502,9 @@ IsOsSedExtRegexSupported()
 	{
 
 	# Inputs: (global)
+	#	$sed_ext_regex_supported
+
+	# Outputs: (global)
 	#	$sed_ext_regex_supported
 
 	[[ ${sed_ext_regex_supported:-unset} = unset ]] && SetOsSedRegexSupport
@@ -14414,12 +14554,13 @@ IsQpkgRepoSelfManaged()
 	#	$1 (optional) = QPKG name.
 
 	# Inputs: (global)
+	#	$e_nopnm
 	#	$qpkg_name (default)
 
 	# Outputs: (local)
 	#	$? = true/false
 
-	local a=''
+	local a
 
 	a=$(GetQpkgInstalledStoreID "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}")
 
@@ -14436,6 +14577,7 @@ IsNtQpkgRepoSelfManaged()
 	#	$1 (optional) = QPKG name.
 
 	# Inputs: (global)
+	#	$e_nopnm
 	#	$qpkg_name (default)
 
 	# Outputs: (local)
@@ -14454,15 +14596,20 @@ IsQpkgBackupExist()
 	#	$1 (optional) = QPKG name.
 
 	# Inputs: (global)
-	#	$r_qpkg_bu_path
+	#	$e_nopnm
 	#	$qpkg_name (default)
+	#	$r_qpkg_bu_path
 
 	# Outputs: (local)
 	#	$? = true/false
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}.config.tar.gz
-	local old=$r_qpkg_bu_path/O$a
-	local new=$r_qpkg_bu_path/$a
+	local a
+	local new
+	local old
+
+	a=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}.config.tar.gz
+		new=$r_qpkg_bu_path/$a
+		old=$r_qpkg_bu_path/O$a
 
 	# KLUDGE: rename prohibited QPKG name (with a leading 'O') backup to migrated QPKG name backup.
 
@@ -14527,10 +14674,7 @@ IsQpkgDbDependent()
 
 	[[ $qpkg_index -gt 0 ]] || return
 
-	local a=''
-
-	a=${r_qpkg_depends_on[qpkg_index]}
-	[[ $a != none ]]
+	[[ ${r_qpkg_depends_on[qpkg_index]} != none ]]
 
 	}
 
@@ -14555,6 +14699,7 @@ IsQpkgDbOptional()
 	#	$1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
+	#	$e_nopnm
 	#	$qpkg_name (default for $1)
 	#	$r_qpkg_name[]
 	#	$r_qpkg_opt_depends_on[]
@@ -14562,13 +14707,10 @@ IsQpkgDbOptional()
 	# Outputs: (local)
 	#	$? = true/false
 
-	local -i i=0
+	local -i i
+	local re
 
-	local a=''
-
-	a=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}
-
-	local re=\\b${a}\\b
+	re=\\b${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}\\b
 
 	for i in "${!r_qpkg_name[@]}"; do
 		[[ ${r_qpkg_opt_depends_on[i]} =~ $re ]] || continue
@@ -14589,13 +14731,14 @@ IsQpkgDbMinRAMOk()
 	#	$1 (optional) = QPKG name.
 
 	# Inputs: (global)
-	#	$r_nas_ram_kb
+	#	$e_nopnm
 	#	$qpkg_name (default)
+	#	$r_nas_ram_kb
 
 	# Outputs: (local)
 	#	$? = true/false
 
-	local a=''
+	local a
 
 	a=$(GetQpkgDbMinRAM "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}")
 
@@ -14612,13 +14755,14 @@ IsQpkgDbMinOSVerOk()
 	#	$1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
-	#	$r_nas_firmware_ver
+	#	$e_nopnm
 	#	$qpkg_name (default for $1)
+	#	$r_nas_firmware_ver
 
 	# Outputs: (local)
 	#	$? = true/false
 
-	local a=''
+	local a
 
 	a=$(GetQpkgDbMinOSVer "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}")
 
@@ -14637,13 +14781,14 @@ IsQpkgDbMaxOSVerOk()
 	#	$1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
-	#	$r_nas_firmware_ver
+	#	$e_nopnm
 	#	$qpkg_name (default for $1)
+	#	$r_nas_firmware_ver
 
 	# Outputs: (local)
 	#	$? = true/false
 
-	local a=''
+	local a
 
 	a=$(GetQpkgDbMaxOSVer "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}")
 
@@ -14662,17 +14807,18 @@ IsQpkgDbCanBackup()
 	#	$1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
-	#	$r_qpkg_can_backup[]
 	#	$qpkg_index
 	#	$qpkg_name (default for $1)
+	#	$r_qpkg_can_backup[]
 	#	$r_qpkg_name[]
 
 	# Outputs: (local)
 	#	$? = true/false
 
-	local -i i=0
+	local -i i
+	local a
 
-	local a=''
+	a=''
 
 	if [[ -n ${1:-} ]]; then
 		for i in "${!r_qpkg_name[@]}"; do
@@ -14699,6 +14845,7 @@ IsQpkgDbCanRestartToUpdate()
 	#	$1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
+	#	$e_nopnm
 	#	$qpkg_name (default for $1)
 	#	$r_qpkg_name[]
 	#	$r_qpkg_can_restart_to_update[]
@@ -14706,12 +14853,10 @@ IsQpkgDbCanRestartToUpdate()
 	# Outputs: (local)
 	#	$? = 0 (true), !0 (false).
 
-	local -i i=0
-
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}
+	local -i i
 
 	for i in "${!r_qpkg_name[@]}"; do
-		[[ ${r_qpkg_name[i]} = "$a" ]] || continue
+		[[ ${r_qpkg_name[i]} = "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}" ]] || continue
 
 		if ${r_qpkg_can_restart_to_update[i]}; then
 			return 0
@@ -14733,17 +14878,18 @@ IsQpkgDbCanClean()
 	#	$1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
+	#	$e_nopnm
 	#	$qpkg_name (default for $1)
+	#	$r_qpkg_can_clean[]
+	#	$r_qpkg_name[]
 
 	# Outputs: (local)
 	#	$? = 0 (true), 1 (false).
 
-	local -i i=0
-
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}
+	local -i i
 
 	for i in "${!r_qpkg_name[@]}"; do
-		[[ ${r_qpkg_name[i]} = "$a" ]] || continue
+		[[ ${r_qpkg_name[i]} = "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}" ]] || continue
 
 		if ${r_qpkg_can_clean[i]}; then
 			return 0
@@ -14766,15 +14912,17 @@ IsQpkgDbSherpaCompatible()
 
 	# Inputs: (global)
 	#	$qpkg_index
-	#	$r_qpkg_is_sherpa_compatible[]
 	#	$qpkg_name (default for $1)
+	#	$r_qpkg_is_sherpa_compatible[]
+	#	$r_qpkg_name[]
 
 	# Outputs: (local)
 	#	$? = true/false
 
-	local -i i=0
+	local -i i
+	local a
 
-	local a=''
+	a=''
 
 	if [[ -n ${1:-} ]]; then
 		for i in "${!r_qpkg_name[@]}"; do
@@ -14803,15 +14951,16 @@ IsQpkgDbUniqueUnpack()
 
 	# Inputs: (global)
 	#	$qpkg_index
-	#	$r_qpkg_is_unique_unpack[]
 	#	$qpkg_name (default for $1)
+	#	$r_qpkg_is_unique_unpack[]
 
 	# Outputs: (local)
 	#	$? = true/false
 
-	local -i i=0
+	local -i i
+	local a
 
-	local a=''
+	a=''
 
 	if [[ -n ${1:-} ]]; then
 		for i in "${!r_qpkg_name[@]}"; do
@@ -14838,12 +14987,14 @@ IsQpkgDbWillLog()
 	#	$1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
+	#	$e_nopnm
 	#	$qpkg_name (default for $1)
+	#	$r_qpkg_will_log[]
 
 	# Outputs: (local)
 	#	$? = 0 (true) / !0 (false).
 
-	local -i i=0
+	local -i i
 
 	for i in "${!r_qpkg_name[@]}"; do
 		[[ ${r_qpkg_name[i]} = "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}" ]] || continue
@@ -14868,6 +15019,7 @@ IsQpkgAutoUpdate()
 	#	$1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
+	#	$e_nopnm
 	#	$qpkg_name (default for $1)
 
 	# Outputs: (local)
@@ -14884,12 +15036,15 @@ IsQpkgAuthorOk()
 	#	$1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
+	#	$e_nopnm
 	#	$qpkg_name (default for $1)
 
 	# Outputs: (local)
 	#	$? = true/false
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}
+	local a
+
+	a=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}
 
 	[[ $(GetQpkgDbAuthor "$a") = "$(GetQpkgAuthor "$a")" ]]
 
@@ -14902,6 +15057,7 @@ IsNtQpkgAuthorOk()
 	#	$1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
+	#	$e_nopnm
 	#	$qpkg_name (default for $1)
 
 	# Outputs: (local)
@@ -14920,12 +15076,15 @@ IsValidQpkgInstalled()
 	#	$1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
+	#	$e_nopnm
 	#	$qpkg_name (default for $1)
 
 	# Outputs: (local)
 	#	$? = true/false
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}
+	local a
+
+	a=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}
 
 	IsQpkgInstalled "$a" && IsQpkgAuthorOk "$a"
 
@@ -14938,6 +15097,7 @@ IsNtValidQpkgInstalled()
 	#	$1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
+	#	$e_nopnm
 	#	$qpkg_name (default for $1)
 
 	# Outputs: (local)
@@ -14956,12 +15116,15 @@ IsQpkgInstalled()
 	#	$1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
+	#	$e_nopnm
 	#	$qpkg_name (default for $1)
 
 	# Outputs: (local)
 	#	$? = true/false
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}
+	local a
+
+	a=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}
 
 #	/bin/grep "\[$a\]" /etc/config/qpkg.conf
 	[[ $(/sbin/getcfg "$a" Name -d undefined -f /etc/config/qpkg.conf) = "$a" ]]
@@ -14975,6 +15138,7 @@ IsNtQpkgInstalled()
 	#	$1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
+	#	$e_nopnm
 	#	$qpkg_name (default for $1)
 
 	# Outputs: (local)
@@ -14993,12 +15157,16 @@ IsQpkgProhibited()
 	#	$1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
+	#	$e_nopnm
 	#	$qpkg_name (default for $1)
+	#	$r_qpkg_names_prohibited[]
 
 	# Outputs: (local)
 	#	$? = true/false
 
-	local re=\\b${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}\\b	# Bash 3.2 regex with word boundaries: https://stackoverflow.com/a/9793094
+	local re
+
+	re=\\b${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}\\b	# Bash 3.2 regex with word boundaries: https://stackoverflow.com/a/9793094
 
 	[[ ${r_qpkg_names_prohibited[*]} =~ $re ]]
 
@@ -15011,6 +15179,7 @@ IsNtQpkgProhibited()
 	#	$1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
+	#	$e_nopnm
 	#	$qpkg_name (default for $1)
 
 	# Outputs: (local)
@@ -15029,12 +15198,13 @@ IsQpkgConflicts()
 	#	$1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
+	#	$e_nopnm
 	#	$qpkg_name (default for $1)
 
 	# Outputs: (local)
 	#	$? = true/false
 
-	local a=''
+	local a
 
 	for a in $(GetQpkgConflicts "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}"); do
 		IsQpkgInstalled "$a" && return
@@ -15051,12 +15221,13 @@ IsQpkgMissing()
 	#	$1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
+	#	$e_nopnm
 	#	$qpkg_name (default for $1)
 
 	# Outputs: (local)
 	#	$? = true/false.
 
-	local a=''
+	local a
 
 	a=$(GetQpkgInstalledPath "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}")
 
@@ -15071,12 +15242,15 @@ IsQpkgComplete()
 	#	$1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
+	#	$e_nopnm
 	#	$qpkg_name (default for $1)
 
 	# Outputs: (local)
 	#	$? = true/false.
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}
+	local a
+
+	a=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}
 
 	[[ $(/sbin/getcfg "$a" Status -d undefined -f /etc/config/qpkg.conf) = complete ]] && [[ $(/sbin/getcfg "$a" Incomplete_Conf -d undefined -f /etc/config/qpkg.conf) != 1 ]]
 
@@ -15089,6 +15263,7 @@ IsNtQpkgComplete()
 	#	$1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
+	#	$e_nopnm
 	#	$qpkg_name (default for $1)
 
 	# Outputs: (local)
@@ -15105,6 +15280,7 @@ IsQpkgEnabled()
 	#	$1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
+	#	$e_nopnm
 	#	$qpkg_name (default for $1)
 
 	# Outputs: (local)
@@ -15121,6 +15297,7 @@ IsNtQpkgEnabled()
 	#	$1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
+	#	$e_nopnm
 	#	$qpkg_name (default for $1)
 
 	# Outputs: (local)
@@ -15139,7 +15316,9 @@ IsQpkgSigned()
 	#	$1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
+	#	$e_nopnm
 	#	$qpkg_name (default for $1)
+	#	$r_cert_db_pathfile
 
 	# Output: (local)
 	#	$? = true/false
@@ -15148,8 +15327,11 @@ IsQpkgSigned()
 
 	# https://pynative.com/python-sqlite-select-from-table/
 
-	local a="SELECT 1 from Certificate WHERE QpkgName = '${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}'"
-	local b=''
+	local a
+	local b
+
+	a="SELECT 1 from Certificate WHERE QpkgName = '${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}'"
+	b=''
 
 	read -r -d '' b <<EOB
 import sqlite3, sys
@@ -15198,7 +15380,9 @@ IsNumber()
 
 	[[ -n ${1:-} ]] || return
 
-	local a=${1//[!0-9]/}	# Strip non-digits.
+	local a
+
+	a=${1//[!0-9]/}	# Strip non-digits.
 
 	[[ ${#a} -gt 0 ]]
 
@@ -15257,7 +15441,7 @@ IsHaveSingleQuote()
 IsLessSupportHeaders()
 	{
 
-	local a=''
+	local a
 
 	a=$(GetLessVersion)
 
@@ -15313,9 +15497,11 @@ UpdateSessionRows()
 	# Outputs: (global)
 	#	$sess_rows
 
-	if IsInTerminal && /usr/bin/which stty; then
-		local a=''
+	local a
 
+	a=''
+
+	if IsInTerminal && /usr/bin/which stty; then
 		a=$(stty size)
 		sess_rows=${a% *}
 	else
@@ -15330,9 +15516,11 @@ UpdateSessionColumns()
 	# Outputs: (global)
 	#	$sess_columns
 
-	if IsInTerminal && /usr/bin/which stty; then
-		local a=''
+	local a
 
+	a=''
+
+	if IsInTerminal && /usr/bin/which stty; then
 		a=$(stty size)
 		sess_columns=${a#* }
 	else
@@ -15532,12 +15720,16 @@ ClearPath()
 	#	$1 = full path to parent of directory name to clear.
 	#	$2 = directory name to clear.
 
+	# Inputs: (global)
+	#	$e_nopth
+
 	ConfirmVarIsDefined 1 "${1:-}" "$e_nopth" || return
 	ConfirmVarIsDefined 2 "${2:-}" "$e_nopth" || return
 
-	local parent=$1
-	local target=''
+	local parent
+	local target
 
+	parent=$1
 	target=$(/usr/bin/basename "$2")
 
 	ConfirmVarIsDefined target "${target:-}" "$e_nopth" || return
@@ -15554,11 +15746,15 @@ ConfirmVarIsDefined()
 	#	$2 = test variable value.
 	#	$3 = error message reason shown if empty or undefined.
 
-	local -i backdepth=1	# 0 = this function, 1 = calling function, etc...
+	local -i backdepth
+	local first
+	local second
+	local third
 
-	local first=${1:-undefined}
-	local second=${2:-undefined}
-	local third=${3:-undefined}
+	backdepth=1						# 0 = this function, 1 = calling function, etc...
+	first=${1:-undefined}
+	second=${2:-undefined}
+	third=${3:-undefined}
 
 	[[ $second != undefined ]] || { ShowAsBug "${FUNCNAME[backdepth]}" "\$$first: '$third'"; return ;}
 
@@ -15603,7 +15799,9 @@ PidLogger()														# directive:omit-from-production
 	#	$3 = PPID.
 	#	$4 = command string.
 
-	local a=/share/Public/PidLogger.log							# directive:omit-from-production
+	local a														# directive:omit-from-production
+
+	a=/share/Public/PidLogger.log								# directive:omit-from-production
 
 	if [[ -z ${1:-} ]]; then									# directive:omit-from-production
 		echo >> "$a"											# directive:omit-from-production
@@ -15633,7 +15831,6 @@ Executer()
 	#	$e_nopfi
 	#	$r_run_logs_path
 	#	$r_sys_run_path
-	#	$useropt_debug
 
 	# Outputs: (local)
 	#	stdout = commandstring stdout and stderr if script is in 'debug' mode.
@@ -15644,15 +15841,16 @@ Executer()
 
 	FuncInit
 
-	local -i z=0
-
-	local a=''
-	local exec_msg='exec:'
-	local r_executer_log_pipe=''
-	local r_log_pathfile=''
+	local -i z
+	local a
+	local exec_msg
+	local r_executer_log_pipe
+	local r_log_pathfile
 
 	a=$(/bin/tr -s ' ' <<< "$1")
+	exec_msg='exec:'
 	r_log_pathfile=$(/bin/mktemp $r_run_logs_path/${FUNCNAME[0]}_XXXXXX)
+	z=0
 
 	local -r r_log_pathfile
 
@@ -15737,16 +15935,20 @@ KludgeExecuter()
 	#	$1 = commandstring to execute.
 	#	$2 = pathfile to record stdout and stderr to.
 
+	# Inputs: (global)
+	#	$e_nocmd
+	#	$e_nopfi
+
 	[[ -n ${1:?${FUNCNAME[0]}(): $e_nocmd} && -n ${2:?${FUNCNAME[0]}(): $e_nopfi} ]] || return
 
 	FuncInit
 
-	local -i pid=0
-	local -i z=0
-
-	local a=''
+	local -i pid
+	local -i z
+	local a
 
 	a=$(/bin/tr -s ' ' <<< "$1")
+	z=0
 
 	if IsVerbose; then
 		eval "$a 2>&1 | /usr/bin/tee $2" &				# Force background process here, and capture PID. NOTE: stdout is buffered here.
@@ -15790,15 +15992,19 @@ FindPid()
 	#	$1 = Process pathfilename to find.
 	#	$2 (optional) = additional string to match if there are multiple processes with identical pathfilenames.
 
+	# Inputs: (global)
+	#	$e_nopfi
+
 	# Outputs: (local)
 	#	$? = 0 (found) or 1 (not found)
 	#	stdout = PID
 
 	ConfirmVarIsDefined 1 "${1:-}" "$e_nopfi" || return
 
-	local -i a=0
+	local -i a
+	local b
 
-	local b=''
+	b=''
 
 	[[ -n ${2:-} && $2 != undefined ]] && b=$2
 
@@ -15839,6 +16045,10 @@ FileMatchesMD5()
 	# Inputs: (local)
 	#	$1 = pathfile to generate an MD5 checksum for.
 	#	$2 = MD5 checksum to compare against.
+
+	# Inputs: (global)
+	#	$e_nochk
+	#	$e_nopfi
 
 	# Outputs: (local)
 	#	$? = true if checksums match.
@@ -15884,6 +16094,9 @@ GenerateMD5()
 
 	# Inputs: (local)
 	#	$1 = pathfile to generate an MD5 checksum for.
+
+	# Inputs: (global)
+	#	$e_nopfi
 
 	# Outputs: (local)
 	#	stdout = MD5 checksum.
@@ -16005,9 +16218,13 @@ FormatAsThous()
 
 	[[ -n ${1:-} ]] || return
 
-	local a=${1//[!0-9]/}	# Strip non-digits.
-	local b=''
-	local c=''
+	local a
+	local b
+	local c
+
+	a=${1//[!0-9]/}	# Strip non-digits.
+	b=''
+	c=''
 
 	while [[ ${#a} -gt 0 ]]; do
 		b=${a:${#a}<3?0:-3}			# A nifty trick found here: https://stackoverflow.com/a/19858692
@@ -16117,6 +16334,11 @@ ShowAsCopyrightBasic()
 ShowAsVersion()
 	{
 
+	# Inputs: (global)
+	#	$r_nas_qpkg_arch
+	#	$r_this_script_ver
+	#	$useropt_branch
+
 	printf '%s' "v$r_this_script_ver-$useropt_branch ($r_nas_qpkg_arch)"
 
 	}
@@ -16159,12 +16381,25 @@ ShowAsOptions()
 FormatPackageName()
 	{
 
+	# Inputs: (global)
+	#	$e_nopnm
+	#	$qpkg_name
+
 	printf '%s' "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}"
 
 	}
 
 FormatReportPackageName()
 	{
+
+	# Inputs: (global)
+	#	$name
+	#	$r_report_flags_path
+	#	$req_alert
+	#	$req_attention
+	#	$req_normal_notice
+	#	$req_notice
+	#	$req_oops
 
 	if [[ $req_alert = true ]]; then
 		FormatReportField "$name" alert
@@ -16198,6 +16433,9 @@ FormatReportPackageName()
 FormatFileName()
 	{
 
+	# Inputs: (global)
+	#	$e_nofil
+
 	printf '%s' "'${1:?${FUNCNAME[0]}(): $e_nofil}'"
 
 	}
@@ -16205,12 +16443,18 @@ FormatFileName()
 ShowAsURL()
 	{
 
+	# Inputs: (global)
+	#	$e_nourl
+
 	TextUnderlinedCyan "${1:?${FUNCNAME[0]}(): $e_nourl}"
 
 	}
 
 FormatExitcode()
 	{
+
+	# Inputs: (global)
+	#	$e_noext
 
 	printf '%s' "'${1:?${FUNCNAME[0]}(): $e_noext}'"
 
@@ -16220,6 +16464,7 @@ FormatLogFilename()
 	{
 
 	# Inputs: (global)
+	#	$e_nofil
 	#	$r_chars_results
 
 	printf '%s' "${r_chars_results}log file: '${1:?${FUNCNAME[0]}(): $e_nofil}'"
@@ -16230,6 +16475,7 @@ FormatCommand()
 	{
 
 	# Inputs: (global)
+	#	$e_nocmd
 	#	$r_chars_results
 
 	echo "${r_chars_results}command: '${1:?${FUNCNAME[0]}(): $e_nocmd}'"
@@ -16241,14 +16487,18 @@ FormatNWords()
 
 	[[ ${#1} -gt 0 ]] || return
 
-	local -i n=0
+	local -i n
+	local a
+	local word_colour
+	local word_count
+	local words
+	local words_max
 
-	local a=''
-	local -i n=0
-	local words=($1)
-	local words_max=${2:-3}
-	local word_colour=${3:-TextUncoloured}
-	local word_count=${#words[@]}
+	a=''
+	word_colour=${3:-TextUncoloured}
+	word_count=${#words[@]}
+	words=($1)
+	words_max=${2:-3}
 
 	for ((n=1; n<=word_count; n++)); do
 		if [[ $n -eq 1 && $words_max -eq 1 ]]; then
@@ -16281,9 +16531,9 @@ FormatNWords()
 GetPrettyLoadAverages()
 	{
 
-	local a=''
-	local b=''
-	local c=''
+	local a
+	local b
+	local c
 
 	read -r a b c _ < /proc/loadavg
 
@@ -16294,8 +16544,11 @@ GetPrettyLoadAverages()
 FormatAsLoadAverage()
 	{
 
-	local a=$1
-	local b=$2
+	local a
+	local b
+
+	a=$1
+	b=$2
 
 	if IsThisLoadAverageInsane "$1"; then
 		a=$(TextBrightRed "$1")
@@ -16317,8 +16570,9 @@ ShowAsResultAndStdout()
 
 	[[ -n ${1:-} && -n ${2:-} ]] || return
 
-	local a=$r_chars_results
+	local a
 
+	a=$r_chars_results
 	[[ ${1:-0} -ne 0 ]] && a=$r_chars_alert
 
 	echo "${a}result: $(FormatExitcode "$1")"
@@ -16345,8 +16599,9 @@ DisplayProcReport()
 
 	[[ ${report_title_shown:=false} = false ]] || return
 
-	local a=''
+	local a
 
+	a=''
 	[[ -n ${1:-} ]] && a=$1' '
 
 	ShowAsProc "${a}report"
@@ -16523,7 +16778,7 @@ DebugItem()
 
 	[[ -n ${1:-} && -n ${2:-} && -n ${3:-} && -n ${4:-} ]] || return
 
-	local a=''
+	local a
 
 	a=$(Uppercase "$2")
 
@@ -16670,10 +16925,14 @@ FuncInit()
 
 	# Debug function entry.
 
-	local -r r_var_name=${FUNCNAME[1]}_STARTNANOSECONDS
+	local r_var_name
+	local var_safe_name
 
-	local var_safe_name=${r_var_name//[.-]/_}
+	r_var_name=${FUNCNAME[1]}_STARTNANOSECONDS
 
+	local -r r_var_name
+
+	var_safe_name=${r_var_name//[.-]/_}
 	var_safe_name=${var_safe_name//:/_}
 
 	eval "$var_safe_name=$(ConvertNowToNanoseconds)"
@@ -16687,10 +16946,14 @@ FuncExit()
 
 	# Debug function exit.
 
-	local -r r_var_name=${FUNCNAME[1]}_STARTNANOSECONDS
+	local r_var_name
+	local var_safe_name
 
-	local var_safe_name=${r_var_name//[.-]/_}
+	r_var_name=${FUNCNAME[1]}_STARTNANOSECONDS
 
+	local -r r_var_name
+
+	var_safe_name=${r_var_name//[.-]/_}
 	var_safe_name=${var_safe_name//:/_}
 
 	DebugAsFuncEx "${1:-0}" "$(ConvertMillisecondsToFuncDuration "$(CalcMillisecondsDiffFromNanoseconds "${!var_safe_name}" "$(ConvertNowToNanoseconds)")")"
@@ -16722,11 +16985,16 @@ FuncForkInit()
 	orig_session_active_log_pathfile=$session_active_log_pathfile
 	session_active_log_pathfile=$(/bin/mktemp "$r_action_log_path"/"${FUNCNAME[1]}"_XXXXXX)
 
-	local -r r_var_name=${FUNCNAME[1]}_STARTNANOSECONDS
+	local r_var_name
+	local var_safe_name
 
-	local var_safe_name=${r_var_name//[.-]/_}
+	r_var_name=${FUNCNAME[1]}_STARTNANOSECONDS
 
+	local -r r_var_name
+
+	var_safe_name=${r_var_name//[.-]/_}
 	var_safe_name=${var_safe_name//:/_}
+
 	eval "$var_safe_name=$(ConvertNowToNanoseconds)"
 
 	DebugAsFuncEn
@@ -16746,10 +17014,14 @@ FuncForkExit()
 	#	$orig_session_active_log_pathfile
 	#	$session_active_log_pathfile
 
-	local -r r_var_name=${FUNCNAME[1]}_STARTNANOSECONDS
+	local r_var_name
+	local var_safe_name
 
-	local var_safe_name=${r_var_name//[.-]/_}
+	r_var_name=${FUNCNAME[1]}_STARTNANOSECONDS
 
+	local -r r_var_name
+
+	var_safe_name=${r_var_name//[.-]/_}
 	var_safe_name=${var_safe_name//:/_}
 
 	[[ ${FUNCNAME[1]} != _ExecOneActionWithManyForks_ ]] && MarkActionForkAsExit	# Ignore exit from primary action launcher as it's not an action fork.
@@ -16839,18 +17111,14 @@ ConvertSecondsToDuration()
 	#		or, if less than 1 minute, to 'S seconds'
 	#		or, if less than 1 second, to '< 1 second'
 
-	local -i d=0
-	local -i h=0
-	local -i m=0
-	local -i s=0
+	local -i d
+	local -i h
+	local -i m
+	local -i s
 
-#	((d=${1:-0}/86400))
 	d=${1:-0}/86400
-#	((h=(${1:-0}%86400)/3600))
 	h=${1:-0}%86400/3600
-#	((m=(${1:-0}%3600)/60))
 	m=${1:-0}%3600/60
-#	((s=${1:-0}%60))
 	s=${1:-0}%60
 
 	if [[ $d -ge 1 ]]; then
@@ -16940,7 +17208,11 @@ ConvertLongDateAsHuman()
 
 	[[ -n ${1:-} ]] || return
 
-	local -i a=${1//[!0-9]/}	# Strip non-digits.
+	local -i a
+	local -i b
+	local c
+
+	a=${1//[!0-9]/}	# Strip non-digits.
 
 	if [[ ${#a} -ne 8 ]]; then
 		printf 'invalid longdate code length'
@@ -16948,9 +17220,8 @@ ConvertLongDateAsHuman()
 		return 1
 	fi
 
-	local -i b=${a:6:2}
-
-	local c=''
+	b=${a:6:2}
+	c=''
 
 	if ((b >= 1 && b <= 10)); then
 		c=early
@@ -16996,9 +17267,11 @@ ConvertAsSmartDate()
 
 	[[ -n ${1:-} ]] || return
 
-	local -i a=${1//[!0-9]/}	# Strip non-digits.
+	local -i a
+	local b
 
-	local b=''
+	a=${1//[!0-9]/}	# Strip non-digits.
+	b=''
 
 	case ${#a} in
 		6)		# Assume input is datecode, so convert to extended date format.
@@ -17082,16 +17355,28 @@ ConvertFirmwareVersionStringToNumber()
 	# Outputs: (local)
 	#	stdout = 10 char string.
 
-	local -ir r_build_trim=4
-	local -ir r_intermediate_trim=2
-	local -ir r_major_trim=2
-	local -ir r_minor_trim=2
+	local -i intermediate
+	local -i major
+	local -i minor
+	local -i r_build_trim
+	local -i r_intermediate_trim
+	local -i r_major_trim
+	local -i r_minor_trim
+	local build
 
-	local -i intermediate=0
-	local -i major=0
-	local -i minor=0
+	build=0
+	intermediate=0
+	major=0
+	minor=0
+	r_build_trim=4
+	r_intermediate_trim=2
+	r_major_trim=2
+	r_minor_trim=2
 
-	local build=0
+	local -r r_build_trim
+	local -r r_intermediate_trim
+	local -r r_major_trim
+	local -r r_minor_trim
 
 	while IFS=. read -r major intermediate minor build _; do
 		printf "%0${r_major_trim}d%0${r_intermediate_trim}d%0${r_minor_trim}d%0${r_build_trim}d" "$((10#${major:0:r_major_trim}))" "$((10#${intermediate:0:r_intermediate_trim}))" "$((10#${minor:0:r_minor_trim}))" "$((10#${build:0:r_build_trim}))"
@@ -17191,8 +17476,11 @@ DebugThis()
 
 	[[ -n ${1:-} ]] || return
 
-	local a=dbug
-	local b=$1
+	local a
+	local b
+
+	a=dbug
+	b=$1
 
 	[[ ${useropt_verbose:-false} = true ]] && ShowAsDebug "$b"
 
@@ -17213,8 +17501,11 @@ AddExtLogToSessLog()
 	# Inputs: (global)
 	#	$useropt_verbose
 
-	local a=''
-	local b=false
+	local a
+	local b
+
+	a=''
+	b=false
 
 	if IsVerbose; then		# Prevent external log contents appearing onscreen again, because they've already been seen live.
 		b=true
@@ -17255,11 +17546,16 @@ ShowAsProc()
 
 	[[ -n ${1:-} ]] || return
 
-	local a=proc
-	local b=$1
-	local c=''
-	[[ -n ${2:-} ]] && c=$2
-	local d="$b ... $c"
+	local a
+	local b
+	local c
+	local d
+
+	a=proc
+	b=$1
+	c=''
+		[[ -n ${2:-} ]] && c=$2
+	d="$b ... $c"
 
 	if [[ -z ${r_inhibit_display_pathfile:-} ]] || [[ -n ${r_inhibit_display_pathfile:-} && ! -e $r_inhibit_display_pathfile ]]; then
 		if [[ ${useropt_verbose:=false} = false && ${useropt_terse:=true} = true ]] || [[ ${useropt_verbose:=false} = false && -n $c ]]; then
@@ -17289,9 +17585,10 @@ ShowAsNote()
 
 	PauseAni
 
-	local a=note
-	local b=''
+	local a
+	local b
 
+	a=note
 	b=$(AddPeriod "$1")
 
 	OpStepClear "$(TextBrightYellow "$a")" "$b"
@@ -17308,9 +17605,10 @@ ShowAsDone()
 
 	PauseAni
 
-	local a='done'
-	local b=''
+	local a
+	local b
 
+	a='done'
 	b=$(AddPeriod "$1")
 
 	OpStepClear "$(TextBrightGreen "$a")" "$b"
@@ -17327,8 +17625,11 @@ ShowAsNews()
 
 	PauseAni
 
-	local a=news
-	local b=$1
+	local a
+	local b
+
+	a=news
+	b=$1
 
 	OpStepClear "$(TextBrightWhiteBlink "$a")" "$b"
 	WriteToLog "$a" "$b"
@@ -17344,9 +17645,10 @@ ShowAsWarn()
 
 	PauseAni
 
-	local a=warn
-	local b=''
+	local a
+	local b
 
+	a=warn
 	b=$(AddPeriod "$1")
 
 	OpStepClear "$(TextBrightOrange "$a")" "$b"
@@ -17363,9 +17665,10 @@ ShowAsAbort()
 
 	PauseAni
 
-	local a=bort
-	local b=''
+	local a
+	local b
 
+	a=bort
 	b=$(AddPeriod "$1")
 
 	OpStepClear "$(TextBrightRed "$a")" "$b"
@@ -17383,9 +17686,10 @@ ShowAsFail()
 
 	PauseAni
 
-	local a=fail
-	local b=''
+	local a
+	local b
 
+	a=fail
 	b=$(AddPeriod "$1")
 
 	OpStepClear "$(TextBrightRed "$a")" "$b"
@@ -17402,9 +17706,10 @@ ShowAsError()
 
 	PauseAni
 
-	local a=derp
-	local b=''
+	local a
+	local b
 
+	a=derp
 	b=$(AddPeriod "$1")
 
 	OpStepClear "$(TextBrightRed "$a")" "$b"
@@ -17426,11 +17731,14 @@ ShowAsBug()
 
 	PauseAni
 
-	local -i i=0
+	local -i i
+	local a
+	local b
+	local c
 
-	local a=buug
-	local b='fstack: '
-	local c=' '
+	a=buug
+	b='fstack: '
+	c=' '
 
 	# Re-order FUNCNAME[] elements in-reverse.
 
@@ -17488,23 +17796,24 @@ ShowAsPercentProgress()
 	#	$5 = fail count
 	#	$6 = total count
 
-	local -i b=${3:-0}
-	local -i c=${4:-0}
-	local -i d=${5:-0}
-	local -i e=${6:-0}
+	local -i b
+	local -i c
+	local -i d
+	local -i e
+	local a
+	local f
 
-	local -r r_a=${1:-}
-
-	local r_f=''
-
-	r_f=$(PercFrac "$b" "$c" "$d" "$e")
-
-	local -r r_f
+	a=${1:-}
+	b=${3:-0}
+	c=${4:-0}
+	d=${5:-0}
+	e=${6:-0}
+	f=$(PercFrac "$b" "$c" "$d" "$e")
 
 	if [[ ${2:-} != long ]]; then
-		ShowAsProc "$r_a" "$r_f "		# Trailing whitespace to separate message from animation.
+		ShowAsProc "$a" "$f "		# Trailing whitespace to separate message from animation.
 	else
-		ShowAsProcLong "$r_a" "$r_f"
+		ShowAsProcLong "$a" "$f"
 	fi
 
 	[[ $((b+c+d)) -ge $e ]] && Pause 0.1
@@ -17524,10 +17833,13 @@ PercFrac()
 	#	$3 = fail count
 	#	$4 = total count
 
-	local -i a=$((${1:-0}+${2:-0}+${3:-0}))
-	local -i b=${4:-0}
+	local -i a
+	local -i b
+	local c
 
-	local c=''
+	a=$((${1:-0}+${2:-0}+${3:-0}))
+	b=${4:-0}
+	c=''
 
 	[[ $b -gt 0 ]] || return	# No-point calculating a fraction of zero.
 
@@ -17562,13 +17874,17 @@ ShowAsIterativeProgress()
 	ConfirmVarIsDefined 5 "${5:-}" "$e_nostr" || return
 
 	local -i a=${2:-0}
-	local -i b=${4:-0}
+	local -i b
+	local c
+	local d
+	local e
+	local f
 
-	local c=$1
-	local d=$3
-	local e=$5
-	local f=''
-
+	a=${2:-0}
+	b=${4:-0}
+	c=$1
+	d=$3
+	e=$5
 	f="$(TextBrightWhite "$a") ${d}$(Pluralise "$a") ($(TextBrightWhite "$b") ${e}$(Pluralise "$b"))"
 
 	if [[ ${6:-short} != long ]]; then
@@ -17597,10 +17913,11 @@ ShowAsActionLogDetail()
 	ConfirmVarIsDefined 2 "${2:-}" "$e_nopnm" || return
 	ConfirmVarIsDefined 7 "${7:-}" "$e_nostr" || return
 
-	local package_type=''
-	local quantity_msg=''
+	local package_type
+	local quantity_msg
 
 	package_type=$7$(Pluralise "$8")
+	quantity_msg=''
 
 	case $8 in
 		0)
@@ -17662,7 +17979,9 @@ OpStepClearWait()
 	# Inputs: (global)
 	#	$colourful
 
-	local -i n=4						# Width of the message type.
+	local -i n
+
+	n=4						# Width of the message type.
 
 	[[ $colourful = true ]] && n=10		# Allow extra length for ANSI codes in message type.
 
@@ -17684,7 +18003,9 @@ OpStepClear()
 	# Inputs: (global)
 	#	$colourful
 
-	local -i n=4						# Width of the message type.
+	local -i n
+
+	n=4						# Width of the message type.
 
 	[[ $colourful = true ]] && n=10		# Allow extra length for ANSI codes in message type.
 
@@ -17703,6 +18024,9 @@ WriteToLog()
 
 	# Inputs: (global)
 	#	$session_active_log_pathfile
+	#	$useropt_debug
+
+	# Outputs: (global)
 	#	$useropt_debug
 
 	[[ -n ${1:-} && -n ${2:-} ]] || return
@@ -18057,6 +18381,7 @@ StripANSICodes()
 	#	$1 = string containing ANSI codes.
 
 	# Inputs: (global)
+	#	$r_regex_strip_ansi
 	#	$sed_ext_regex_supported
 
 	# Ouputs: (local)
@@ -18064,12 +18389,10 @@ StripANSICodes()
 
 	# QTS 4.2.6 BusyBox `sed` doesn't fully support extended-regexes, so code-stripping only works with a real `sed`.
 
-	local re='s/\x1b\[[0-9;]*m//g'
-
 	if IsOsSedExtRegexSupported; then
-		echo -en "${1:-}" | /bin/sed -r "$re"					# https://superuser.com/a/380778
+		echo -en "${1:-}" | /bin/sed -r "$r_regex_strip_ansi"					# https://superuser.com/a/380778
 	elif [[ -x /opt/bin/sed && -L /opt/etc/passwd ]]; then		# Try to ensure Entware is active first.
-		echo -en "${1:-}" | /opt/bin/sed -r "$re"				# https://superuser.com/a/380778
+		echo -en "${1:-}" | /opt/bin/sed -r "$r_regex_strip_ansi"				# https://superuser.com/a/380778
 	else
 		echo -en "${1:-}"										# Can't strip, so pass thru original message unaltered.
 	fi
@@ -18399,8 +18722,11 @@ ConvertDecimalSecondsToMicroseconds()
 	# Outputs: (local)
 	#	stdout = microseconds.
 
-	local -i a=${1%.*}
-	local b=${1#*.}
+	local -i a
+	local b
+
+	a=${1%.*}
+	b=${1#*.}
 
 	[[ $a != "$1" ]] || b=0
 	b=${b}000000
@@ -18436,14 +18762,20 @@ RefreshArchive()
 
 	FuncInit
 
-	local curl_insecure_opt=''
-	local download=false
-	local downloaded=false
-	local extract=false
-	local new_archive_checksum=''
-	local orig_archive_checksum=''
+	local curl_insecure_opt
+	local download
+	local downloaded
+	local extract
+	local new_archive_checksum
+	local orig_archive_checksum
 
+	curl_insecure_opt=''
+	download=false
+	downloaded=false
+	extract=false
 	extracted=false
+	new_archive_checksum=''
+	orig_archive_checksum=''
 
 	if IsFile "$target_pathfile"; then
 		DebugAsDetect "'$archive_name' file found"
@@ -18574,18 +18906,24 @@ LoadObjects()
 
 	# NOTE: Set these prior to calling RefreshArchive()
 
-	local archive_name=objects
-	local archive_pathfile=$r_objects_archive_pathfile
-	local archive_url=$r_objects_archive_url
-	local dont_refresh_pathfile=$PWD/dont-refresh-objects
-	local extracted=false
-	local target_pathfile=$r_objects_pathfile
+	local archive_name
+	local archive_pathfile
+	local archive_url
+	local dont_refresh_pathfile
+	local extracted
+	local target_pathfile
+
+	archive_name=objects
+	archive_pathfile=$r_objects_archive_pathfile
+	archive_url=$r_objects_archive_url
+	dont_refresh_pathfile=$PWD/dont-refresh-objects
+	extracted=false
+	r_objects_epoch=undefined
+	target_pathfile=$r_objects_pathfile
 
 	if ! RefreshArchive; then
 		FuncExit 1; exit
 	fi
-
-	r_objects_epoch=undefined
 
 	# Source elements from `objects` file.
 
@@ -18629,12 +18967,19 @@ LoadDatabase()
 
 	# NOTE: Set these prior to calling RefreshArchive()
 
-	local archive_name=database
-	local archive_pathfile=$r_packages_archive_pathfile
-	local archive_url=$r_packages_archive_url
-	local dont_refresh_pathfile=$PWD/dont-refresh-database
-	local extracted=false
-	local target_pathfile=$r_packages_pathfile
+	local archive_name
+	local archive_pathfile
+	local archive_url
+	local dont_refresh_pathfile
+	local extracted
+	local target_pathfile
+
+	archive_name=database
+	archive_pathfile=$r_packages_archive_pathfile
+	archive_url=$r_packages_archive_url
+	dont_refresh_pathfile=$PWD/dont-refresh-database
+	extracted=false
+	target_pathfile=$r_packages_pathfile
 
 	if ! RefreshArchive; then
 		FuncExit 1; exit
@@ -18742,7 +19087,7 @@ StartAni()
 	/bin/touch "$r_ani_pid_pathfile"
 
 	_Animator_ &
-	: # This is only here to prevent Squeeze() combining the end-of-function brace below with the line above.
+	: # This line is only here to prevent Squeeze() combining the end-of-function brace below with the line above.
 
 	}
 
@@ -18769,7 +19114,7 @@ ResumeAni()
 	/bin/touch "$r_ani_pid_pathfile"
 
 	_Animator_ &
-	: # This is only here to prevent Squeeze() combining the line below with the line above.
+	: # This line is only here to prevent Squeeze() combining the line below with the line above.
 
 	}
 
@@ -18835,8 +19180,10 @@ _Animator_()
 	[[ ${#r_ani_chars[@]} -gt 2 ]] || exit
 	[[ $r_ani_frame_step -gt 0 ]] || exit
 
-	local -i ani_start_frame=1
-	local -i n=0
+	local -i ani_start_frame
+	local -i n
+
+	ani_start_frame=1
 
 	SaveAniPid
 
@@ -18909,8 +19256,6 @@ IsSiteUp()
 	a=$(/usr/bin/cut -d'/' -f3 <<< "$1" | /usr/bin/cut -d':' -f1)
 
 	ConfirmVarIsDefined a "${a:-}" "$e_nourl" || return
-
-	n=0
 
 	for ((n=0; n<=2; n++)); do
 		/bin/ping -c 1 -w 1 "$a" && return 0
