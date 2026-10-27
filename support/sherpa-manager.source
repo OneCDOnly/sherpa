@@ -1878,7 +1878,7 @@ ProcActions()
 	local tier=''
 
 	/bin/rm -f "$r_action_results_pathfile" 2> /dev/null
-	OpenMsgPipeEnhancedLog								# directive:omit-from-production
+#	OpenMsgPipeEnhancedLog								# directive:omit-from-production
 
 	# -> Package preparation phase <-
 
@@ -1995,7 +1995,7 @@ ProcActions()
 	fi
 
 	show_action_results_report=true
-	CloseMsgPipeEnhancedLog												# directive:omit-from-production
+#	CloseMsgPipeEnhancedLog												# directive:omit-from-production
 
 	FuncExit
 
@@ -9502,7 +9502,7 @@ ReadFromMsgPipe()
 
 	eval "$1='${_msg1_key:-null}' $2='${_msg1_value:-null}' $3='${_msg2_key:-null}' $4='${_msg2_value:-null}'"
 
-	AppendToMsgPipeEnhancedLog																	# directive:omit-from-production
+#	AppendToMsgPipeEnhancedLog																	# directive:omit-from-production
 
 	return 0
 
@@ -15958,16 +15958,16 @@ KludgeExecuter()
 
 	pid=$!
 
-	PidLogger											# directive:omit-from-production
-	PidLogger pre-background-wait "$pid" "$PPID" "$a"	# directive:omit-from-production
+#	PidLogger											# directive:omit-from-production
+#	PidLogger pre-background-wait "$pid" "$PPID" "$a"	# directive:omit-from-production
 
 	if [[ $pid -gt 1 ]]; then
 		wait $pid 2> /dev/null
 		z=$?
 	fi
 
-	PidLogger post-background-wait "$pid" "$PPID" "$a"	# directive:omit-from-production
-	PidLogger pre-detached-wait "$pid" "$PPID" "$a"		# directive:omit-from-production
+#	PidLogger post-background-wait "$pid" "$PPID" "$a"	# directive:omit-from-production
+#	PidLogger pre-detached-wait "$pid" "$PPID" "$a"		# directive:omit-from-production
 
 	pid=$(FindPid '/bin/sh' "$r_local_pathfile")
 
@@ -15979,7 +15979,7 @@ KludgeExecuter()
 		done
 	fi
 
-	PidLogger post-detached-wait "$pid" "$PPID" "$a"	# directive:omit-from-production
+#	PidLogger post-detached-wait "$pid" "$PPID" "$a"	# directive:omit-from-production
 
 	FuncExit $z
 
