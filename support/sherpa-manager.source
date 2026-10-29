@@ -844,8 +844,6 @@ LoadLists()
 
 	local a
 
-	a=''
-
 	for a in "${ar_qpkg_actions[@]}" debug downgrade fix; do
 		readonly r_"$(Lowercase "$a")"_log_file=$a.log
 	done
@@ -1029,13 +1027,12 @@ DebugLogEnv()
 
 	FuncInit
 
+	local -i n
 	local a
 	local b
-	local -i n
 
 	a=''
 	b=''
-	n=0
 
 	SetHardwarePlatform
 	SetOsKernelPageSize
@@ -1293,14 +1290,25 @@ CheckTasks()
 
 	FuncInit
 
-	local action=''
-#	local build_basic_states=false		# These states are found in `/etc/config/qpkg.conf`
-	local build_extended_states=false	# These cannot be found in `/etc/config/qpkg.conf`
-	local group=''
-	local state=''
-	local installed_version=''
-	local target_packages=''
-	local -r r_pid_pathfile=$(CreatePidFilePathName)
+	local action
+#	local build_basic_states
+	local build_extended_states
+	local group
+	local installed_version
+	local r_pid_pathfile
+	local state
+	local target_packages
+
+	action=''
+#	build_basic_states=false		# These states are found in `/etc/config/qpkg.conf`
+	build_extended_states=false		# These cannot be found in `/etc/config/qpkg.conf`
+	group=''
+	installed_version=''
+	r_pid_pathfile=$(CreatePidFilePathName)
+	state=''
+	target_packages=''
+
+	local -r r_pid_pathfile
 
 	if [[ $useropt_fix = true || $useropt_show_status = true ]]; then
 		build_extended_states=true
@@ -1520,8 +1528,12 @@ AssignQpkgsToActions()
 	ShowAsProc 'action assignment'
 	ResumeAni
 
-	local action=''
-	local prospect=''
+	local action
+	local prospect
+	local qpkg_name
+
+	action=''
+	prospect=''
 
 	# KLUDGE: ensure Entware is reinstalled when IPKs database is upgraded.
 	# Don't auto re-install Entware if only 'status' action is requested.
@@ -1871,11 +1883,14 @@ ProcActions()
 	ShowAsProc 'package actions'
 	ResumeAni
 
-	local -i tier_index=0
+	local -i tier_index
+	local action
+	local state
+	local tier
 
-	local action=''
-	local state=''
-	local tier=''
+	action=''
+	state=''
+	tier=''
 
 	/bin/rm -f "$r_action_results_pathfile" 2> /dev/null
 #	OpenMsgPipeEnhancedLog								# directive:omit-from-production
@@ -2068,18 +2083,16 @@ ProcAction()
 	msg2_key=''
 	msg2_value=''
 	package=''
-	package_index=0
 	pid=0
-	re=''
-	state=''
-	target_object_name=''
-	total_count=0
-
 	r_action=${1:?${FUNCNAME[0]}(): $e_noact}
 	r_action_intransitive_msg=${4:?${FUNCNAME[0]}(): $e_noact message}
 	r_package_type=${3:?${FUNCNAME[0]}(): $e_nopty}
 	r_pid_pathfile=$(CreatePidFilePathName)
 	r_tier=${2:?${FUNCNAME[0]}(): $e_notir}
+	re=''
+	state=''
+	target_object_name=''
+	total_count=0
 
 	local -r r_action
 	local -r r_action_intransitive_msg
@@ -2356,14 +2369,14 @@ SetMaxForks()
 	# Outputs: (global)
 	#	$max_forks
 
-	local default_forks
+	[[ -n ${1:-} ]] || return
+
+	local -i default_forks
+	local reason
 
 	default_forks=$r_concurrency
 		max_forks=$default_forks
-
-	[[ -n ${1:-} ]] || return
-
-	local reason=''
+	reason=''
 
 	if IsVerbose; then					# No-point running async actions in verbose or debug modes: stdout would be a confusing mess.
 		max_forks=1
@@ -2470,7 +2483,6 @@ ParseManagementArgs()
 
 	a_args_remaining=()
 	action=''				# Internal, nice, simple, action name. Only one per-action.
-	arg=''
 	awaiting_group=false
 	current_action=''
 	group=''
@@ -2626,7 +2638,6 @@ ParseHelpArgs()
 
 	a_args_remaining=()
 	action=''				# Internal, nice, simple, action name. Only one per-action.
-	arg=''
 	awaiting_group=false
 	current_action=''
 	group=''
@@ -2834,7 +2845,6 @@ ParseShowArgs()
 
 	a_args_remaining=()
 	action=''				# Internal, nice, simple, action name. Only one per-action.
-	arg=''
 	awaiting_group=false
 	current_action=''
 	group=''
@@ -3059,7 +3069,6 @@ ParseListArgs()
 
 	a_args_remaining=()
 	action=''				# Internal, nice, simple, action name. Only one per-action.
-	arg=''
 	awaiting_group=false
 	current_action=''
 	group=''
@@ -3202,7 +3211,6 @@ ParseActionArgs()
 
 	a_args_remaining=()
 	action=''				# Internal, nice, simple, action name. Only one per-action.
-	arg=''
 	awaiting_group=false
 	current_action=''
 	group=''
@@ -3548,7 +3556,6 @@ ShowArgSuggestions()
 	local arg
 
 	a_args_remaining=()
-	arg=''
 
 	CreateReportPaths
 
@@ -3731,9 +3738,6 @@ AllocPackGroupsToAcs()
 	local action
 	local group
 
-	action=''
-	group=''
-
 	for action in "${ar_user_qpkg_actions[@]}"; do
 		# Process group-based user-actions.
 
@@ -3787,9 +3791,7 @@ AllocPackStatesToAcs()
 	local check_later
 	local state
 
-	action=''
 	check_later=false
-	state=''
 
 	for action in "${ar_user_qpkg_actions[@]}"; do
 		# Process state-based user-actions.
@@ -3886,8 +3888,11 @@ ResetArchivedLogs()
 #	# Outputs: (local)
 #	#	$? = 0 if "y", 1 if anything else
 #
-#	local a=${1:?${FUNCNAME[0]}(): $e_noprm}
-#	local b=''
+#	local a
+#	local b
+#
+#	a=${1:?${FUNCNAME[0]}(): $e_noprm}
+#	b=''
 #
 #	ShowAsQuiz "$a"
 #	IsInTerminal && /usr/bin/which stty &> /dev/null && stty igncr	# Ignore CR to prevent an onscreen linefeed (`which` disrupts same-line rewrite used later, and looks bad).
@@ -4081,24 +4086,28 @@ CalcIpkDepsToInstall()
 
 	FuncInit
 
-	local -a a_dep_acc=()
-	local -a a_this_list=()
+	local -a a_dep_acc
+	local -a a_this_list
+	local -i iterations
+	local -i pre_exclude_count
+	local -i requested_count
+	local complete
+	local element
+	local ipk_titles
+	local pre_exclude_list
+	local r_iteration_limit
+	local req_list
 
-	local -i iterations=0
-	local -i pre_exclude_count=0
-	local -i requested_count=0
+	complete=false
+	element=''
+	iterations=0
+	r_iteration_limit=20
+	req_list=$(DeDupeWords "$(IPKs-ACinstall-to:List)")
 
-	local -r r_iteration_limit=20
-
-	local complete=false
-	local element=''
-	local ipk_titles=''
-	local pre_exclude_list=''
-	local req_list=''
+	local -r r_iteration_limit
 
 	# Remove duplicate entries.
 
-	req_list=$(DeDupeWords "$(IPKs-ACinstall-to:List)")
 	a_dep_acc=($req_list)
 	a_this_list=($req_list)
 	requested_count=$(/usr/bin/wc -w <<< "$req_list")
@@ -4198,9 +4207,8 @@ CalcIpkDownloadSize()
 
 	FuncInit
 
-	local -a a_sizes=()
-
-	local -i size_count=0
+	local -a a_sizes
+	local -i size_count
 
 	size_count=$(IPKs-ACdownload-to:Count)
 
@@ -4239,7 +4247,7 @@ IPKs:upgrade()
 	#	$useropt_verbose
 
 	# Outputs: (global)
-	#	$dir_size_progress_prefix
+	#	$UpdateDirSizeProgress_prefix
 	#	$useropt_terse
 	#	$useropt_verbose
 
@@ -4249,11 +4257,19 @@ IPKs:upgrade()
 
 	FuncInit
 
-	local -i pid=''
-	local -i total_count=0
-	local -i z=0
+	local -i pid
+	local -i total_count
+	local -i z
+	local action
+	local desc
+	local package_name
+	local package_type
+	local log_pathfile=$r_log_path/ipks.$r_upgrade_log_file
 
-	local desc=''
+	action=upgrade
+	package_name=auxiliary
+	package_type=IPK
+	z=0
 
 	IPKs-ACupgrade-to:Init
 	IPKs-ACdownload-to:Init
@@ -4271,16 +4287,18 @@ IPKs:upgrade()
 	total_count=$(IPKs-ACdownload-to:Count)
 
 	if [[ $total_count -gt 0 ]]; then
-		desc="$total_count auxiliary IPK$(Pluralise "$total_count")"
+		desc="$action $total_count $package_name ${package_type}$(Pluralise "$total_count")"
+
 		dir_bytes=$(IPKs-ACdownload-to:Size)
 		dir_location=$r_ipk_download_path
-		dir_size_progress_prefix='upgrade '$desc
+		UpdateDirSizeProgress_prefix=$desc
 
 		PauseAni
+
 		_DirSizeMonitor_ &
 		pid=$!
 
-		Executer "$r_opkg_cmd upgrade --force-overwrite $(IPKs-ACdownload-to:List) --cache $r_ipk_cache_path --tmp-dir $r_ipk_download_path" "$r_log_path/ipks.$r_upgrade_log_file" log:failure-only
+		Executer "$r_opkg_cmd upgrade --force-overwrite $(IPKs-ACdownload-to:List) --cache $r_ipk_cache_path --tmp-dir $r_ipk_download_path" "$log_pathfile" log:failure-only
 		z=$?
 
 		KillPID "$pid"
@@ -4290,12 +4308,12 @@ IPKs:upgrade()
 		UpdateDirSizeProgress final
 
 		if [[ $z -eq 0 ]]; then
-			NoteIpkAcAsOk "$(IPKs-ACupgrade-to:Array)" upgrade
-			DebugAsDone "upgraded $desc"
-			SaveActionResultMetrics IPK auxiliary upgrade "$total_count" ok
+			NoteIpkAcAsOk "$(IPKs-ACupgrade-to:Array)" "$action"
+			DebugAsDone "$desc"
+			SaveActionResultMetrics ok '' "$total_count"
 		else
-			NoteIpkAcAsEr "$(IPKs-ACupgrade-to:Array)" upgrade
-			SaveActionResultMetrics IPK auxiliary upgrade "$total_count" er "$z"
+			NoteIpkAcAsEr "$(IPKs-ACupgrade-to:Array)" "$action"
+			SaveActionResultMetrics er "$z" "$total_count"
 		fi
 
 		[[ ${useropt_terse:=true} = false && ${useropt_verbose:=false} = false ]] && echo
@@ -4326,7 +4344,7 @@ IPKs:install()
 	#	$useropt_verbose
 
 	# Outputs: (global)
-	#	$dir_size_progress_prefix
+	#	$UpdateDirSizeProgress_prefix
 	#	$useropt_terse
 	#	$useropt_verbose
 
@@ -4336,13 +4354,19 @@ IPKs:install()
 
 	FuncInit
 
-	local -i i=0
-	local -i pid=''
-	local -i total_count=0
-	local -i z=0
+	local -i pid
+	local -i total_count
+	local -i z
+	local action
+	local desc
+	local package_name
+	local package_type
+	local qpkg_name
 
-	local desc=''
-	local previous=''
+	action=install
+	package_name=auxiliary
+	package_type=IPK
+	z=0
 
 	IPKs-ACinstall-to:Init
 	IPKs-ACdownload-to:Init
@@ -4375,10 +4399,11 @@ IPKs:install()
 	total_count=$(IPKs-ACdownload-to:Count)
 
 	if [[ $total_count -gt 0 ]] && IsEntwareSiteUp; then
-		desc="$total_count auxiliary IPK$(Pluralise "$total_count")"
+		desc="$action $total_count $package_name ${package_type}$(Pluralise "$total_count")"
+
 		dir_bytes=$(IPKs-ACdownload-to:Size)
 		dir_location=$r_ipk_download_path
-		dir_size_progress_prefix='install '$desc
+		UpdateDirSizeProgress_prefix=$desc
 
 		PauseAni
 		_DirSizeMonitor_ &
@@ -4394,16 +4419,16 @@ IPKs:install()
 		UpdateDirSizeProgress final
 
 		if [[ $z -eq 0 ]]; then
-			NoteIpkAcAsOk "$(IPKs-ACdownload-to:Array)" install
-			DebugAsDone "installed $desc"
-			SaveActionResultMetrics IPK auxiliary install "$total_count" ok
+			NoteIpkAcAsOk "$(IPKs-ACdownload-to:Array)" "$action"
+			DebugAsDone "$desc"
+			SaveActionResultMetrics ok '' "$total_count"
 			HideKeystrokes
 			SetCapabilities
 
 			/bin/rm -f "$r_prev_ipk_list_pathfile.installing" 2> /dev/null
 		else
-			NoteIpkAcAsEr "$(IPKs-ACdownload-to:Array)" install
-			SaveActionResultMetrics IPK auxiliary install "$total_count" er "$z"
+			NoteIpkAcAsEr "$(IPKs-ACdownload-to:Array)" "$action"
+			SaveActionResultMetrics er "$z" "$total_count"
 
 			if [[ -s $r_prev_ipk_list_pathfile.installing ]]; then
 				/bin/mv -f "$r_prev_ipk_list_pathfile.installing" "$r_prev_ipk_list_pathfile"
@@ -4425,6 +4450,11 @@ IPKs:downgrade()
 
 	# Inputs: (global)
 	#	$ipks_downgrade
+	#	$r_downgrade_log_file
+	#	$r_download_log_file
+	#	$r_ipk_cache_path
+	#	$r_ipk_downgrade_path
+	#	$r_log_path
 	#	$r_opkg_cmd
 
 	# Outputs: (global)
@@ -4437,31 +4467,38 @@ IPKs:downgrade()
 
 	FuncInit
 
-	local -i done_fail_count=0
-	local -i done_ok_count=0
-	local -i total_count=0
-	local -i z=0
+	local -i done_fail_count
+	local -i done_ok_count
+	local -i total_count
+	local -i z
+	local action
+	local curl_insecure_opt
+	local desc
+	local log_pathfile
+	local name
+	local package_name
+	local package_type
+	local remote_url
+	local url_prefix
+	local url_suffix
 
-	local curl_insecure_opt=''
-	local desc=''
-	local log_pathfile=''
-	local name=''
-	local package_type=''
-	local remote_url=''
-	local url_prefix=''
-	local url_suffix=''
+	package_name=auxiliary
+	package_type=IPK
+	z=0
 
 	IPKs-ACdownload-to:Init
 	total_count=$(IPKs-ACdowngrade-to:Count)
 	IsOsCanSecureDownload || curl_insecure_opt='--insecure'
 
 	if [[ $total_count -gt 0 ]] && IsEntwareSiteUp; then
-		package_type=IPK
-		desc="$total_count ${package_type}$(Pluralise "$total_count")"
+		action=download
+		desc="$action $total_count $package_name ${package_type}$(Pluralise "$total_count")"
+		done_fail_count=0
+		done_ok_count=0
 		log_pathfile=$r_log_path/ipks.$r_download_log_file
 
 		PauseAni
-		ShowAsProc "download $desc"
+		ShowAsProc "$desc"
 
 		SetQpkgArch
 
@@ -4472,7 +4509,7 @@ IPKs:downgrade()
 					url_suffix=_2.38-1_armv7-3.2.ipk
 
 					for name in $(IPKs-ACdowngrade-to:Array); do
-						ShowAsPercentProgress "download $desc" '' "$done_ok_count" 0 0 "$total_count"
+						ShowAsPercentProgress "$desc" '' "$done_ok_count" 0 0 "$total_count"
 						((done_ok_count++))
 
 						remote_url=${url_prefix}${name}${url_suffix}
@@ -4480,7 +4517,7 @@ IPKs:downgrade()
 						Executer "/sbin/curl $curl_insecure_opt --location --output $local_pathfile $remote_url" "$log_pathfile" log:failure-only
 					done
 
-					ShowAsPercentProgress "download $desc" '' "$done_ok_count" 0 "$done_fail_count" "$total_count"
+					ShowAsPercentProgress "$desc" '' "$done_ok_count" 0 "$done_fail_count" "$total_count"
 
 					url_prefix=''
 					url_suffix=''
@@ -4503,7 +4540,7 @@ IPKs:downgrade()
 #
 #		if [[ -n $url_prefix && -n $url_suffix ]]; then
 #			for name in $(IPKs-ACdowngrade-to:Array); do
-#				ShowAsPercentProgress "download $desc" '' "$done_ok_count" 0 0 "$total_count"
+#				ShowAsPercentProgress "$action $desc" '' "$done_ok_count" 0 0 "$total_count"
 #				((done_ok_count++))
 #
 #				remote_url=${url_prefix}${name}${url_suffix}
@@ -4511,7 +4548,7 @@ IPKs:downgrade()
 #				Executer "/sbin/curl $curl_insecure_opt --location --output $local_pathfile $remote_url" "$log_pathfile" log:failure-only
 #			done
 #
-#			ShowAsPercentProgress "download $desc" '' "$done_ok_count" 0 "$done_fail_count" "$total_count"
+#			ShowAsPercentProgress "$action $desc" '' "$done_ok_count" 0 "$done_fail_count" "$total_count"
 #
 #			url_prefix=''
 #			url_suffix=''
@@ -4519,31 +4556,33 @@ IPKs:downgrade()
 
 		[[ ${useropt_terse:=true} = false && ${useropt_verbose:=false} = false ]] && echo
 
-		total_count=1
-		done_ok_count=0
+		total_count=1		# Reset this as downgrade is completed in a single process.
+
+		action=downgrade
+		desc="$action $total_count $package_name ${package_type}$(Pluralise "$total_count")"
 		done_fail_count=0
-		desc="$total_count auxiliary ${package_type}$(Pluralise "$total_count")"
+		done_ok_count=0
 		log_pathfile=$r_log_path/ipks.$r_downgrade_log_file
 
 		PauseAni
-		ShowAsProc "downgrade $desc"
+		ShowAsProc "$desc"
 
-		ShowAsPercentProgress "downgrade $desc" '' "$done_ok_count" 0 "$done_fail_count" "$total_count"
+		ShowAsPercentProgress "$desc" '' "$done_ok_count" 0 "$done_fail_count" "$total_count"
 		Executer "$r_opkg_cmd install --force-downgrade --cache $r_ipk_cache_path --tmp-dir $r_ipk_downgrade_path $r_ipk_downgrade_path/*.ipk" "$log_pathfile" log:failure-only
 		z=$?
 
 		if [[ $z -eq 0 ]]; then
 			((done_ok_count++))
-			NoteIpkAcAsOk "$(IPKs-ACdowngrade-to:Array)" downgrade
-			DebugAsDone "downgraded $desc"
-			SaveActionResultMetrics IPK auxiliary downgrade "$done_ok_count" ok
+			NoteIpkAcAsOk "$(IPKs-ACdowngrade-to:Array)" "$action"
+			DebugAsDone "$desc"
+			SaveActionResultMetrics ok '' "$done_ok_count"
 		else
 			((done_fail_count++))
-			NoteIpkAcAsEr "$(IPKs-ACdowngrade-to:Array)" downgrade
-			SaveActionResultMetrics IPK auxiliary downgrade "$done_fail_count" er "$z"
+			NoteIpkAcAsEr "$(IPKs-ACdowngrade-to:Array)" "$action"
+			SaveActionResultMetrics er "$z" "$done_fail_count"
 		fi
 
-		ShowAsPercentProgress "downgrade $desc" '' "$done_ok_count" 0 "$done_fail_count" "$total_count"
+		ShowAsPercentProgress "$desc" '' "$done_ok_count" 0 "$done_fail_count" "$total_count"
 
 		[[ ${useropt_terse:=true} = false && ${useropt_verbose:=false} = false ]] && echo
 	fi
@@ -4587,15 +4626,25 @@ PIPs:install()
 
 	FuncInit
 
-	local -i done_fail_count=0
-	local -i done_ok_count=0
-	local -i total_count=0
-	local -i z=0
+	local -i done_fail_count
+	local -i done_ok_count
+	local -i total_count
+	local -i z
+	local action
+	local desc
+	local exec_cmd
+	local log_pathfile
+	local package_name
+	local package_type
 
-	local desc=''
-	local exec_cmd=''
-	local log_pathfile=$r_action_log_path/pips.$r_install_log_file
-	local package_type=PIP
+	action=install
+	done_fail_count=0
+	done_ok_count=0
+	log_pathfile=$r_action_log_path/pips.$r_install_log_file
+	package_name=auxiliary
+	package_type=PIP
+	total_count=0
+	z=0
 
 	if [[ $useropt_fix = true ]] || IPKs-ACinstall-ok.Exist python3-pip; then
 		PIPs-ACinstall-to:Add "$r_base_pips"
@@ -4608,10 +4657,10 @@ PIPs:install()
 		((total_count++))
 
 		exec_cmd="$r_pip_cmd install --upgrade --no-input $(PIPs-ACinstall-to:List) --cache-dir $r_pip_cache_path --root-user-action=ignore"
-		desc="$total_count auxiliary PIP$(Pluralise "$total_count")"
+		desc="$action $total_count $package_name ${package_type}$(Pluralise "$total_count")"
 
 		EndAni
-		ShowAsPercentProgress "install $desc" '' "$done_ok_count" 0 0 "$total_count"
+		ShowAsPercentProgress "$desc" '' "$done_ok_count" 0 0 "$total_count"
 		StartAni
 
 		Executer "$exec_cmd" "$log_pathfile" log:failure-only
@@ -4619,13 +4668,13 @@ PIPs:install()
 
 		if [[ $z -eq 0 ]]; then
 			((done_ok_count++))
-			DebugAsDone "installed $desc"
-			SaveActionResultMetrics PIP auxiliary install "$done_ok_count" ok
+			DebugAsDone "$desc"
+			SaveActionResultMetrics ok '' "$done_ok_count"
 
 			/bin/rm -f "$r_prev_pip_list_pathfile.installing" 2> /dev/null
 		else
 			((done_fail_count++))
-			SaveActionResultMetrics PIP auxiliary install "$done_fail_count" er "$z"
+			SaveActionResultMetrics er "$z" "$done_fail_count"
 
 			if [[ -s $r_prev_pip_list_pathfile.installing ]]; then
 				/bin/mv -f "$r_prev_pip_list_pathfile.installing" "$r_prev_pip_list_pathfile"
@@ -4633,7 +4682,7 @@ PIPs:install()
 		fi
 
 		EndAni
-		ShowAsPercentProgress "install $desc" '' "$done_ok_count" 0 "$done_fail_count" "$total_count"
+		ShowAsPercentProgress "$desc" '' "$done_ok_count" 0 "$done_fail_count" "$total_count"
 
 		[[ ${useropt_terse:=true} = false && ${useropt_verbose:=false} = false ]] && echo
 		StartAni
@@ -4716,17 +4765,20 @@ _ExecOneActionWithManyForks_()
 
 	FuncForkInit
 
-	local -i pid=0
-	local -r r_pid_pathfile=$(CreatePidFilePathName)
+	local -a a_c
+	local -i pid
+	local a
+	local qpkg_name
+	local r_pid_pathfile
 
-	local a=$1
-	local qpkg_name=''
+	a=$1
+	pid=0
+	r_pid_pathfile=$(CreatePidFilePathName)
+
+	local -r r_pid_pathfile
 
 	shift												# Shift arguments one position to the left.
-
-# StartAni
-
-	local -a a_c=("$@")
+	a_c=("$@")
 
 	for qpkg_name in "${a_c[@]}"; do
 		[[ ! -e $r_abort_actions_pathfile ]] || break
@@ -4771,8 +4823,6 @@ _ExecOneActionWithManyForks_()
 	UpdateActionForkProgress
 	Pause 0.2
 
-# EndAni
-
 	FuncForkExit
 
 	}
@@ -4793,10 +4843,11 @@ _DirSizeMonitor_()
 
 	[[ -d $dir_location && $dir_bytes -gt 0 ]] || exit
 
-	local -i last_bytes=0
+	local -i last_bytes
 
 	current_bytes=-1
 	last_active_epoch=0
+	last_bytes=0
 
 	while [[ $current_bytes -lt $dir_bytes ]]; do
 		[[ ! -e $r_abort_actions_pathfile ]] || break
@@ -4854,7 +4905,7 @@ WriteBranch()
 	#	$switch_branch
 	#	$useropt_branch
 
-	local a=''
+	local a
 
 	if [[ $switch_branch = true && -n $user_branch_value ]]; then
 		# Validate before saving.
@@ -4900,7 +4951,7 @@ WriteReportInfo()
 	#	$switch_report_info
 	#	$useropt_show_report_info
 
-	local a=''
+	local a
 
 	if [[ $switch_report_info = true && -n $user_report_info_value ]]; then
 		# Validate before saving.
@@ -4944,7 +4995,7 @@ WriteTerse()
 	#	$switch_terse
 	#	$useropt_terse
 
-	local a=''
+	local a
 
 	if [[ $switch_terse = true && -n $user_terse_value ]]; then
 		# Validate before saving.
@@ -4985,19 +5036,18 @@ SaveSetting()
 	ConfirmVarIsDefined 1 "${1:-}" "$e_nonam" || return
 	ConfirmVarIsDefined 2 "${2:-}" "$e_noval" || return
 
-	local a=$1
-	local b=''
+	local a
 
-	b=$(Lowercase "$2")
+	a=$(Lowercase "$2")
 
-	case $b in
+	case $a in
 		true|false)
-			b=$(Uppercase "$b")		# Convert these to uppercase to match QNAP-convention.
+			a=$(Uppercase "$a")		# Convert these to uppercase to match QNAP-convention.
 	esac
 
-	/sbin/setcfg sherpa "$a" "$b" -f /etc/config/qpkg.conf
+	/sbin/setcfg sherpa "$1" "$a" -f /etc/config/qpkg.conf
 
-	[[ ${3:-} = announce ]] && ShowAsDone "user setting '$a = $b' saved"
+	[[ ${3:-} = announce ]] && ShowAsDone "user setting '$1 = $a' saved"
 
 	}
 
@@ -5016,7 +5066,7 @@ LoadSetting()
 	ConfirmVarIsDefined 1 "${1:-}" "$e_nonam" || return
 	ConfirmVarIsDefined 2 "${2:-}" "$e_noval" || return
 
-	local a=''
+	local a
 
 	a=$(Lowercase "$2")
 
@@ -5055,10 +5105,11 @@ LenANSIDiff()
 	# Inputs: (local)
 	#	$1 (optional) = text to find length-of.
 
-	local a=${1:-}
-	local b=''
+	local a
+	local b
 
-	b=$(StripANSICodes "$a")
+	a=${1:-}
+		b=$(StripANSICodes "$a")
 
 	printf '%s' "$((${#a}-${#b}))"
 
@@ -5077,7 +5128,7 @@ AddSeparators()
 
 	[[ -z ${1:-} ]] && return
 
-	local a=''
+	local a
 
 	a=$(Trim "$1")
 	a=${a// /, }	# Replace whitespace with separators.
@@ -5199,7 +5250,9 @@ GeneratePacksReportTitleRow()
 	#	$r_report_qpkg_description_column_width
 	#	$r_report_qpkg_name_column_width
 
-	local -a a_headers=('QPKG name:' 'Appl. version:' 'Description:')
+	local -a a_headers
+
+	a_headers=('QPKG name:' 'Appl. version:' 'Description:')
 
 	if IsOsCanAutowidthTableColumns; then
 		(
@@ -5235,9 +5288,12 @@ _GeneratePacksReportDataRow_()
 	#	$r_report_qpkg_description_column_width
 	#	$r_report_qpkg_name_column_width
 
-	local -a a_column_vars=(app_ver description name)
+	local -a a_column_vars
+	local a
+	local mode
 
-	local mode=''
+	a_column_vars=(app_ver description name)
+	mode=''
 
 	# Init field messages.
 
@@ -5303,11 +5359,13 @@ GenerateStatusReportTitleRow()
 	# Inputs: (global)
 	#	$r_report_qpkg_name_column_width
 
-	local a=''
+	local -a a_headers
+	local a
+
+	a=''
 
 	QPKGs-ISupgradable.IsAny && a=" $(TextBrightWhite '(')$(TextBrightOrange new)$(TextBrightWhite ')')"
-
-	local -a a_headers=("$(TextBrightWhite 'QPKG name:')" "$(TextBrightWhite 'Status:')" "$(TextBrightWhite 'Last action (result):')" "$(TextBrightWhite 'QPKG version')${a}$(TextBrightWhite ':')" "$(TextBrightWhite 'Appl. version:')" "$(TextBrightWhite 'Location:')")
+	a_headers=("$(TextBrightWhite 'QPKG name:')" "$(TextBrightWhite 'Status:')" "$(TextBrightWhite 'Last action (result):')" "$(TextBrightWhite 'QPKG version')${a}$(TextBrightWhite ':')" "$(TextBrightWhite 'Appl. version:')" "$(TextBrightWhite 'Location:')")
 
 	if IsOsCanAutowidthTableColumns; then
 		(
@@ -5338,17 +5396,26 @@ _GenerateStatusReportDataRow_()
 	#	$r_report_flags_path
 	#	$r_report_qpkg_name_column_width
 
-	local -a a_column_vars=(action app_ver auxiliary name path status ver)
-		local auxiliary_column=status		# Auxiliary messages are shown in this column name.
+	local -a a_column_vars
+	local a
+	local auxiliary_column
+	local mode
+	local req_alert
+	local req_attention
+	local req_normal_notice
+	local req_notice
+	local req_oops
+	local result
 
-	local a=''
-	local mode=''
-	local req_alert=false
-	local req_attention=false
-	local req_normal_notice=false
-	local req_notice=false
-	local req_oops=false
-	local result=''
+	a_column_vars=(action app_ver auxiliary name path status ver)
+	auxiliary_column=status		# Auxiliary messages are shown in this column name.
+	mode=''
+	req_alert=false
+	req_attention=false
+	req_normal_notice=false
+	req_notice=false
+	req_oops=false
+	result=''
 
 	# Init field messages.
 
@@ -5605,7 +5672,9 @@ GenerateReposReportTitleRow()
 	#	$r_report_qpkg_name_column_width
 	#	$r_report_qpkg_repo_column_width
 
-	local -a a_headers=('QPKG name:' 'Repository:' 'Install date:')
+	local -a a_headers
+
+	a_headers=('QPKG name:' 'Repository:' 'Install date:')
 
 	if IsOsCanAutowidthTableColumns; then
 		(
@@ -5640,19 +5709,27 @@ _GenerateReposReportDataRow_()
 	# Outputs: (local)
 	#	stdout = single report line with data fields.
 
-	local -a a_column_vars=(assigned_repo auxiliary install_date name)
-		local auxiliary_column=assigned_repo		# Auxiliary messages are shown in this column name.
+	local -a a_column_vars
+	local a
+	local auxiliary_column
+	local mode
+	local req_alert
+	local req_attention
+	local req_normal_notice
+	local req_notice
+	local req_oops
+	local store_id
 
-	local a=''
-	local mode=''
-	local req_alert=false
-	local req_attention=false
-	local req_normal_notice=false
-	local req_notice=false
-	local req_oops=false
-	local store_id=''
-
+	a_column_vars=(assigned_repo auxiliary install_date name)
+	auxiliary_column=assigned_repo		# Auxiliary messages are shown in this column name.
+	mode=''
+	req_alert=false
+	req_attention=false
+	req_normal_notice=false
+	req_notice=false
+	req_oops=false
 	store_id=$(GetQpkgInstalledStoreID)
+
 	[[ $store_id = undefined ]] && store_id=sherpa
 
 	for a in "${a_column_vars[@]}"; do
@@ -5762,7 +5839,9 @@ GenerateAbsReportTitleRow()
 	#	$r_report_qpkg_is_installed_column_width
 	#	$r_report_qpkg_name_column_width
 
-	local -a a_headers=('QPKG name:' 'Installed?' 'Acceptable QPKG name abbreviations and aliases:')
+	local -a a_headers
+
+	a_headers=('QPKG name:' 'Installed?' 'Acceptable QPKG name abbreviations and aliases:')
 
 	if IsOsCanAutowidthTableColumns; then
 		(
@@ -5796,20 +5875,29 @@ _GenerateAbsReportDataRow_()
 	#	$r_report_qpkg_is_installed_column_width
 	#	$r_report_qpkg_name_column_width
 
-	local -a a_column_vars=(abs auxiliary installed name)
-		local auxiliary_column=installed		# Auxiliary messages are shown in this column name.
+	local -a a_column_vars
+	local a
+	local auxiliary_column
+	local mode
+	local req_alert
+	local req_attention
+	local req_normal_notice
+	local req_notice
+	local req_oops
+
+	a_column_vars=(abs auxiliary installed name)
+	auxiliary_column=installed		# Auxiliary messages are shown in this column name.
+	mode=''
+	req_alert=false
+	req_attention=false
+	req_normal_notice=false
+	req_notice=false
+	req_oops=false
 
 	for a in "${a_column_vars[@]}"; do
 		local ${a}=false
 		local ${a}_msg=''
 	done
-
-	local mode=''
-	local req_alert=false
-	local req_attention=false
-	local req_normal_notice=false
-	local req_notice=false
-	local req_oops=false
 
 	name=$qpkg_name
 
@@ -5892,7 +5980,9 @@ GenerateDepsReportTitleRow()
 	#	$r_report_qpkg_opt_dependencies_column_width
 	#	$r_report_qpkg_os_version_column_width
 
-	local -a a_headers=('QPKG name:' 'Dependencies:' 'Optionals:' 'Prohibited?' 'Installed?' 'Enabled?' 'Complete?' 'Managed?' 'Signed?' 'Min. RAM:' 'Min. OS:' 'Max. OS:' 'Installed QPKG author:')
+	local -a a_headers
+
+	a_headers=('QPKG name:' 'Dependencies:' 'Optionals:' 'Prohibited?' 'Installed?' 'Enabled?' 'Complete?' 'Managed?' 'Signed?' 'Min. RAM:' 'Min. OS:' 'Max. OS:' 'Installed QPKG author:')
 
 	if IsOsCanAutowidthTableColumns; then
 		(
@@ -5945,22 +6035,30 @@ _GenerateDepsReportDataRow_()
 	#	$r_report_qpkg_opt_dependencies_column_width
 	#	$r_report_qpkg_os_version_column_width
 
-	local -a a_column_vars=(author auxiliary complete deps enabled installed managed max_os min_os min_ram name opt_deps prohibited signed)
-		local auxiliary_column=deps		# Auxiliary messages are shown in this column name.
+	local -a a_column_vars
+	local a
+	local auxiliary_column
+	local dep_name
+	local deps_raw
+	local mode
+	local opt_deps_raw
+	local req_alert
+	local req_attention
+	local req_normal_notice
+	local req_notice
+	local req_oops
 
-	local a=''
-	local dep_name=''
-	local deps_raw=''
-	local mode=''
-	local opt_deps_raw=''
-	local req_alert=false
-	local req_attention=false
-	local req_normal_notice=false
-	local req_notice=false
-	local req_oops=false
-
+	a_column_vars=(author auxiliary complete deps enabled installed managed max_os min_os min_ram name opt_deps prohibited signed)
+	auxiliary_column=deps		# Auxiliary messages are shown in this column name.
+	dep_name=''
 	deps_raw=$(GetQpkgDbDependencies "$qpkg_name")
+	mode=''
 	opt_deps_raw=$(GetQpkgDbOptDependencies "$qpkg_name")
+	req_alert=false
+	req_attention=false
+	req_normal_notice=false
+	req_notice=false
+	req_oops=false
 
 	for a in "${a_column_vars[@]}"; do
 		local ${a}=false
@@ -6250,7 +6348,9 @@ GenerateFeaturesReportTitleRow()
 	#	$r_report_qpkg_name_column_width
 	#	$r_report_qpkg_tier_column_width
 
-	local -a a_headers=('QPKG name:' 'Independ:' 'Optional:' 'Depend:' 'Enhanced:' 'CanBack:' 'CanClean:' 'StartUpd:' 'AutoUpdate:' 'LiveTest:' 'UniqUnpack:')
+	local -a a_headers
+
+	a_headers=('QPKG name:' 'Independ:' 'Optional:' 'Depend:' 'Enhanced:' 'CanBack:' 'CanClean:' 'StartUpd:' 'AutoUpdate:' 'LiveTest:' 'UniqUnpack:')
 
 	if IsOsCanAutowidthTableColumns; then
 		(
@@ -6286,16 +6386,24 @@ _GenerateFeaturesReportDataRow_()
 	#	$qpkg_name
 	#	$r_report_flags_path
 
-	local -a a_column_vars=(active_test autoupdate auxiliary backup clean dependent enhanced independent name optional restart_to_update uniqueunpack)
-		local auxiliary_column=independent		# Auxiliary messages are shown in this column name.
+	local -a a_column_vars
+	local a
+	local auxiliary_column
+	local mode
+	local req_alert
+	local req_attention
+	local req_normal_notice
+	local req_notice
+	local req_oops
 
-	local a=''
-	local mode=''
-	local req_alert=false
-	local req_attention=false
-	local req_normal_notice=false
-	local req_notice=false
-	local req_oops=false
+	a_column_vars=(active_test autoupdate auxiliary backup clean dependent enhanced independent name optional restart_to_update uniqueunpack)
+	auxiliary_column=independent		# Auxiliary messages are shown in this column name.
+	mode=''
+	req_alert=false
+	req_attention=false
+	req_normal_notice=false
+	req_notice=false
+	req_oops=false
 
 	for a in "${a_column_vars[@]}"; do
 		local ${a}=false
@@ -6454,7 +6562,9 @@ GenerateBacksReportTitleRow()
 	#	$r_report_file_change_date_column_width
 	#	$r_report_file_name_column_width
 
-	local -a a_headers=('Backup file:' 'Size in bytes:' 'Backup date:')
+	local -a a_headers
+
+	a_headers=('Backup file:' 'Size in bytes:' 'Backup date:')
 
 	if IsOsCanAutowidthTableColumns; then
 		(
@@ -6492,9 +6602,12 @@ _GenerateBacksReportItemLine_()
 	#	$r_report_file_name_column_width
 	#	$r_report_flags_path
 
-	local -a a_column_vars=(epoch_time file_bytes file_name)
+	local -a a_column_vars
+	local a
+	local mode
 
-	local mode=''
+	a_column_vars=(epoch_time file_bytes file_name)
+	mode=''
 
 	for a in "${a_column_vars[@]}"; do
 		local ${a}=false
@@ -6554,9 +6667,13 @@ FormatReportField()
 	#	$r_chars_blank
 	#	$r_chars_normal
 
-	local a=''
-	local b=''
-	local c=${2:-blank}
+	local a
+	local b
+	local c
+
+	a=''
+	b=''
+	c=${2:-blank}
 
 	IsOsCanAutowidthTableColumns || c=blank
 
@@ -6678,8 +6795,11 @@ DisplayAsIndentActionResultDurationReason()
 
 	[[ -n ${1:-} && -n ${2:-} ]] || return
 
-	local action=''
-	local duration=''
+	local action
+	local duration
+
+	action=''
+	duration=''
 
 	case $1 in
 		disableau)
@@ -7210,20 +7330,29 @@ DisplayFileInViewport()
 	/bin/sed -i '1{/^[[:space:]]*$/d};${/^[[:space:]]*$/d}' "$1"	# Remove first and last lines if empty: https://stackoverflow.com/a/11230764
 	[[ -s $1 ]] || return
 
-	local report_pathfile=$1
+	local -a a_b
+	local arg
+	local headers
+	local linenumbers
+	local linewrap
+	local options
+	local r_prompt
+	local report_pathfile
+	local scrolltoend
+
+	report_pathfile=$1
 
 	shift															# Shift arguments one position to the left.
 
-	local -a a_b=("${@:-}")
+	a_b=("${@:-}")
+	headers=false
+	linenumbers=false
+	linewrap=false
+	options=''
+	r_prompt=' Report viewer\: use arrow-keys to scroll up-down & left-right, press Q to quit '
+	scrolltoend=false
 
-	local -r r_prompt=' Report viewer\: use arrow-keys to scroll up-down & left-right, press Q to quit '
-
-	local arg=''
-	local headers=false
-	local linenumbers=false
-	local linewrap=false
-	local options=''
-	local scrolltoend=false
+	local -r r_prompt
 
 	for arg in "${a_b[@]}"; do
 		[[ $arg = headers:on ]] && headers=true
@@ -7292,9 +7421,9 @@ CalcReportFirstColumnWidth()
 	ConfirmVarIsDefined 1 "${1:-}" "$e_nopfi" || return
 	[[ -s $1 ]] || return
 
-	local a=''
-	local b=''
-	local c=''
+	local a
+	local b
+	local c
 
 	a=$(/bin/sed '/^#[[:space:]].*/d;/#$/d;s/[[:space:]]#[[:space:]].*//' < "$1")	# Remove comment lines and line comments.
 	a=$(/bin/sed 's/[[:space:]]*$//' <<< "$a")										# Remove line trailing whitespace.
@@ -7321,7 +7450,7 @@ GetLogSessStartLine()
 	# Inputs: (global)
 	#	$r_session_tail_pathfile
 
-	local -i a=0
+	local -i a
 
 	a=$(($(/bin/grep -n 'SCRIPT:.*started:' "$r_session_tail_pathfile" | /usr/bin/tail -n${1:-1} | /usr/bin/head -n1 | /usr/bin/cut -d':' -f1)-1))
 	[[ $a -lt 1 ]] && a=1
@@ -7338,7 +7467,7 @@ GetLogSessFinishLine()
 	# Inputs: (global)
 	#	$r_session_tail_pathfile
 
-	local -i a=0
+	local -i a
 
 	a=$(($(/bin/grep -n 'SCRIPT:.*finished:' "$r_session_tail_pathfile" | /usr/bin/tail -n${1:-1} | /usr/bin/cut -d':' -f1)+2))
 	[[ $a -eq 2 ]] && a=3
@@ -7366,7 +7495,7 @@ ArchivePriorSessLog()
 	#	$r_session_archive_log_pathfile
 	#	$session_active_log_pathfile
 
-	local f=''
+	local f
 
 	for f in "$r_log_path"/session.*.active.log; do
 		if [[ -f $f && $f != "$session_active_log_pathfile" ]]; then
@@ -7394,10 +7523,13 @@ ExtractPrevSessFromTail()
 	#	$r_session_last_pathfile
 	#	$r_session_tail_pathfile
 
-	local -i end_line=0
-	local -i old_session=1
-	local -i old_session_limit=12		# Don't try to find "started:" further back than this many sessions.
-	local -i start_line=0
+	local -i end_line
+	local -i old_session
+	local -i old_session_limit
+	local -i start_line
+
+	old_session=1				# Start at this session.
+	old_session_limit=12		# Don't try to find "started:" further back than this many sessions.
 
 	ExtractTailFromLog
 
@@ -7612,7 +7744,7 @@ UpdateActionForkProgress()
 	#	$useropt_verbose
 	#	$worker_count
 
-	local a=''
+	local a
 
 	RefreshActionForkCounts
 	[[ $useropt_verbose = false && ! -e $r_inhibit_display_pathfile ]] || return	# Don't display progress, difficult to read with so-many other writes to the screen.
@@ -7662,7 +7794,7 @@ UpdateDirSizeProgress()
 	# Inputs: (global)
 	#	$current_bytes
 	#	$dir_bytes
-	#	$dir_size_progress_prefix
+	#	$UpdateDirSizeProgress_prefix
 	#	$last_active_epoch
 	#	$r_inhibit_display_pathfile
 
@@ -7671,13 +7803,15 @@ UpdateDirSizeProgress()
 
 	[[ $dir_bytes -gt 0 ]] || return
 
-	local -ir r_stalled_seconds_threshold=4
+	local -i r_stalled_seconds_threshold
+	local -i stalled_seconds
+	local perc_msg
+	local progress_msg
+	local stalled_msg
 
-	local -i stalled_seconds=0
+	r_stalled_seconds_threshold=4
 
-	local perc_msg=''
-	local progress_msg=''
-	local stalled_msg=''
+	local -r r_stalled_seconds_threshold
 
 	if [[ ${1:-} = final ]]; then
 		current_bytes=$dir_bytes
@@ -7721,7 +7855,7 @@ UpdateDirSizeProgress()
 	fi
 
 	[[ ! -e $r_inhibit_display_pathfile ]] || return
-	ShowAsProc "$dir_size_progress_prefix" "$progress_msg"
+	ShowAsProc "$UpdateDirSizeProgress_prefix" "$progress_msg"
 
 	return 0
 
@@ -7739,8 +7873,8 @@ ShowQPKGsMissing()
 	! QPKGs.AClistISmissing.IsSet || return 0
 	! QPKGs.ACreinstallISmissing.IsSet || return 0
 
-	local a=''
-	local b=''
+	local a
+	local b
 
 	case $(QPKGs-ISmissing:Count) in
 		0)
@@ -7773,8 +7907,8 @@ ShowQPKGsNewVers()
 	! QPKGs.AClistISupgradable.IsSet || return 0
 	! QPKGs.ACupgradeISupgradable.IsSet || return 0
 
-	local a=''
-	local b=''
+	local a
+	local b
 
 	case $(QPKGs-ISupgradable:Count) in
 		0)
@@ -7848,9 +7982,11 @@ ListQPKGsActions()
 
 	FuncInit
 
-	local a=''
-	local b=''
-	local border_shown=false
+	local a
+	local b
+	local border_shown
+
+	border_shown=false
 
 	for a in "${ar_qpkg_actions[@]}"; do
 		for b in ok er sk se sa; do
@@ -7890,8 +8026,8 @@ ListQPKGsActionsAll()																						# directive:omit-from-production
 
 	FuncInit																								# directive:omit-from-production
 
-	local a=''																								# directive:omit-from-production
-	local b=''																								# directive:omit-from-production
+	local a																									# directive:omit-from-production
+	local b																									# directive:omit-from-production
 
 	DebugInfoMinSepr																						# directive:omit-from-production
 
@@ -7920,8 +8056,8 @@ ListQPKGsFlagsAll()																							# directive:omit-from-production
 
 	FuncInit																								# directive:omit-from-production
 
-	local a=''																								# directive:omit-from-production
-	local b=''																								# directive:omit-from-production
+	local a																									# directive:omit-from-production
+	local b																									# directive:omit-from-production
 
 	DebugInfoMinSepr																						# directive:omit-from-production
 
@@ -7954,8 +8090,10 @@ ListIPKsActions()
 
 	FuncInit
 
-	local a=''
-	local border_shown=false
+	local a
+	local border_shown
+
+	border_shown=false
 
 	for a in "${ar_ipk_actions[@]}"; do
 		if IPKs-AC${a}-ok.IsAny; then
@@ -7992,7 +8130,7 @@ ListPIPsActions()
 
 	FuncInit
 
-	local a=''
+	local a
 
 	DebugInfoMinSepr
 
@@ -8021,7 +8159,7 @@ ListQPKGsStates()
 
 	FuncInit
 
-	local a=''
+	local a
 
 	BuildExtendedQPKGsStates
 	DebugInfoMinSepr
@@ -8085,7 +8223,9 @@ CheckIncompatibleQPKGs()
 	# Outputs: (global)
 	#	$run_package_actions
 
-	local a=''
+	FuncInit
+
+	local a
 
 	if [[ -n ${r_base_qpkg_conflicts_with:-} ]]; then
 		for a in "${r_base_qpkg_conflicts_with[@]}"; do
@@ -8093,10 +8233,12 @@ CheckIncompatibleQPKGs()
 				ShowAsError "the '$a' QPKG is enabled. $(ShowAsTitleName) is incompatible with this package. Please consider stopping this QPKG in your App Center"
 				run_package_actions=false
 
-				return 1
+				FuncExit 1; return
 			fi
 		done
 	fi
+
+	FuncExit
 
 	}
 
@@ -8106,17 +8248,21 @@ CheckProblemEnabledQPKGs()
 	# Inputs: (global)
 	#	$r_base_qpkg_warnings[]
 
-	local a=''
+	FuncInit
+
+	local a
 
 	if [[ -n ${r_base_qpkg_warnings:-} ]]; then
 		for a in "${r_base_qpkg_warnings[@]}"; do
 			if IsQpkgEnabled "$a"; then
 				ShowAsWarn "the '$a' QPKG is enabled. This may cause problems with $(ShowAsTitleName) applications. Please consider stopping this QPKG in your App Center"
 
-				return 1
+				FuncExit 1; return
 			fi
 		done
 	fi
+
+	FuncExit
 
 	}
 
@@ -8131,7 +8277,7 @@ CheckWebsitesUp()
 
 	FuncInit
 
-	local -i n=0
+	local -i n
 
 #	r_websites+=(testsiteisdown.com)						# directive:omit-from-production
 
@@ -8150,7 +8296,7 @@ CheckSystemLoad()
 
 	FuncInit
 
-	local a=0
+	local a
 
 	if IsOsStartingPackages; then
 		ShowAsNote "$(GetOsName) is starting QPKGs, check again in a few minutes"
@@ -8247,7 +8393,7 @@ InitQPKGsStates()
 
 	FuncInit
 
-	local a=''
+	local a
 
 	for a in "${ar_qpkg_is_states[@]}"; do
 		[[ $a = active ]] && continue		# Don't reset.
@@ -8285,9 +8431,12 @@ RefreshAndStoreQPKGsStates()
 
 	FuncInit
 
-	qpkg_name=''
+	local qpkg_name
+	local r_pid_pathfile
 
-	local -r r_pid_pathfile=$(CreatePidFilePathName)
+	r_pid_pathfile=$(CreatePidFilePathName)
+
+	local -r r_pid_pathfile
 
 	PauseAni
 	ShowAsProc 'basic package states'
@@ -8349,10 +8498,9 @@ LoadQPKGsStates()
 
 	FuncInit
 
-	local a=''
-	local b=''
-
-	qpkg_name=''
+	local a
+	local b
+	local qpkg_name
 
 	PauseAni
 	ShowAsProc 'load QPKG states'
@@ -8442,7 +8590,7 @@ BuildQPKGsIsCanBackup()
 
 	FuncInit
 
-	local qpkg_name=''
+	local qpkg_name
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		IsQpkgDbCanBackup "$qpkg_name" && QPKGs-GRcanbackup:Add "$qpkg_name"
@@ -8459,7 +8607,7 @@ BuildQPKGsIsCanRestartToUpdate()
 
 	FuncInit
 
-	local qpkg_name=''
+	local qpkg_name
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		IsQpkgDbCanRestartToUpdate "$qpkg_name" && QPKGs-GRcanrestarttoupdate:Add "$qpkg_name"
@@ -8476,7 +8624,7 @@ BuildQPKGsIsCanClean()
 
 	FuncInit
 
-	local qpkg_name=''
+	local qpkg_name
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		IsQpkgDbCanClean "$qpkg_name" && QPKGs-GRcanclean:Add "$qpkg_name"
@@ -8491,13 +8639,17 @@ HelpAbbreviations()
 
 	FuncInit
 
-	local -r r_pid_pathfile=$(CreatePidFilePathName)
+	local -i m
+	local -i n
+	local a
+	local b
+	local qpkg_name
+	local r_pid_pathfile
 
-	local -i m=0
-	local -i n=0
+	n=0
+	r_pid_pathfile=$(CreatePidFilePathName)
 
-	local a=''
-	local b=''
+	local -r r_pid_pathfile
 
 	LoadDatabase
 	DisplayProcReport abbreviations
@@ -8556,18 +8708,21 @@ ReportBackups()
 
 	FuncInit
 
-	local -r r_pid_pathfile=$(CreatePidFilePathName)
+	local -i file_bytes
+	local -i m
+	local -i n
+	local a
+	local b
+	local epoch_time			# Allow float as seconds have a decimal component.
+	local file_date
+	local file_name
+	local file_time
+	local r_pid_pathfile
 
-	local -i file_bytes=0
-	local -i m=0
-	local -i n=0
+	n=0
+	r_pid_pathfile=$(CreatePidFilePathName)
 
-	local a=''
-	local b=''
-	local epoch_time=0		# Allow float as seconds have a decimal component.
-	local file_date=''
-	local file_name=''
-	local file_time=''
+	local -r r_pid_pathfile
 
 	DisplayProcReport backups
 	CreateReportPaths
@@ -8627,13 +8782,16 @@ ReportDependencies()
 
 	generate_report_headers=true
 
-	local -r r_pid_pathfile=$(CreatePidFilePathName)
+	local -i m
+	local -i n
+	local a
+	local b
+	local r_pid_pathfile
 
-	local -i m=0
-	local -i n=0
+	n=0
+	r_pid_pathfile=$(CreatePidFilePathName)
 
-	local a=''
-	local b=''
+	local -r r_pid_pathfile
 
 	DisplayProcReport dependency
 	CreateReportPaths
@@ -8683,13 +8841,16 @@ ReportFeatures()
 
 	generate_report_headers=true
 
-	local -r r_pid_pathfile=$(CreatePidFilePathName)
+	local -i m
+	local -i n
+	local a
+	local b
+	local r_pid_pathfile
 
-	local -i m=0
-	local -i n=0
+	n=0
+	r_pid_pathfile=$(CreatePidFilePathName)
 
-	local a=''
-	local b=''
+	local -r r_pid_pathfile
 
 	DisplayProcReport features
 	CreateReportPaths
@@ -8737,13 +8898,16 @@ ReportPackages()
 
 	FuncInit
 
-	local -r r_pid_pathfile=$(CreatePidFilePathName)
+	local -i m
+	local -i n
+	local a
+	local b
+	local r_pid_pathfile
 
-	local -i m=0
-	local -i n=0
+	n=0
+	r_pid_pathfile=$(CreatePidFilePathName)
 
-	local a=''
-	local b=''
+	local -r r_pid_pathfile
 
 	DisplayProcReport package
 	CreateReportPaths
@@ -8806,13 +8970,16 @@ ReportRepos()
 
 	generate_report_headers=true
 
-	local -r r_pid_pathfile=$(CreatePidFilePathName)
+	local -i m
+	local -i n
+	local a
+	local b
+	local r_pid_pathfile
 
-	local -i m=0
-	local -i n=0
+	n=0
+	r_pid_pathfile=$(CreatePidFilePathName)
 
-	local a=''
-	local b=''
+	local -r r_pid_pathfile
 
 	DisplayProcReport repository
 	CreateReportPaths
@@ -8862,13 +9029,16 @@ ReportStatuses()
 
 	generate_report_headers=true
 
-	local -r r_pid_pathfile=$(CreatePidFilePathName)
+	local -i m
+	local -i n
+	local a
+	local b
+	local r_pid_pathfile
 
-	local -i m=0
-	local -i n=0
+	n=0
+	r_pid_pathfile=$(CreatePidFilePathName)
 
-	local a=''
-	local b=''
+	local -r r_pid_pathfile
 
 	DisplayProcReport status
 	CreateReportPaths
@@ -8919,20 +9089,22 @@ ReportStatuses()
 ReportAllActionResults()
 	{
 
-	local -i a=0
-	local -i b=0
-	local -i c=0
-	local -i d=0
-	local -i datetime=0
-	local -i duration=0
-	local -i e=0
-	local -i quantity=0
+	local -i a
+	local -i b
+	local -i c
+	local -i d
+	local -i datetime
+	local -i duration
+	local -i e
+	local -i quantity
+	local action
+	local package_name
+	local package_type
+	local reason
+	local result
 
-	local action=''
-	local package_name=''
-	local package_type=''
-	local reason=''
-	local result=''
+	a=0
+	d=0
 
 	if [[ $useropt_show_previous_action_results_report = true ]]; then
 		show_action_results_failed=true
@@ -8987,16 +9159,17 @@ ReportActionResults()
 	# Inputs: (global)
 	#	$r_action_results_pathfile
 
-	local -i count=0
-	local -i datetime=0
-	local -i duration=0
-	local -i quantity=0
+	local -i count
+	local -i datetime
+	local -i duration
+	local -i quantity
+	local action
+	local package_name
+	local package_type
+	local reason
+	local result
 
-	local action=''
-	local package_name=''
-	local package_type=''
-	local reason=''
-	local result=''
+	count=0
 
 	if [[ -s $r_action_results_pathfile ]]; then
 		# Obtain count of same results. Need to know if action applied to one QPKG or many.
@@ -9069,7 +9242,7 @@ GenerateReportInfo()
 
 	DisplayAsHelpTitle 'report information:'
 
-	local a=''
+	local a
 
 	a=$({
 		if [[ -e "$r_report_flags_path"/status-missing ]]; then
@@ -9214,7 +9387,7 @@ GenerateReportHeadingsInfo()
 
 	DisplayAsHelpTitle 'column headings:'
 
-	local a=''
+	local a
 
 	a=$({
 		DisplayAsIndentQuotedInfoItem Independ 'is independent of other QPKGs'
@@ -9286,7 +9459,7 @@ ShowQPKGLists()
 
 	[[ ${packages_loaded:=false} = true ]] || return
 
-	local a=''
+	local a
 
 	for a in "${ar_qpkg_basic_states[@]}"; do
 		case $a in
@@ -9387,7 +9560,7 @@ ShowQPKGList()
 
 	[[ -n ${1:-} ]] || return
 
-	local qpkg_name=''
+	local qpkg_name
 
 	EndAni
 	EraseThisLine
@@ -9531,17 +9704,17 @@ AppendToMsgPipeEnhancedLog()																	# directive:omit-from-production
 	{																							# directive:omit-from-production
 
 	# Inputs: (global)
-	#	$r_action
-	#	$r_tier
 	#	$_msg1_key
 	#	$_msg1_value
 	#	$_msg2_key
 	#	$_msg2_value
+	#	$r_action
 	#	$r_action_field_length
 	#	$r_action_msg_pipe_log_pathfile
 	#	$r_date_field_length
 	#	$r_key1_field_length
 	#	$r_key2_field_length
+	#	$r_tier
 	#	$r_tier_field_length
 
 	# Inputs: (local)
@@ -9550,7 +9723,7 @@ AppendToMsgPipeEnhancedLog()																	# directive:omit-from-production
 	# Outputs: (global)
 	#	stdout -> $r_action_msg_pipe_log_pathfile
 
-	local a=''																		# directive:omit-from-production
+	local a																			# directive:omit-from-production
 
 	a=$(ExpandMsgPipeShortcodes "${_msg1_value:-null}")								# directive:omit-from-production
 
@@ -9606,7 +9779,7 @@ FindNextFD()
 
 	# Find next available file descriptor: https://stackoverflow.com/a/41603891
 
-	local -i fd=-1
+	local -i fd
 
 	for fd in {10..100}; do
 		if [[ ! -e /proc/$$/fd/$fd ]]; then
@@ -9709,7 +9882,7 @@ NoteIpkAcAsEr()
 	#	$2 = action.
 	#	$3 (optional) = reason.
 
-	local a=''
+	local a
 
 	a="failing request to $2 $(FormatPackageName "${1:-}")"
 
@@ -9725,20 +9898,22 @@ NoteIpkAcAsEr()
 ModPathToEntware()
 	{
 
-	local a=''
-	local b=/opt/bin:/opt/sbin
+	local a
+	local b
+
+	a=/opt/bin:/opt/sbin
 
 	if IsQpkgEnabled Entware; then
-		! [[ $PATH =~ $b ]] || return
+		! [[ $PATH =~ $a ]] || return
 
-		a=$(/bin/sed "s|${b}:||" <<< "$PATH:")		# Append colon prior to searching, then remove existing Entware paths.
-		export PATH=$b:${a%:}						# ... now prepend Entware paths and remove trailing colon
+		b=$(/bin/sed "s|${a}:||" <<< "$PATH:")		# Append colon prior to searching, then remove existing Entware paths.
+		export PATH=$a:${b%:}						# ... now prepend Entware paths and remove trailing colon
 		DebugAsDone 'prepended Entware to $PATH'
 	else
-		[[ $PATH =~ $b ]] || return
+		[[ $PATH =~ $a ]] || return
 
-		a=$(/bin/sed "s|${b}:||" <<< "$PATH:")		# Append colon prior to searching, then remove existing Entware paths.
-		export PATH=${a%:}							# ... now remove trailing colon
+		b=$(/bin/sed "s|${a}:||" <<< "$PATH:")		# Append colon prior to searching, then remove existing Entware paths.
+		export PATH=${b%:}							# ... now remove trailing colon
 		DebugAsDone 'removed Entware from $PATH'
 	fi
 
@@ -9755,7 +9930,7 @@ GetHardwareCpuName()
 	#	stdout = CPU name as string.
 	#	$? = 0 if found, 1 if not.
 
-	local a=''
+	local a
 
 	if a=$(GetCpuModel); then
 		printf '%s' "$a"
@@ -9778,8 +9953,8 @@ GetHardwareCpuStepping()
 	#	stdout = CPU stepping as string.
 	#	$? = 0 if found, 1 if not.
 
-	local a=''
-	local b=''
+	local a
+	local b
 
 	if a=$(GetCpuStepping); then
 		printf '%s' "$a"
@@ -9802,7 +9977,7 @@ GetCpuModel()
 	#	stdout = CPU model as string.
 	#	$? = 0 if found, 1 if not.
 
-	local a=''
+	local a
 
 	a=$(GetValueFromFile '^model name' /proc/cpuinfo) || return 1
 
@@ -9819,7 +9994,7 @@ GetCpuName()
 	#	stdout = CPU name as string.
 	#	$? = 0 if found, 1 if not.
 
-	local a=''
+	local a
 
 	a=$(GetValueFromFile '^Processor name' /proc/cpuinfo) || return 1
 
@@ -9836,7 +10011,7 @@ GetCpuStepping()
 	#	stdout = CPU stepping as integer.
 	#	$? = 0 if found, 1 if not.
 
-	local a=''
+	local a
 
 	a=$(GetValueFromFile '^stepping' /proc/cpuinfo) || return 1
 
@@ -9853,7 +10028,7 @@ GetCpuVariant()
 	#	stdout = CPU variant as integer.
 	#	$? = 0 if found, 1 if not.
 
-	local a=''
+	local a
 
 	a=$(GetValueFromFile '^CPU variant' /proc/cpuinfo) || return 1
 
@@ -9870,7 +10045,7 @@ GetCpuRevision()
 	#	stdout = CPU revision as integer.
 	#	$? = 0 if found, 1 if not.
 
-	local a=''
+	local a
 
 	a=$(GetValueFromFile '^CPU revision' /proc/cpuinfo) || return 1
 
@@ -9895,7 +10070,7 @@ GetValueFromFile()
 
 	[[ -n "${1:-}" && -n "${2:-}" && -e $2 ]] || return 1
 
-	local a=''
+	local a
 
 	a=$(/bin/grep "$1" "$2" 2> /dev/null) || return 1
 
@@ -9918,7 +10093,7 @@ GetCountOfValuesFromFile()
 
 	[[ -n "${1:-}" && -n "${2:-}" && -e $2 ]] || return 1
 
-	local a=''
+	local a
 
 	a=$(/bin/grep -c "$1" "$2" 2> /dev/null) || return 1
 
@@ -9962,10 +10137,12 @@ GetHardwareCpuBenchmark()
 	#	$r_gnu_dd_cmd
 	#	$r_gnu_nice_cmd
 
-	local -i a=-20		# Execute benchmark with highest priority.
-	local -i b=16		# Maximum time-to-run is ~ 1 second on my slowest NAS (TS-220).
+	local -i a
+	local -i b
+	local c
 
-	local c=''
+	a=-20		# Execute benchmark with highest priority.
+	b=16		# Maximum time-to-run is ~ 1 second on my slowest NAS (TS-220).
 
 	if [[ ! -x $r_gnu_dd_cmd ]]; then
 		printf "unable to measure, GNU 'dd' is unavailable"
@@ -10009,12 +10186,13 @@ GetHardwareVolumeBenchmark()
 	#	$r_gnu_dd_cmd
 	#	$r_gnu_nice_cmd
 
-	local -i a=-20		# Run benchmark with highest priority.
+	local -i a
+	local b
+	local c
+	local d
 
-	local b=''
-	local c=10k			# Maximum time-to-run is ~ 1 second on my slowest NAS (TS-220).
-	local d=''
-
+	a=-20		# Run benchmark with highest priority.
+	c=10k			# Maximum time-to-run is ~ 1 second on my slowest NAS (TS-220).
 	d=$(GetUserDefVol)/zero
 
 	if [[ -d $(/usr/bin/dirname "$d") ]]; then
@@ -10068,7 +10246,7 @@ GetCpuDataWidth()
 	#	$r_nas_arch
 	#	$r_nas_platform
 
-	local a=''
+	local a
 
 	case $r_nas_arch in
 		x86_64|aarch64)
@@ -10119,7 +10297,7 @@ GetOsKernelVersion()
 GetOsKernelPageSize()
 	{
 
-	local a=''
+	local a
 
 	if [[ -x /sbin/hal_app ]]; then
 		a=$(/sbin/hal_app --get_pagesize)B
@@ -10168,7 +10346,7 @@ GetRepoURLFromStoreID()
 GetOsUptime()
 	{
 
-	local a=''
+	local a
 
 	a=$(< /proc/uptime)
 
@@ -10179,7 +10357,7 @@ GetOsUptime()
 GetUserLIBC()
 	{
 
-	local a=''
+	local a
 
 	a=$(/sbin/ldd --version | /usr/bin/head -n1)
 
@@ -10211,7 +10389,7 @@ GetBusyBoxCopyright()
 GetBusyBoxFunctionCount()
 	{
 
-	local -i a=''
+	local -i a
 
 	a=$(/bin/busybox --list 2> /dev/null | /usr/bin/wc -l)
 
@@ -10228,7 +10406,7 @@ GetBusyBoxFunctionCount()
 GetOsSysLoad1MinAverage()
 	{
 
-	local a=0
+	local a
 
 	read -r a _ < /proc/loadavg
 
@@ -10243,7 +10421,7 @@ GetHardwareCpuThreads()
 	#	stdout = CPU threads integer.
 	#	$? = 0 if found, 1 if not.
 
-	local a=''
+	local a
 
 	if a=$(GetCountOfValuesFromFile '^processor' /proc/cpuinfo); then
 		printf '%d' "$a"
@@ -10262,6 +10440,9 @@ GetHardwareCpuThreads()
 GetHardwareInstalledRAMkb()
 	{
 
+	# Inputs: (global)
+	#	$r_regex_get_ram
+
 	# Outputs: (local)
 	#	stdout = string.
 
@@ -10272,15 +10453,19 @@ GetHardwareInstalledRAMkb()
 GetHardwareInstalledRAMgb()
 	{
 
+	# Inputs: (global)
+	#	$r_regex_get_ram
+
 	# Outputs: (local)
 	#	stdout = string.
 
-	local a=''
+	local a
+	local b
+	local c
 
 	a=$(/bin/grep MemTotal /proc/meminfo | /bin/sed "$r_regex_get_ram")
-
-	local b=$((((a/1024)*1000)/1024))
-	local c=${b%???}.${b:${#b}<3?0:-3}
+		b=$((((a/1024)*1000)/1024))
+			c=${b%???}.${b:${#b}<3?0:-3}
 
 	printf '%.2f' "$c"
 
@@ -10475,7 +10660,9 @@ GetUserSudoUID()
 GetOsState()
 	{
 
-	local a=''
+	local a
+
+	a=''
 
 	if IsOsStarting; then
 		a=booting
@@ -10532,8 +10719,8 @@ ShowZeroQpkgs()
 
 	[[ ${packages_loaded:=false} = true ]] || return
 
-	local a=''
-	local b=''
+	local a
+	local b
 
 	for a in "${ar_qpkg_is_states[@]}"; do
 		for b in "${ar_user_qpkg_actions[@]}"; do
@@ -10555,9 +10742,11 @@ ClaimLockfile()
 	# Outputs: (global)
 	#	$r_lock_pathfile
 
-	readonly r_lock_pathfile=/var/lock/sherpa.pid
+	local a
 
-	local a=''
+	r_lock_pathfile=/var/lock/sherpa.pid
+
+	readonly r_lock_pathfile
 
 	for a in sherpa-manager.sh sherpa-manager.source; do
 		if [[ -e $r_lock_pathfile && -d /proc/$(< "$r_lock_pathfile") && $(< /proc/"$(< "$r_lock_pathfile")"/cmdline) =~ $a ]]; then
@@ -10635,51 +10824,61 @@ SaveActionResultMetrics()
 	# Write various action metrics into log and durations files.
 
 	# Inputs: (local)							Example:
-	#	$1 = package type						`QPKG`, `IPK`, `PIP`
-	#	$2 = package or group name				`SABnzbd`, `essential`
-	#	$3 = action								`download`, `activate`
-	#	$4 = quantity (optional, default 1)		number of packages affected
-	#	$5 = result code						`ok`, `sk`, `sa`, `se`, `er`
-	#	$6 (optional) = reason					"file already exists in local cache"
+	#	$1 = result code						`ok`, `sk`, `sa`, `se`, `er`
+	#	$2 (optional) = reason					"file already exists in local cache"
+	#	$3 (optional) = quantity (default 1)	number of packages affected
 
 	# Inputs: (global)
-	#	$r_action_times_path
+	#	$action
+	#	$package_name
+	#	$package_type
 	#	$r_action_results_pathfile
+	#	$r_action_times_path
 
 	# Calculate duration here.
 
-	local r_duration=''
-	local r_starttime=''
+	local r_action_times_pathfile
+	local r_clean_action
+	local r_duration
+	local r_qty
+	local r_reason
+	local r_result_code
+	local r_starttime
+	local r_var_name
+	local var_safe_name
 
-	local -r r_action=${3:?${FUNCNAME[0]}(): $e_noact}
-		local -r r_clean_action=${r_action//\"/}
-			local -r r_action_times_pathfile=$r_action_times_path/$r_clean_action.milliseconds
-	local -r r_name=${2:?${FUNCNAME[0]}(): $e_nopnm}
-	local -r r_package_type=${1:?${FUNCNAME[0]}(): $e_nopty}
-	local -r r_qty=${4:-1}
-	local -r r_reason=${6:-}
-	local -r r_result_code=${5:?${FUNCNAME[0]}(): $e_nores}
-	local -r r_var_name=${FUNCNAME[1]}_STARTNANOSECONDS
-		local var_safe_name=${r_var_name//[.-]/_}; var_safe_name=${var_safe_name//:/_}
+	r_clean_action=${action//\"/}
+		r_action_times_pathfile=$r_action_times_path/$r_clean_action.milliseconds
+	r_var_name=${FUNCNAME[1]}_STARTNANOSECONDS
+		var_safe_name=${r_var_name//[.-]/_}; var_safe_name=${var_safe_name//:/_}
 			r_starttime=$(ConvertNanosecondsToMilliseconds "${!var_safe_name}")
 				r_duration=$(CalcAmountDiff "$r_starttime" "$(ConvertNowToMilliseconds)")
+	r_qty=${3:-1}
+	r_reason=${2:-}
+	r_result_code=${1:?${FUNCNAME[0]}(): $e_nores}
 
+	local -r r_action_times_pathfile
+	local -r r_clean_action
 	local -r r_duration
+	local -r r_qty
+	local -r r_reason
+	local -r r_result_code
 	local -r r_starttime
+	local -r r_var_name
 
 	# Add new action results entry.
 
-	echo "$r_starttime|$r_action|$r_qty|$r_name|$r_package_type|$r_result_code|$r_duration|$r_reason" >> "$r_action_results_pathfile"
+	echo "$r_starttime|$action|$r_qty|$package_name|$package_type|$r_result_code|$r_duration|$r_reason" >> "$r_action_results_pathfile"
 
 	# Remove previous action duration entry if one exists.
 
-	if [[ -s $r_action_times_pathfile ]] && /bin/grep "^$r_name|" < "$r_action_times_pathfile" &> /dev/null; then
-		/bin/sed -i "/^$r_name|/d" "$r_action_times_pathfile"
+	if [[ -s $r_action_times_pathfile ]] && /bin/grep "^$package_name|" < "$r_action_times_pathfile" &> /dev/null; then
+		/bin/sed -i "/^$package_name|/d" "$r_action_times_pathfile"
 	fi
 
 	# Add new action duration entry.
 
-	echo "$r_name|$r_duration" >> "$r_action_times_pathfile"
+	echo "$package_name|$r_duration" >> "$r_action_times_pathfile"
 
 	case $r_result_code in
 		ok)
@@ -10731,33 +10930,40 @@ _QPKG:status_()
 
 	FuncForkInit
 
-	local -i z=0
+	local -i z
+	local a
+	local action
+	local b
+	local package_name
+	local package_type
+	local r_local_pathfile
+	local r_log_pathfile
 
-	local action=status
+	action=status
+	b=''
+	package_name=$qpkg_name
+	package_type=QPKG
+	r_log_pathfile=$r_action_log_path/$qpkg_name.$r_status_log_file
+	z=0
+
+	local -r r_log_pathfile
 
 	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
 	if IsNtValidQpkgInstalled; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
+		SaveActionResultMetrics sk 'not installed'
 		MarkActionForkAsSkippedOk
 		z=2
 	fi
 
 	[[ $z -eq 0 ]] || FuncForkExit
 
-	DebugAsProc "status $(FormatPackageName)"
-
-	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_status_log_file
-
-	local a=''
-	local b=''
+	DebugAsProc "$action $(FormatPackageName)"
 
 	a=$(GetQpkgDbActiveTest)
 	IsDebug && b+='DEBUG_QPKG=true '
 
 	if [[ $a = builtin ]]; then
-		local r_local_pathfile=''
-
 		r_local_pathfile=$(GetQpkgServicePathFile)
 
 		local -r r_local_pathfile
@@ -10800,7 +11006,7 @@ _QPKG:status_()
 			SendPackageStateChange ISunknown
 	esac
 
-	SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok "returned: $z"
+	SaveActionResultMetrics ok "returned: $z"
 	MarkActionForkAsDoneOk
 
 	FuncForkExit $z
@@ -10822,38 +11028,44 @@ _QPKG:rebuild_()
 
 	FuncForkInit
 
-	local -i z=0
+	local -i z
+	local action
+	local package_name
+	local package_type
 
-	local action=meta-rebuild
+	action=meta-rebuild
+	package_name=$qpkg_name
+	package_type=QPKG
+	z=0
 
 	# Reactive checks performed just-before the action is carried-out. NOTE: predictive checks are permitted here for time-saving purposes (don't run future actions if this action isn't permitted).
 
 	if IsQpkgProhibited; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'prohibited package'
+		SaveActionResultMetrics sk 'prohibited package'
 		MarkActionForkAsSkippedOk
 		z=2
 	elif IsValidQpkgInstalled; then
 		if IsQpkgBackupExist; then
-			SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "already installed, please use 'restore' instead"
+			SaveActionResultMetrics sk "already installed, please use 'restore' instead"
 		else
-			SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'already installed & backup file unavailable'
+			SaveActionResultMetrics sk 'already installed & backup file unavailable'
 		fi
 
 		MarkActionForkAsSkippedOk
 		z=2
 	elif ! IsQpkgBackupExist && ! (QPKGs-ACbackup-to.Exist "O$qpkg_name" && QPKGs-ACuninstall-to.Exist "O$qpkg_name"); then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'backup file unavailable'
+		SaveActionResultMetrics sk 'backup file unavailable'
 		MarkActionForkAsSkippedOk
 		z=2
 	fi
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	DebugAsProc "meta-rebuilding $(FormatPackageName)"
+	DebugAsProc "$action $(FormatPackageName)"
 
 	# Nothing-to-do here, real QPKG actions have already been assigned in CheckTasks().
 
-	SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
+	SaveActionResultMetrics ok
 	MarkActionForkAsDoneOk
 
 	FuncForkExit $z
@@ -10877,29 +11089,36 @@ _QPKG:reassign_()
 
 	FuncForkInit
 
-	local -i z=0
+	local -i z
+	local action
+	local b
+	local package_name
+	local package_type
 
-	local action=reassign
+	action=reassign
+	package_name=$qpkg_name
+	package_type=QPKG
+	z=0
 
 	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
 	if IsNtValidQpkgInstalled; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
+		SaveActionResultMetrics sk 'not installed'
 		MarkActionForkAsSkippedOk
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'incompatible author'
+		SaveActionResultMetrics sk 'incompatible author'
 		MarkActionForkAsSkippedOk
 		z=2
 	elif [[ $(GetQpkgInstalledStoreID) = sherpa || $(GetQpkgInstalledStoreID) = undefined ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'already assigned to sherpa'
+		SaveActionResultMetrics sk 'already assigned to sherpa'
 		MarkActionForkAsSkippedOk
 		z=2
 	fi
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	DebugAsProc "reassigning $(FormatPackageName)"
+	DebugAsProc "$action $(FormatPackageName)"
 
 	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_reassign_log_file
 
@@ -10907,14 +11126,11 @@ _QPKG:reassign_()
 	z=$?
 
 	if [[ $z -eq 0 ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
+		SaveActionResultMetrics ok
 		MarkActionForkAsDoneOk
 	else
-		local b=''
-
 		b=$(GetQpkgServiceExplanation) || b=$z
-
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
+		SaveActionResultMetrics er "$b"
 		MarkActionForkAsDoneError
 	fi
 
@@ -10940,21 +11156,31 @@ _QPKG:download_()
 
 	FuncForkInit
 
-	local -i z=0
+	local -i z
+	local action
+	local curl_insecure_opt
+	local package_name
+	local package_type
+	local r_local_filename
+	local r_local_pathfile
+	local r_log_pathfile
+	local r_remote_filename
+	local r_remote_hash
+	local r_remote_url
 
-	local action=download
-	local r_local_filename=''
-	local r_remote_filename=''
-	local r_remote_hash=''
-	local r_remote_url=''
-
+	action=download
+	package_name=$qpkg_name
+	package_type=QPKG
 	r_remote_hash=$(GetQpkgDbHash)
 	r_remote_url=$(GetQpkgDbURL)
 		r_remote_filename=$(/usr/bin/basename "$r_remote_url")
-			local -r r_local_pathfile=$r_qpkg_download_path/$r_remote_filename
+			r_local_pathfile=$r_qpkg_download_path/$r_remote_filename
 				r_local_filename=$(/usr/bin/basename "$r_local_pathfile")
+	z=0
 
 	local -r r_local_filename
+	local -r r_local_pathfile
+	local -r r_log_pathfile
 	local -r r_remote_filename
 	local -r r_remote_hash
 	local -r r_remote_url
@@ -10962,7 +11188,7 @@ _QPKG:download_()
 	# Reactive checks performed just-before the action is carried-out. NOTE: predictive checks are permitted here for time-saving purposes (don't run future actions if this action isn't permitted).
 
 	if IsQpkgProhibited; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'prohibited package'
+		SaveActionResultMetrics sk 'prohibited package'
 
 		IsOsCanManageSignedPackages && SendParentCommand "QPKGs-ACsign-to:Remove $qpkg_name"
 		SendParentCommand "QPKGs-ACinstall-to:Remove $qpkg_name"
@@ -10972,7 +11198,7 @@ _QPKG:download_()
 		MarkActionForkAsSkippedOk
 		z=2
 	elif ! IsQpkgDbMinOSVerOk || ! IsQpkgDbMaxOSVerOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "incompatible $(GetOsName) version"
+		SaveActionResultMetrics sk "incompatible $(GetOsName) version"
 
 		IsOsCanManageSignedPackages && SendParentCommand "QPKGs-ACsign-to:Remove $qpkg_name"
 		SendParentCommand "QPKGs-ACinstall-to:Remove $qpkg_name"
@@ -10982,7 +11208,7 @@ _QPKG:download_()
 		MarkActionForkAsSkippedOk
 		z=2
 	elif ! IsQpkgDbMinRAMOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'insufficient installed RAM'
+		SaveActionResultMetrics sk 'insufficient installed RAM'
 
 		IsOsCanManageSignedPackages && SendParentCommand "QPKGs-ACsign-to:Remove $qpkg_name"
 		SendParentCommand "QPKGs-ACinstall-to:Remove $qpkg_name"
@@ -10992,7 +11218,7 @@ _QPKG:download_()
 		MarkActionForkAsSkippedOk
 		z=2
 	elif IsQpkgConflicts && ! QPKGs-ACuninstall-to.Exist "O$qpkg_name"; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'conflicting package installed'
+		SaveActionResultMetrics sk 'conflicting package installed'
 
 		IsOsCanManageSignedPackages && SendParentCommand "QPKGs-ACsign-to:Remove $qpkg_name"
 		SendParentCommand "QPKGs-ACinstall-to:Remove $qpkg_name"
@@ -11003,7 +11229,7 @@ _QPKG:download_()
 		z=2
 	elif IsFile "$r_local_pathfile"; then
 		if FileMatchesMD5 "$r_local_pathfile" "$r_remote_hash"; then
-			SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'already downloaded'
+			SaveActionResultMetrics sk 'already downloaded'
 
 			MarkActionForkAsSkippedOk
 			z=2
@@ -11016,12 +11242,7 @@ _QPKG:download_()
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	if IsNtFile "$r_local_pathfile"; then
-		DebugAsProc "downloading $(FormatFileName "$r_remote_filename")"
-
-		local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_download_log_file
-
-		local curl_insecure_opt=''
-
+		DebugAsProc "$action $(FormatFileName "$r_remote_filename")"
 		IsOsCanSecureDownload || curl_insecure_opt='--insecure'
 
 		/bin/rm -f "$r_log_pathfile" 2> /dev/null
@@ -11032,17 +11253,17 @@ _QPKG:download_()
 		if [[ $z -eq 0 ]]; then
 			if FileMatchesMD5 "$r_local_pathfile" "$r_remote_hash"; then
 				[[ $(Lowercase "${r_local_pathfile##*.}") = zip ]] && /usr/bin/unzip -nq "$r_local_pathfile" -d "$r_qpkg_download_path"
-				SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
+				SaveActionResultMetrics ok
 				SendPackageStateChange ISdownloaded
 				MarkActionForkAsDoneOk
 			else
-				SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "cache file $(FormatFileName "$r_local_filename") has incorrect checksum"
+				SaveActionResultMetrics er "cache file $(FormatFileName "$r_local_filename") has incorrect checksum"
 				SendPackageStateChange ISNTdownloaded
 				MarkActionForkAsDoneError
 				z=1
 			fi
 		else
-			SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$z"
+			SaveActionResultMetrics er "$z"
 			MarkActionForkAsDoneError
 			z=1		# Remap to 1 (last time I checked, 'curl' had 92 return codes).
 		fi
@@ -11081,12 +11302,15 @@ _QPKG:install_()
 	local a
 	local action
 	local b
+	local package_name
+	local package_type
 	local r_local_pathfile
 	local r_log_pathfile
 
 	a='INSTALL_QPKG=true '
 	action=install
-	b=''
+	package_name=$qpkg_name
+	package_type=QPKG
 	r_local_pathfile=$(GetQpkgDbPathFilename)
 	r_log_pathfile=$r_action_log_path/$qpkg_name.$r_install_log_file
 	z=0
@@ -11097,27 +11321,27 @@ _QPKG:install_()
 	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
 	if IsQpkgInstalled; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "already installed, please use 'reinstall' instead"
+		SaveActionResultMetrics sk "already installed, please use 'reinstall' instead"
 		MarkActionForkAsSkippedOk
 		z=2
 	elif IsQpkgProhibited; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'prohibited package'
+		SaveActionResultMetrics sk 'prohibited package'
 		MarkActionForkAsSkippedOk
 		z=2
 	elif ! IsQpkgDbMinOSVerOk || ! IsQpkgDbMaxOSVerOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "incompatible $(GetOsName) version"
+		SaveActionResultMetrics sk "incompatible $(GetOsName) version"
 		MarkActionForkAsSkippedOk
 		z=2
 	elif ! IsQpkgDbMinRAMOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'insufficient installed RAM'
+		SaveActionResultMetrics sk 'insufficient installed RAM'
 		MarkActionForkAsSkippedOk
 		z=2
 	elif IsQpkgConflicts; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'conflicting package installed'
+		SaveActionResultMetrics sk 'conflicting package installed'
 		MarkActionForkAsSkippedOk
 		z=2
 	elif [[ -z $r_local_pathfile || ! -s $r_local_pathfile ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'installation package unavailable'
+		SaveActionResultMetrics se 'installation package unavailable'
 		MarkActionForkAsSkippedError
 		z=4
 	fi
@@ -11134,7 +11358,7 @@ _QPKG:install_()
 		fi
 	fi
 
-	DebugAsProc "installing $(FormatPackageName)"
+	DebugAsProc "$action $(FormatPackageName)"
 
 	IsDebug && a+='DEBUG_QPKG=true '
 	[[ ${a_QPKGs_were_installed_name[*]:-} = *"$qpkg_name"* ]] && a+="QINSTALL_PATH=$(GetQpkgInstalledOriginalPath "$qpkg_name") "
@@ -11150,7 +11374,7 @@ _QPKG:install_()
 	[[ $qpkg_name = Entware ]] && IsNtCriticalFile $r_opkg_cmd && z=1	# Entware installation has failed.
 
 	if [[ $z -eq 0 || $z -eq 10 ]]; then	# '0' or '10' from a QPKG install/reinstall/upgrade is OK, but also includes user-aborts.
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok "v$(GetQpkgInstalledVer)"
+		SaveActionResultMetrics ok "v$(GetQpkgInstalledVer)"
 
 		if [[ $qpkg_name = Entware ]]; then
 			SendParentCommand ModPathToEntware
@@ -11171,7 +11395,7 @@ _QPKG:install_()
 		z=0		# Remap to zero.
 	else
 		b=$(GetQpkgServiceExplanation) || b=$z
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
+		SaveActionResultMetrics er "$b"
 #		IsOsCanManageSignedPackages && IsQpkgSigned && SendParentCommand "QPKGs-ACunsign-to:Add $qpkg_name"
 		MarkActionForkAsDoneError
 	fi
@@ -11206,12 +11430,15 @@ _QPKG:reinstall_()
 	local a
 	local action
 	local b
+	local package_name
+	local package_type
 	local r_local_pathfile
 	local r_log_pathfile
 
 	a='REINSTALL_QPKG=true '
 	action=reinstall
-	b=''
+	package_name=$qpkg_name
+	package_type=QPKG
 	r_local_pathfile=$(GetQpkgDbPathFilename)
 	r_log_pathfile=$r_action_log_path/$qpkg_name.$r_reinstall_log_file
 	z=0
@@ -11222,30 +11449,30 @@ _QPKG:reinstall_()
 	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
 	if IsNtQpkgInstalled; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "not already installed, please use 'install' instead"
+		SaveActionResultMetrics sk "not already installed, please use 'install' instead"
 		MarkActionForkAsSkippedOk
 		z=2
 	elif IsQpkgProhibited; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'prohibited package'
+		SaveActionResultMetrics sk 'prohibited package'
 		MarkActionForkAsSkippedOk
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'incompatible author'
+		SaveActionResultMetrics sk 'incompatible author'
 		MarkActionForkAsSkippedOk
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
+		SaveActionResultMetrics sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkippedOk
 		z=2
 	elif [[ -z $r_local_pathfile || ! -s $r_local_pathfile ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'installation package unavailable'
+		SaveActionResultMetrics se 'installation package unavailable'
 		MarkActionForkAsSkippedError
 		z=4
 	fi
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	DebugAsProc "reinstalling $(FormatPackageName)"
+	DebugAsProc "$action $(FormatPackageName)"
 
 	IsDebug && a+='DEBUG_QPKG=true '
 	IsValidQpkgInstalled && a+="QINSTALL_PATH=$(/usr/bin/dirname "$(GetQpkgInstalledPath)") "
@@ -11261,13 +11488,13 @@ _QPKG:reinstall_()
 	[[ $qpkg_name = Entware ]] && IsNtCriticalFile $r_opkg_cmd && z=1
 
 	if [[ $z -eq 0 || $z -eq 10 ]]; then	# '0' or '10' from a QPKG install/reinstall/upgrade is OK, but also includes aborts.
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok "v$(GetQpkgInstalledVer)"
+		SaveActionResultMetrics ok "v$(GetQpkgInstalledVer)"
 		IsQpkgDbCanClean && SendParentCommand "QPKGs-ACclean-to:Add $qpkg_name"
 		MarkActionForkAsDoneOk
 		z=0		# Remap to zero.
 	else
 		b=$(GetQpkgServiceExplanation) || b=$z
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
+		SaveActionResultMetrics er "$b"
 		MarkActionForkAsDoneError
 	fi
 
@@ -11300,12 +11527,15 @@ _QPKG:update_()
 	local a
 	local action
 	local b
+	local package_name
+	local package_type
 	local r_local_pathfile
 	local r_log_pathfile
 
 	a=''
 	action=update
-	b=''
+	package_name=$qpkg_name
+	package_type=QPKG
 	r_local_pathfile=$(GetQpkgServicePathFile)
 	r_log_pathfile=$r_action_log_path/$qpkg_name.$r_update_log_file
 	z=0
@@ -11316,34 +11546,34 @@ _QPKG:update_()
 	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
 	if IsNtValidQpkgInstalled; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
+		SaveActionResultMetrics sk 'not installed'
 		MarkActionForkAsSkippedOk
 		z=2
 	elif ! IsQpkgDbCanClean; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'unsupported by this QPKG'
+		SaveActionResultMetrics sk "unsupported by this $package_type"
 		MarkActionForkAsSkippedOk
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'incompatible author'
+		SaveActionResultMetrics sk 'incompatible author'
 		MarkActionForkAsSkippedOk
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
+		SaveActionResultMetrics sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkippedOk
 		z=2
 	elif [[ $r_local_pathfile = undefined ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'QPKG service-script file undefined'
+		SaveActionResultMetrics se "$package_type service-script file undefined"
 		MarkActionForkAsSkippedError
 		z=4
 	elif [[ ! -s $r_local_pathfile ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'QPKG service-script file not found'
+		SaveActionResultMetrics se "$package_type service-script file not found"
 		MarkActionForkAsSkippedError
 		z=4
 	fi
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	DebugAsProc "updating $(FormatPackageName)"
+	DebugAsProc "$action $(FormatPackageName)"
 
 	IsDebug && a+='DEBUG_QPKG=true '
 
@@ -11354,11 +11584,11 @@ _QPKG:update_()
 	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
 
 	if [[ $z -eq 0 ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
+		SaveActionResultMetrics ok
 		MarkActionForkAsDoneOk
 	else
 		b=$(GetQpkgServiceExplanation) || b=$z
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
+		SaveActionResultMetrics er "$b"
 		MarkActionForkAsDoneError
 		# TODO: if debug mode, save action log to session log.
 	fi
@@ -11393,14 +11623,16 @@ _QPKG:upgrade_()
 	local action
 	local b
 	local current_ver
+	local package_name
+	local package_type
 	local prev_ver
 	local r_local_pathfile
 	local r_log_pathfile
 
 	a='UPGRADE_QPKG=true '
 	action=upgrade
-	b=''
-	prev_ver=''
+	package_name=$qpkg_name
+	package_type=QPKG
 	r_local_pathfile=$(GetQpkgDbPathFilename)
 	r_log_pathfile=$r_action_log_path/$qpkg_name.$r_upgrade_log_file
 	z=0
@@ -11411,34 +11643,34 @@ _QPKG:upgrade_()
 	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
 	if IsNtValidQpkgInstalled; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
+		SaveActionResultMetrics sk 'not installed'
 		MarkActionForkAsSkippedOk
 		z=2
 	elif IsQpkgProhibited; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'prohibited package'
+		SaveActionResultMetrics sk 'prohibited package'
 		MarkActionForkAsSkippedOk
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'incompatible author'
+		SaveActionResultMetrics sk 'incompatible author'
 		MarkActionForkAsSkippedOk
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
+		SaveActionResultMetrics sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkippedOk
 		z=2
 	elif ! QPKGs-ISupgradable.Exist "$qpkg_name"; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'no new QPKG is available'
+		SaveActionResultMetrics sk "no new $package_type is available"
 		MarkActionForkAsSkippedOk
 		z=2
 	elif [[ -z $r_local_pathfile || ! -s $r_local_pathfile ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'installation package unavailable'
+		SaveActionResultMetrics se 'installation package unavailable'
 		MarkActionForkAsSkippedError
 		z=4
 	fi
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	DebugAsProc "upgrading $(FormatPackageName)"
+	DebugAsProc "$action $(FormatPackageName)"
 
 	prev_ver=$(GetQpkgInstalledVer)
 	IsDebug && a+='DEBUG_QPKG=true '
@@ -11462,16 +11694,16 @@ _QPKG:upgrade_()
 		current_ver=$(GetQpkgInstalledVer)
 
 		if [[ $current_ver = "$prev_ver" ]]; then
-			SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok "v$current_ver"
+			SaveActionResultMetrics ok "v$current_ver"
 		else
-			SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok "v$prev_ver -> v$current_ver"		# directive:dont-squeeze
+			SaveActionResultMetrics ok "v$prev_ver -> v$current_ver"		# directive:dont-squeeze
 		fi
 
 		MarkActionForkAsDoneOk
 		z=0		# Remap to zero.
 	else
 		b=$(GetQpkgServiceExplanation) || b=$z
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
+		SaveActionResultMetrics er "$b"
 		MarkActionForkAsDoneError
 	fi
 
@@ -11505,12 +11737,15 @@ _QPKG:uninstall_()
 	local action
 	local b
 	local current_ver
+	local package_name
+	local package_type
 	local r_local_pathfile
 	local r_log_pathfile
 
 	a='UNINSTALL_QPKG=true '
 	action=uninstall
-	b=''
+	package_name=$qpkg_name
+	package_type=QPKG
 	r_local_pathfile=$(GetQpkgInstalledPath)/.uninstall.sh
 	r_log_pathfile=$r_action_log_path/$qpkg_name.$r_uninstall_log_file
 	z=0
@@ -11521,29 +11756,29 @@ _QPKG:uninstall_()
 	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
 	if IsNtValidQpkgInstalled; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
+		SaveActionResultMetrics sk 'not installed'
 		MarkActionForkAsSkippedOk
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'incompatible author'
+		SaveActionResultMetrics sk 'incompatible author'
 		MarkActionForkAsSkippedOk
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
+		SaveActionResultMetrics sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkippedOk
 		z=2
 	elif [[ $qpkg_name = sherpa ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "it's needed here! 😉"
+		SaveActionResultMetrics sk "it's needed here! 😉"
 		MarkActionForkAsSkippedOk
 		z=2
 	elif [[ $r_local_pathfile = undefined ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se "$(FormatFileName '.uninstall.sh') undefined"
+		SaveActionResultMetrics se "$(FormatFileName '.uninstall.sh') undefined"
 		MarkActionForkAsSkippedError
 		z=4
 	elif [[ ! -s $r_local_pathfile ]]; then
 		# Standard QPKG `.uninstall.sh` was not found, so can't continue with uninstallation (maybe force this instead with `rm -r` ?).
 
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$(FormatFileName '.uninstall.sh') not found"
+		SaveActionResultMetrics er "$(FormatFileName '.uninstall.sh') not found"
 		MarkActionForkAsDoneError
 		z=1
 	fi
@@ -11554,7 +11789,7 @@ _QPKG:uninstall_()
 
 	current_ver=$(GetQpkgInstalledVer)
 
-	DebugAsProc "uninstalling $(FormatPackageName)"
+	DebugAsProc "$action $(FormatPackageName)"
 
 	IsDebug && a+='DEBUG_QPKG=true '
 
@@ -11565,7 +11800,7 @@ _QPKG:uninstall_()
 		# WARNING: beware of `qpkg_cli --remove`. It removes the QPKG installation path ~ 10-20 seconds after execution. If sherpa has moved-on and starts an install, `qpkg_cli` will remove the newly created QPKG installation path partway through the installation. So, check if QPKG is to be installed again. If-so, don't use `qpkg_cli --remove`.
 
 		[[ -x /sbin/qpkg_cli ]] && ! QPKGs-ACinstall-to.Exist "$qpkg_name" && /sbin/qpkg_cli --remove "$qpkg_name" &> /dev/null
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok "v$current_ver"
+		SaveActionResultMetrics ok "v$current_ver"
 		/sbin/rmcfg "$qpkg_name" -f /etc/config/qpkg.conf
 		DebugAsDone 'removed icon information from App Center'
 
@@ -11579,7 +11814,7 @@ _QPKG:uninstall_()
 		MarkActionForkAsDoneOk
 	else
 		b=$(GetQpkgServiceExplanation) || b=$z
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
+		SaveActionResultMetrics er "$b"
 		MarkActionForkAsDoneError
 	fi
 
@@ -11611,16 +11846,18 @@ _QPKG:activate_()
 	local a
 	local action
 	local b
+	local package_name
+	local package_type
 	local r_local_pathfile
 	local r_log_pathfile
 	local timeout
 
 	a=''
 	action=activate
-	b=''
+	package_name=$qpkg_name
+	package_type=QPKG
 	r_local_pathfile=$(GetQpkgServicePathFile)
 	r_log_pathfile=$r_action_log_path/$qpkg_name.$r_activate_log_file
-	timeout=''
 	z=0
 
 	local -r r_local_pathfile
@@ -11629,34 +11866,34 @@ _QPKG:activate_()
 	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
 	if IsNtValidQpkgInstalled; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
+		SaveActionResultMetrics sk 'not installed'
 		MarkActionForkAsSkippedOk
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'incompatible author'
+		SaveActionResultMetrics sk 'incompatible author'
 		MarkActionForkAsSkippedOk
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
+		SaveActionResultMetrics sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkippedOk
 		z=2
 	elif IsNtQpkgEnabled; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "disabled, please 'enable' it first"
+		SaveActionResultMetrics sk "disabled, please 'enable' it first"
 		MarkActionForkAsSkippedOk
 		z=2
 	elif [[ $r_local_pathfile = undefined ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'QPKG service-script file undefined'
+		SaveActionResultMetrics se "$package_type service-script file undefined"
 		MarkActionForkAsSkippedError
 		z=4
 	elif [[ ! -s $r_local_pathfile ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'QPKG service-script file not found'
+		SaveActionResultMetrics se "$package_type service-script file not found"
 		MarkActionForkAsSkippedError
 		z=4
 	fi
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	DebugAsProc "activating $(FormatPackageName)"
+	DebugAsProc "$action $(FormatPackageName)"
 
 	IsOsCanQpkgTimeout && timeout='-t '$r_qpkg_start_timeout_seconds
 
@@ -11677,7 +11914,7 @@ _QPKG:activate_()
 	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
 
 	if [[ $z -eq 0 ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
+		SaveActionResultMetrics ok
 
 		if [[ $qpkg_name = Entware ]]; then
 			SendParentCommand ModPathToEntware
@@ -11689,7 +11926,7 @@ _QPKG:activate_()
 		MarkActionForkAsDoneOk
 	else
 		b=$(GetQpkgServiceExplanation) || b=$z
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
+		SaveActionResultMetrics er "$b"
 		SendPackageStateChange ISNTactive
 		MarkActionForkAsDoneError
 	fi
@@ -11724,16 +11961,18 @@ _QPKG:reactivate_()
 	local a
 	local action
 	local b
+	local package_name
+	local package_type
 	local r_local_pathfile
 	local r_log_pathfile
 	local timeout
 
 	a=''
 	action=reactivate
-	b=''
+	package_name=$qpkg_name
+	package_type=QPKG
 	r_local_pathfile=$(GetQpkgServicePathFile)
 	r_log_pathfile=$r_action_log_path/$qpkg_name.$r_reactivate_log_file
-	timeout=''
 	z=0
 
 	local -r r_local_pathfile
@@ -11742,34 +11981,34 @@ _QPKG:reactivate_()
 	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
 	if IsNtValidQpkgInstalled; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
+		SaveActionResultMetrics sk 'not installed'
 		MarkActionForkAsSkippedOk
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'incompatible author'
+		SaveActionResultMetrics sk 'incompatible author'
 		MarkActionForkAsSkippedOk
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
+		SaveActionResultMetrics sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkippedOk
 		z=2
 	elif IsNtQpkgEnabled; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "disabled, please 'enable' it first"
+		SaveActionResultMetrics sk "disabled, please 'enable' it first"
 		MarkActionForkAsSkippedOk
 		z=2
 	elif [[ $r_local_pathfile = undefined ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'QPKG service-script file undefined'
+		SaveActionResultMetrics se "$package_type service-script file undefined"
 		MarkActionForkAsSkippedError
 		z=4
 	elif [[ ! -s $r_local_pathfile ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'QPKG service-script file not found'
+		SaveActionResultMetrics se "$package_type service-script file not found"
 		MarkActionForkAsSkippedError
 		z=4
 	fi
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	DebugAsProc "reactivating $(FormatPackageName)"
+	DebugAsProc "$action $(FormatPackageName)"
 
 	IsOsCanQpkgTimeout && timeout='-t '$r_qpkg_restart_timeout_seconds
 
@@ -11790,12 +12029,12 @@ _QPKG:reactivate_()
 	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
 
 	if [[ $z -eq 0 ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
+		SaveActionResultMetrics ok
 		SendParentCommand "QPKGs-ACactivate-to:Remove $qpkg_name"
 		MarkActionForkAsDoneOk
 	else
 		b=$(GetQpkgServiceExplanation) || b=$z
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
+		SaveActionResultMetrics er "$b"
 		MarkActionForkAsDoneError
 	fi
 
@@ -11825,19 +12064,21 @@ _QPKG:deactivate_()
 	FuncForkInit
 
 	local -i z
-	local r_log_pathfile
 	local a
 	local action
 	local b
+	local package_name
+	local package_type
 	local r_local_pathfile
+	local r_log_pathfile
 	local timeout
 
 	a=''
 	action=deactivate
-	b=''
+	package_name=$qpkg_name
+	package_type=QPKG
 	r_local_pathfile=$(GetQpkgServicePathFile)
 	r_log_pathfile=$r_action_log_path/$qpkg_name.$r_deactivate_log_file
-	timeout=''
 	z=0
 
 	local -r r_local_pathfile
@@ -11845,27 +12086,27 @@ _QPKG:deactivate_()
 	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
 	if IsNtValidQpkgInstalled; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
+		SaveActionResultMetrics sk 'not installed'
 		MarkActionForkAsSkippedOk
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'incompatible author'
+		SaveActionResultMetrics sk 'incompatible author'
 		MarkActionForkAsSkippedOk
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
+		SaveActionResultMetrics sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkippedOk
 		z=2
 #	elif [[ $qpkg_name = sherpa ]]; then
-#		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "it's needed here! 😉"
+#		SaveActionResultMetrics sk "it's needed here! 😉"
 #		MarkActionForkAsSkippedOk
 #		z=2
 	elif [[ $r_local_pathfile = undefined ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'QPKG service-script file undefined'
+		SaveActionResultMetrics se "$package_type service-script file undefined"
 		MarkActionForkAsSkippedError
 		z=4
 	elif [[ ! -s $r_local_pathfile ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'QPKG service-script file not found'
+		SaveActionResultMetrics se "$package_type service-script file not found"
 		MarkActionForkAsSkippedError
 		z=4
 	fi
@@ -11874,7 +12115,7 @@ _QPKG:deactivate_()
 
 	IsOsCanQpkgTimeout && timeout='-t '$r_qpkg_stop_timeout_seconds
 
-	DebugAsProc "deactivating $(FormatPackageName)"
+	DebugAsProc "$action $(FormatPackageName)"
 
 	if IsDebug; then
 		a+='DEBUG_QPKG=true '
@@ -11893,7 +12134,7 @@ _QPKG:deactivate_()
 	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
 
 	if [[ $z -eq 0 ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
+		SaveActionResultMetrics ok
 
 		if [[ $qpkg_name = Entware ]]; then
 			SendParentCommand ModPathToEntware
@@ -11905,7 +12146,7 @@ _QPKG:deactivate_()
 		MarkActionForkAsDoneOk
 	else
 		b=$(GetQpkgServiceExplanation) || b=$z
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
+		SaveActionResultMetrics er "$b"
 		MarkActionForkAsDoneError
 	fi
 
@@ -11934,10 +12175,15 @@ _QPKG:enable_()
 
 	local -i z=0
 	local action
+	local package_name
+	local package_type
 	local r_log_pathfile
 	local timeout
 
+	a=''
 	action=enable
+	package_name=$qpkg_name
+	package_type=QPKG
 	r_log_pathfile=$r_action_log_path/$qpkg_name.$r_enable_log_file
 	timeout=''
 	z=0
@@ -11947,19 +12193,19 @@ _QPKG:enable_()
 	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
 	if IsNtValidQpkgInstalled; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
+		SaveActionResultMetrics sk 'not installed'
 		MarkActionForkAsSkippedOk
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'incompatible author'
+		SaveActionResultMetrics sk 'incompatible author'
 		MarkActionForkAsSkippedOk
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
+		SaveActionResultMetrics sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkippedOk
 		z=2
 	elif IsQpkgEnabled; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'already enabled'
+		SaveActionResultMetrics sk 'already enabled'
 		MarkActionForkAsSkippedOk
 		z=2
 	fi
@@ -11968,10 +12214,10 @@ _QPKG:enable_()
 
 	IsOsCanQpkgTimeout && timeout='-t '$r_qpkg_enable_timeout_seconds
 
-	DebugAsProc "enabling $(FormatPackageName)"
+	DebugAsProc "$action $(FormatPackageName)"
 
 	Executer "/usr/local/sbin/qpkg_service $timeout enable $qpkg_name" "$r_log_pathfile" log:failure-only
-	SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
+	SaveActionResultMetrics ok
 	MarkActionForkAsDoneOk
 	ClearQpkgInstalledAppCenterNotifier
 
@@ -12000,10 +12246,15 @@ _QPKG:disable_()
 
 	local -i z
 	local action
+	local package_name
+	local package_type
 	local r_log_pathfile
 	local timeout
 
+	a=''
 	action=disable
+	package_name=$qpkg_name
+	package_type=QPKG
 	r_log_pathfile=$r_action_log_path/$qpkg_name.$r_disable_log_file
 	timeout=''
 	z=0
@@ -12013,23 +12264,23 @@ _QPKG:disable_()
 	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
 	if IsNtValidQpkgInstalled; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
+		SaveActionResultMetrics sk 'not installed'
 		MarkActionForkAsSkippedOk
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'incompatible author'
+		SaveActionResultMetrics sk 'incompatible author'
 		MarkActionForkAsSkippedOk
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
+		SaveActionResultMetrics sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkippedOk
 		z=2
 	elif IsNtQpkgEnabled; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'already disabled'
+		SaveActionResultMetrics sk 'already disabled'
 		MarkActionForkAsSkippedOk
 		z=2
 #	elif [[ $qpkg_name = sherpa ]]; then
-#		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "it's needed here! 😉"
+#		SaveActionResultMetrics sk "it's needed here! 😉"
 #		MarkActionForkAsSkippedOk
 #		z=2
 	fi
@@ -12038,11 +12289,10 @@ _QPKG:disable_()
 
 	IsOsCanQpkgTimeout && timeout='-t '$r_qpkg_disable_timeout_seconds
 
-	DebugAsProc "disabling $(FormatPackageName)"
+	DebugAsProc "$action $(FormatPackageName)"
 
 	Executer "/usr/local/sbin/qpkg_service $timeout disable $qpkg_name" "$r_log_pathfile" log:failure-only
-
-	SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
+	SaveActionResultMetrics ok
 	MarkActionForkAsDoneOk
 	ClearQpkgInstalledAppCenterNotifier
 
@@ -12073,12 +12323,15 @@ _QPKG:enableau_()
 	local a
 	local action
 	local b
+	local package_name
+	local package_type
 	local r_local_pathfile
 	local r_log_pathfile
 
 	a=''
 	action=enableau
-	b=''
+	package_name=$qpkg_name
+	package_type=QPKG
 	r_local_pathfile=$(GetQpkgServicePathFile)
 	r_log_pathfile=$r_action_log_path/$qpkg_name.$r_enableau_log_file
 	z=0
@@ -12089,38 +12342,38 @@ _QPKG:enableau_()
 	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
 	if IsNtValidQpkgInstalled; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
+		SaveActionResultMetrics sk 'not installed'
 		MarkActionForkAsSkippedOk
 		z=2
 	elif ! IsQpkgDbCanRestartToUpdate; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'unsupported by this QPKG'
+		SaveActionResultMetrics sk "unsupported by this $package_type"
 		MarkActionForkAsSkippedOk
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'incompatible author'
+		SaveActionResultMetrics sk 'incompatible author'
 		MarkActionForkAsSkippedOk
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
+		SaveActionResultMetrics sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkippedOk
 		z=2
 	elif [[ $qpkg_name = sherpa ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "'auto-update' is always enabled"
+		SaveActionResultMetrics sk "'auto-update' is always enabled"
 		MarkActionForkAsSkippedOk
 		z=2
 	elif [[ $r_local_pathfile = undefined ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'QPKG service-script file undefined'
+		SaveActionResultMetrics se "$package_type service-script file undefined"
 		MarkActionForkAsSkippedError
 		z=4
 	elif [[ ! -s $r_local_pathfile ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'QPKG service-script file not found'
+		SaveActionResultMetrics se "$package_type service-script file not found"
 		MarkActionForkAsSkippedError
 		z=4
 	fi
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	DebugAsProc "enabling auto-update $(FormatPackageName)"
+	DebugAsProc "enable auto-update $(FormatPackageName)"
 
 	IsDebug && a+='DEBUG_QPKG=true '
 
@@ -12131,11 +12384,11 @@ _QPKG:enableau_()
 	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
 
 	if [[ $z -eq 0 ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
+		SaveActionResultMetrics ok
 		MarkActionForkAsDoneOk
 	else
 		b=$(GetQpkgServiceExplanation) || b=$z
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
+		SaveActionResultMetrics er "$b"
 		MarkActionForkAsDoneError
 	fi
 
@@ -12166,12 +12419,15 @@ _QPKG:disableau_()
 	local a
 	local action
 	local b
+	local package_name
+	local package_type
 	local r_local_pathfile
 	local r_log_pathfile
 
 	a=''
 	action=disableau
-	b=''
+	package_name=$qpkg_name
+	package_type=QPKG
 	r_local_pathfile=$(GetQpkgServicePathFile)
 	r_log_pathfile=$r_action_log_path/$qpkg_name.$r_disableau_log_file
 	z=0
@@ -12182,38 +12438,38 @@ _QPKG:disableau_()
 	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
 	if IsNtValidQpkgInstalled; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
+		SaveActionResultMetrics sk 'not installed'
 		MarkActionForkAsSkippedOk
 		z=2
 	elif ! IsQpkgDbCanRestartToUpdate; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'unsupported by this QPKG'
+		SaveActionResultMetrics sk "unsupported by this $package_type"
 		MarkActionForkAsSkippedOk
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'incompatible author'
+		SaveActionResultMetrics sk 'incompatible author'
 		MarkActionForkAsSkippedOk
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
+		SaveActionResultMetrics sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkippedOk
 		z=2
 	elif [[ $qpkg_name = sherpa ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "'auto-update' cannot be disabled"
+		SaveActionResultMetrics sk "'auto-update' cannot be disabled"
 		MarkActionForkAsSkippedOk
 		z=2
 	elif [[ $r_local_pathfile = undefined ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'QPKG service-script file undefined'
+		SaveActionResultMetrics se "$package_type service-script file undefined"
 		MarkActionForkAsSkippedError
 		z=4
 	elif [[ ! -s $r_local_pathfile ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'QPKG service-script file not found'
+		SaveActionResultMetrics se "$package_type service-script file not found"
 		MarkActionForkAsSkippedError
 		z=4
 	fi
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	DebugAsProc "disabling auto-update $(FormatPackageName)"
+	DebugAsProc "disable auto-update $(FormatPackageName)"
 
 	IsDebug && a+='DEBUG_QPKG=true '
 
@@ -12224,11 +12480,11 @@ _QPKG:disableau_()
 	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
 
 	if [[ $z -eq 0 ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
+		SaveActionResultMetrics ok
 		MarkActionForkAsDoneOk
 	else
 		b=$(GetQpkgServiceExplanation) || b=$z
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
+		SaveActionResultMetrics er "$b"
 		MarkActionForkAsDoneError
 	fi
 
@@ -12259,12 +12515,15 @@ _QPKG:backup_()
 	local a
 	local action
 	local b
+	local package_name
+	local package_type
 	local r_local_pathfile
 	local r_log_pathfile
 
 	a=''
 	action=backup
-	b=''
+	package_name=$qpkg_name
+	package_type=QPKG
 	r_local_pathfile=$(GetQpkgServicePathFile)
 	r_log_pathfile=$r_action_log_path/$qpkg_name.$r_backup_log_file
 	z=0
@@ -12275,34 +12534,34 @@ _QPKG:backup_()
 	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
 	if IsNtValidQpkgInstalled; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
+		SaveActionResultMetrics sk 'not installed'
 		MarkActionForkAsSkippedOk
 		z=2
 	elif ! IsQpkgDbCanBackup; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'unsupported by this QPKG'
+		SaveActionResultMetrics sk "unsupported by this $package_type"
 		MarkActionForkAsSkippedOk
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'incompatible author'
+		SaveActionResultMetrics sk 'incompatible author'
 		MarkActionForkAsSkippedOk
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
+		SaveActionResultMetrics sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkippedOk
 		z=2
 	elif [[ $r_local_pathfile = undefined ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'QPKG service-script file undefined'
+		SaveActionResultMetrics se "$package_type service-script file undefined"
 		MarkActionForkAsSkippedError
 		z=4
 	elif [[ ! -s $r_local_pathfile ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'QPKG service-script file not found'
+		SaveActionResultMetrics se "$package_type service-script file not found"
 		MarkActionForkAsSkippedError
 		z=4
 	fi
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	DebugAsProc "backing-up $(FormatPackageName) configuration"
+	DebugAsProc "$action $(FormatPackageName) configuration"
 
 	IsDebug && a+='DEBUG_QPKG=true '
 
@@ -12313,12 +12572,12 @@ _QPKG:backup_()
 	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
 
 	if [[ $z -eq 0 ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
+		SaveActionResultMetrics ok
 		SendPackageStateChange ISbackedup
 		MarkActionForkAsDoneOk
 	else
 		b=$(GetQpkgServiceExplanation) || b=$z
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
+		SaveActionResultMetrics er "$b"
 		SendParentCommand "QPKGs-ACuninstall-to:Remove $qpkg_name"
 		SendParentCommand "QPKGs-ACrestore-to:Remove $qpkg_name"
 		MarkActionForkAsDoneError
@@ -12351,12 +12610,15 @@ _QPKG:restore_()
 	local a
 	local action
 	local b
+	local package_name
+	local package_type
 	local r_local_pathfile
 	local r_log_pathfile
 
 	a=''
 	action=restore
-	b=''
+	package_name=$qpkg_name
+	package_type=QPKG
 	r_local_pathfile=$(GetQpkgServicePathFile)
 	r_log_pathfile=$r_action_log_path/$qpkg_name.$r_restore_log_file
 	z=0
@@ -12368,42 +12630,42 @@ _QPKG:restore_()
 
 	if IsNtValidQpkgInstalled; then
 		if IsQpkgBackupExist; then
-			SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "not installed, try 'rebuild' instead"
+			SaveActionResultMetrics sk "not installed, try 'rebuild' instead"
 		else
-			SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed & backup file unavailable'
+			SaveActionResultMetrics sk 'not installed & backup file unavailable'
 		fi
 
 		MarkActionForkAsSkippedOk
 		z=2
 	elif ! IsQpkgDbCanBackup; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'unsupported by this QPKG'
+		SaveActionResultMetrics sk "unsupported by this $package_type"
 		MarkActionForkAsSkippedOk
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'incompatible author'
+		SaveActionResultMetrics sk 'incompatible author'
 		MarkActionForkAsSkippedOk
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
+		SaveActionResultMetrics sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkippedOk
 		z=2
 	elif ! IsQpkgBackupExist; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'backup file unavailable'
+		SaveActionResultMetrics sk 'backup file unavailable'
 		MarkActionForkAsSkippedOk
 		z=2
 	elif [[ $r_local_pathfile = undefined ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'QPKG service-script file undefined'
+		SaveActionResultMetrics se "$package_type service-script file undefined"
 		MarkActionForkAsSkippedError
 		z=4
 	elif [[ ! -s $r_local_pathfile ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'QPKG service-script file not found'
+		SaveActionResultMetrics se "$package_type service-script file not found"
 		MarkActionForkAsSkippedError
 		z=4
 	fi
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	DebugAsProc "restoring $(FormatPackageName) configuration"
+	DebugAsProc "$action $(FormatPackageName) configuration"
 
 	IsDebug && a+='DEBUG_QPKG=true '
 
@@ -12414,12 +12676,12 @@ _QPKG:restore_()
 	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
 
 	if [[ $z -eq 0 ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
+		SaveActionResultMetrics ok
 #		SendPackageStateChange ISrestored		# TODO: this doesn't yet exist as an object.
 		MarkActionForkAsDoneOk
 	else
 		b=$(GetQpkgServiceExplanation) || b=$z
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
+		SaveActionResultMetrics er "$b"
 		MarkActionForkAsDoneError
 	fi
 
@@ -12450,12 +12712,15 @@ _QPKG:clean_()
 	local a
 	local action
 	local b
+	local package_name
+	local package_type
 	local r_local_pathfile
 	local r_log_pathfile
 
 	a=''
 	action=clean
-	b=''
+	package_name=$qpkg_name
+	package_type=QPKG
 	r_local_pathfile=$(GetQpkgServicePathFile)
 	r_log_pathfile=$r_action_log_path/$qpkg_name.$r_clean_log_file
 	z=0
@@ -12466,34 +12731,34 @@ _QPKG:clean_()
 	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
 	if IsNtValidQpkgInstalled; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
+		SaveActionResultMetrics sk 'not installed'
 		MarkActionForkAsSkippedOk
 		z=2
 	elif ! IsQpkgDbCanClean; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'unsupported by this QPKG'
+		SaveActionResultMetrics sk "unsupported by this $package_type"
 		MarkActionForkAsSkippedOk
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'incompatible author'
+		SaveActionResultMetrics sk 'incompatible author'
 		MarkActionForkAsSkippedOk
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
+		SaveActionResultMetrics sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkippedOk
 		z=2
 	elif [[ $r_local_pathfile = undefined ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'QPKG service-script file undefined'
+		SaveActionResultMetrics se "$package_type service-script file undefined"
 		MarkActionForkAsSkippedError
 		z=4
 	elif [[ ! -s $r_local_pathfile ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'QPKG service-script file not found'
+		SaveActionResultMetrics se "$package_type service-script file not found"
 		MarkActionForkAsSkippedError
 		z=4
 	fi
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	DebugAsProc "cleaning $(FormatPackageName)"
+	DebugAsProc "$action $(FormatPackageName)"
 
 	IsDebug && a+='DEBUG_QPKG=true '
 
@@ -12510,12 +12775,12 @@ _QPKG:clean_()
 	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
 
 	if [[ $z -eq 0 ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
+		SaveActionResultMetrics ok
 		MarkActionForkAsDoneOk
 		SendParentCommand "QPKGs-ACupdate-to:Remove $qpkg_name"
 	else
 		b=$(GetQpkgServiceExplanation) || b=$z
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
+		SaveActionResultMetrics er "$b"
 		MarkActionForkAsDoneError
 		# TODO: if debug mode, save action log to session log.
 	fi
@@ -12556,33 +12821,37 @@ _QPKG:sign_()
 	local a
 	local action
 	local b
+	local package_name
+	local package_type
 
 	action='"sign"'
+	package_name=$qpkg_name
+	package_type=QPKG
 	z=0
 
 	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
 	if ! IsOsCanManageSignedPackages; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "incompatible $(GetOsName) version"
+		SaveActionResultMetrics sk "incompatible $(GetOsName) version"
 		MarkActionForkAsSkippedOk
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
+		SaveActionResultMetrics sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkippedOk
 		z=2
 	elif [[ ! -s $r_cert_db_pathfile ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sa "$(GetOsName) QPKG certificate database unavailable, no further signing will occur"
+		SaveActionResultMetrics sa "$(GetOsName) $package_type certificate database unavailable, no further signing will occur"
 		MarkActionForkAsSkippedAbort
 		z=3
 	elif IsQpkgSigned; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'already signed'
+		SaveActionResultMetrics sk 'already signed'
 		MarkActionForkAsSkippedOk
 		z=2
 	fi
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	DebugAsProc "\"signing\" $(FormatPackageName)"
+	DebugAsProc "\"$action\" $(FormatPackageName)"
 
 	# https://pynative.com/python-sqlite-insert-into-table/
 
@@ -12620,11 +12889,11 @@ EOB
 	done
 
 	if [[ $z -eq 0 ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
+		SaveActionResultMetrics ok
 		SendPackageStateChange ISsigned
 		MarkActionForkAsDoneOk
 	else
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$(Parenthesise "$z") but don't know why. Please report this as a bug"
+		SaveActionResultMetrics er "$(Parenthesise "$z") but don't know why. Please report this as a bug"
 		SendParentCommand 'show_suggest_raise_issue=true'
 		MarkActionForkAsDoneError
 	fi
@@ -12661,33 +12930,37 @@ _QPKG:unsign_()
 	local a
 	local action
 	local b
+	local package_name
+	local package_type
 
 	action='"unsign"'
+	package_name=$qpkg_name
+	package_type=QPKG
 	z=0
 
 	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
 	if ! IsOsCanManageSignedPackages; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "incompatible $(GetOsName) version"
+		SaveActionResultMetrics sk "incompatible $(GetOsName) version"
 		MarkActionForkAsSkippedOk
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
+		SaveActionResultMetrics sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkippedOk
 		z=2
 	elif [[ ! -s $r_cert_db_pathfile ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sa "$(GetOsName) QPKG certificate database unavailable, no further unsigning will occur"
+		SaveActionResultMetrics sa "$(GetOsName) $package_type certificate database unavailable, no further unsigning will occur"
 		MarkActionForkAsSkippedAbort
 		z=3
 	elif IsNtQpkgSigned; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'already unsigned'
+		SaveActionResultMetrics sk 'already unsigned'
 		MarkActionForkAsSkippedOk
 		z=2
 	fi
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	DebugAsProc "\"unsigning\" $(FormatPackageName)"
+	DebugAsProc "\"$action\" $(FormatPackageName)"
 
 	# https://pynative.com/python-sqlite-delete-from-table/
 
@@ -12727,11 +13000,11 @@ EOB
 	done
 
 	if [[ $z -eq 0 ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
+		SaveActionResultMetrics ok
 		SendPackageStateChange ISsigned
 		MarkActionForkAsDoneOk
 	else
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$(Parenthesise "$z") but don't know why. Please report this as a bug"
+		SaveActionResultMetrics er "$(Parenthesise "$z") but don't know why. Please report this as a bug"
 		SendParentCommand 'show_suggest_raise_issue=true'
 		MarkActionForkAsDoneError
 	fi
@@ -19250,8 +19523,8 @@ IsSiteUp()
 
 	ConfirmVarIsDefined 1 "${1:-}" "$e_nourl" || return
 
-	local a
 	local -i n
+	local a
 
 	a=$(/usr/bin/cut -d'/' -f3 <<< "$1" | /usr/bin/cut -d':' -f1)
 
