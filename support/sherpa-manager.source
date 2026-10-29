@@ -11112,6 +11112,7 @@ _QPKG:reassign_()
 
 	# Inputs: (global)
 	#	$qpkg_name
+	#	$r_action_log_path
 	#	$r_log_path
 	#	$r_reassign_log_file
 
@@ -11125,11 +11126,15 @@ _QPKG:reassign_()
 	local b
 	local package_name
 	local package_type
+	local r_log_pathfile
 
 	action=reassign
 	package_name=$qpkg_name
 	package_type=QPKG
+	r_log_pathfile=$r_action_log_path/$qpkg_name.$r_reassign_log_file
 	z=0
+
+	local -r r_log_pathfile
 
 	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
@@ -11150,8 +11155,6 @@ _QPKG:reassign_()
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	DebugAsProc "$action $(FormatPackageName)"
-
-	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_reassign_log_file
 
 	Executer "/sbin/setcfg -e $qpkg_name store -f /etc/config/qpkg.conf" "$r_log_pathfile" log:failure-only
 	z=$?
@@ -11178,6 +11181,7 @@ _QPKG:download_()
 
 	# Inputs: (global)
 	#	$qpkg_name
+	#	$r_action_log_path
 	#	$r_download_log_file
 	#	$r_log_path
 	#	$r_qpkg_download_path
@@ -11202,6 +11206,7 @@ _QPKG:download_()
 	action=download
 	package_name=$qpkg_name
 	package_type=QPKG
+	r_log_pathfile=$r_action_log_path/$qpkg_name.$r_download_log_file
 	r_remote_hash=$(GetQpkgDbHash)
 	r_remote_url=$(GetQpkgDbURL)
 		r_remote_filename=$(/usr/bin/basename "$r_remote_url")
