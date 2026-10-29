@@ -284,18 +284,37 @@ LoadConsts()
 		r_cert_db_pathfile=/etc/config/nas_sign_qpkg.db
 		r_entware_packages_last_updated=20260407
 		r_file_change_threshold_minutes=60
-		r_regex_get_ram='s/.*: //;s/kB//;s/ //g'
-		r_regex_strip_ansi='s/\x1b\[[0-9;]*m//g'
 		r_script_built_epoch='<?manager_epoch?>'
 		r_this_script_ver='<?manager_version?>'
 
 		readonly r_cert_db_pathfile
 		readonly r_entware_packages_last_updated
 		readonly r_file_change_threshold_minutes
-		readonly r_regex_get_ram
-		readonly r_regex_strip_ansi
 		readonly r_script_built_epoch
 		readonly r_this_script_ver
+
+	# Regexes.
+
+		r_regex_delete_empty_lines='/^$/d;/^[[:space:]]*$/d'
+		r_regex_strip_ansi='s/\x1b\[[0-9;]*m//g'
+		r_regex_strip_comments='/^#[[:blank:]].*/d;/#$/d;s/[[:blank:]]#[[:blank:]].*//'
+		r_regex_strip_lead_whitespace='s/^[[:blank:]]*//'
+		r_regex_strip_tail_whitespace='s/[[:blank:]]*$//'
+		r_regex_strip_upto_colon='s/^.*:[[:blank:]]//'
+
+			r_regex_delete_firstlast_empty_lines='1{'$r_regex_delete_empty_lines'};${'$r_regex_delete_empty_lines'}'
+			r_regex_process_ram=$r_regex_strip_upto_colon';s/kB//;s/[[:blank:]]//g'
+			r_regex_process_screen_sessions=$r_regex_delete_empty_lines';'$r_regex_strip_lead_whitespace
+
+		readonly r_regex_delete_empty_lines
+		readonly r_regex_delete_firstlast_empty_lines
+		readonly r_regex_process_ram
+		readonly r_regex_process_screen_sessions
+		readonly r_regex_strip_ansi
+		readonly r_regex_strip_comments
+		readonly r_regex_strip_lead_whitespace
+		readonly r_regex_strip_tail_whitespace
+		readonly r_regex_strip_upto_colon
 
 	# Error messages.
 
@@ -650,6 +669,9 @@ IsCMDsOk()
 
 ConfigEnv()
 	{
+
+	# Inputs: (global)
+	#	$$
 
 	SetHardwareCpuThreads
 	SetHardwareInstalledRAM
@@ -1248,7 +1270,7 @@ DebugLogEnv()
 	fi
 
 	DebugInfoMinSepr
-	Executer "/usr/sbin/screen -ls | /bin/sed '/^[[:space:]]*$/d;s/^[[:space:]]*//'" "$r_screen_sessions_pathfile" '' 1
+	Executer "/usr/sbin/screen -ls | /bin/sed '$r_regex_process_screen_sessions'" "$r_screen_sessions_pathfile" '' 1
 	DebugInfoMinSepr
 
 	if [[ -x $r_gnu_free_cmd ]]; then
@@ -7327,7 +7349,7 @@ DisplayFileInViewport()
 
 	ConfirmVarIsDefined 1 "${1:-}" "$e_nopfi" || return
 
-	/bin/sed -i '1{/^[[:space:]]*$/d};${/^[[:space:]]*$/d}' "$1"	# Remove first and last lines if empty: https://stackoverflow.com/a/11230764
+	/bin/sed -i "$r_regex_delete_firstlast_empty_lines" "$1"
 	[[ -s $1 ]] || return
 
 	local -a a_b
@@ -7425,17 +7447,17 @@ CalcReportFirstColumnWidth()
 	local b
 	local c
 
-	a=$(/bin/sed '/^#[[:space:]].*/d;/#$/d;s/[[:space:]]#[[:space:]].*//' < "$1")	# Remove comment lines and line comments.
-	a=$(/bin/sed 's/[[:space:]]*$//' <<< "$a")										# Remove line trailing whitespace.
-	a=$(/bin/sed '/^$/d' <<< "$a")													# Remove empty lines.
-	a=$(/usr/bin/head -n1 <<< "$a")													# Only use header row (column titles).
-	a=$(StripANSICodes "$a")														# Remove ANSI codes to calculate column width for `less`.
+	a=$(/bin/sed "$r_regex_strip_comments" < "$1")
+	a=$(/bin/sed "$r_regex_strip_tail_whitespace" <<< "$a")
+	a=$(/bin/sed "$r_regex_delete_empty_lines" <<< "$a")
+	a=$(/usr/bin/head -n1 <<< "$a")									# Only use header row (column titles).
+	a=$(StripANSICodes "$a")										# Must remove ANSI codes to calculate column width for `less`.
 
-	b=$(/usr/bin/cut -f2 -d: <<< "$a"):												# Grab second field characters.
-	b=$(/bin/sed 's/^[[:space:]]*//' <<< "$b")										# Remove leading whitespace.
+	b=$(/usr/bin/cut -f2 -d: <<< "$a"):								# Grab second field characters.
+	b=$(/bin/sed "$r_regex_strip_lead_whitespace" <<< "$b")
 
 	# shellcheck disable=2295
-	c=${a%%$b*}																		# Remove from second column onwards to generate first column width.
+	c=${a%%$b*}														# Remove from second column onwards to generate first column width.
 
 	printf '%s' "${#c}"
 
@@ -9643,6 +9665,7 @@ WriteToMsgPipe()
 	#	$4 = message 2 value
 
 	# Inputs: (global)
+	#	$$
 	#	$action_msg_pipe_fd
 
 	[[ ${action_msg_pipe_fd:=none} != none && -e /proc/$$/fd/$action_msg_pipe_fd ]] && echo "${1:-null}|${2:-null}|${3:-null}|${4:-null}" >&$action_msg_pipe_fd
@@ -9778,6 +9801,9 @@ FindNextFD()
 	{
 
 	# Find next available file descriptor: https://stackoverflow.com/a/41603891
+
+	# Inputs: (global)
+	#	$$
 
 	local -i fd
 
@@ -10113,11 +10139,11 @@ GetFirstLineSecondField()
 	#	stdout = requested value of field.
 	#	$? = 0 if found, 1 if not.
 
-	# BusyBox 1.01 doesn't support `grep -m`, so extract first mention the hard-way with `head`.
+	# QTS BusyBox 1.01 doesn't support `grep -m`, so extract first mention the hard-way with `head`.
 
 	[[ -n "$1" ]] || return 1
 
-	/usr/bin/head -n1 <<< "$1" | /bin/sed 's/^.*: //' | /bin/tr -s ' '
+	/usr/bin/head -n1 <<< "$1" | /bin/sed "$r_regex_strip_upto_colon" | /bin/tr -s ' '
 
 	}
 
@@ -10134,6 +10160,7 @@ GetHardwareCpuBenchmark()
 	# Use GNU `dd` because it generates speed statistics as stderr. BusyBox 1.01 `dd` does not generate stats at-all.
 
 	# Inputs: (global)
+	#	$$
 	#	$r_gnu_dd_cmd
 	#	$r_gnu_nice_cmd
 
@@ -10183,6 +10210,7 @@ GetHardwareVolumeBenchmark()
 	# Use GNU `dd` because it generates speed statistics as stderr. BusyBox 1.01 `dd` does not generate stats at-all.
 
 	# Inputs: (global)
+	#	$$
 	#	$r_gnu_dd_cmd
 	#	$r_gnu_nice_cmd
 
@@ -10441,12 +10469,12 @@ GetHardwareInstalledRAMkb()
 	{
 
 	# Inputs: (global)
-	#	$r_regex_get_ram
+	#	$r_regex_process_ram
 
 	# Outputs: (local)
 	#	stdout = string.
 
-	/bin/grep MemTotal /proc/meminfo | /bin/sed "$r_regex_get_ram"
+	/bin/grep MemTotal /proc/meminfo | /bin/sed "$r_regex_process_ram"
 
 	}
 
@@ -10454,7 +10482,7 @@ GetHardwareInstalledRAMgb()
 	{
 
 	# Inputs: (global)
-	#	$r_regex_get_ram
+	#	$r_regex_process_ram
 
 	# Outputs: (local)
 	#	stdout = string.
@@ -10463,7 +10491,7 @@ GetHardwareInstalledRAMgb()
 	local b
 	local c
 
-	a=$(/bin/grep MemTotal /proc/meminfo | /bin/sed "$r_regex_get_ram")
+	a=$(/bin/grep MemTotal /proc/meminfo | /bin/sed "$r_regex_process_ram")
 		b=$((((a/1024)*1000)/1024))
 			c=${b%???}.${b:${#b}<3?0:-3}
 
@@ -10738,6 +10766,9 @@ ShowZeroQpkgs()
 
 ClaimLockfile()
 	{
+
+	# Inputs: (global)
+	#	$$
 
 	# Outputs: (global)
 	#	$r_lock_pathfile
@@ -16308,7 +16339,7 @@ DeDupeWords()
 
 	[[ -n ${1:-} ]] || return
 
-	/bin/tr ' ' '\n' <<< "$1" | /usr/bin/sort | /bin/uniq | /bin/tr '\n' ' ' | /bin/sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'
+	/bin/tr ' ' '\n' <<< "$1" | /usr/bin/sort | /bin/uniq | /bin/tr '\n' ' ' | /bin/sed "$r_regex_strip_lead_whitespace;$r_regex_strip_tail_whitespace"
 
 	}
 
@@ -16769,8 +16800,8 @@ FormatNWords()
 
 	a=''
 	word_colour=${3:-TextUncoloured}
-	word_count=${#words[@]}
 	words=($1)
+		word_count=${#words[@]}
 	words_max=${2:-3}
 
 	for ((n=1; n<=word_count; n++)); do
@@ -19158,6 +19189,7 @@ LoadObjects()
 	# Ensure `objects` in the local cache is up-to-date, then source it.
 
 	# Inputs: (global)
+	#	$PWD
 	#	$objects_loaded
 	#	$r_objects_archive_pathfile
 	#	$r_objects_archive_url
@@ -19219,6 +19251,7 @@ LoadDatabase()
 	# Ensure `packages` in the local cache is up-to-date, then source it.
 
 	# Inputs: (global)
+	#	$PWD
 	#	$packages_loaded
 	#	$r_packages_archive_pathfile
 	#	$r_packages_archive_url
