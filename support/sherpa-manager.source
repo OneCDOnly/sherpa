@@ -296,6 +296,7 @@ LoadConsts()
 	# Regexes.
 
 		r_regex_delete_empty_lines='/^$/d;/^[[:space:]]*$/d'
+		r_regex_fix_kib='s/kB/kiB/'
 		r_regex_strip_ansi='s/\x1b\[[0-9;]*m//g'
 		r_regex_strip_comments='/^#[[:blank:]].*/d;/#$/d;s/[[:blank:]]#[[:blank:]].*//'
 		r_regex_strip_lead_whitespace='s/^[[:blank:]]*//'
@@ -308,6 +309,7 @@ LoadConsts()
 
 		readonly r_regex_delete_empty_lines
 		readonly r_regex_delete_firstlast_empty_lines
+		readonly r_regex_fix_kib
 		readonly r_regex_process_ram
 		readonly r_regex_process_screen_sessions
 		readonly r_regex_strip_ansi
@@ -10331,7 +10333,7 @@ GetOsKernelPageSize()
 		a=$(/sbin/hal_app --get_pagesize)B
 		[[ $a = 4096B ]] && printf 4kiB || printf '%s' "$a"
 	else
-		/bin/grep KernelPageSize /proc/1/smaps | /usr/bin/head -n1 | /usr/bin/cut -f2 -d':' | /bin/tr -d ' ' | /bin/sed 's/kB/kiB/'
+		/bin/grep KernelPageSize /proc/1/smaps | /usr/bin/head -n1 | /usr/bin/cut -f2 -d':' | /bin/tr -d ' ' | /bin/sed "$r_regex_fix_kib"
 	fi
 
 	}
