@@ -4235,9 +4235,9 @@ CalcIpkDownloadSize()
 	size_count=$(IPKs-ACdownload-to:Count)
 
 	if [[ $size_count -gt 0 ]]; then
-		PauseAni
+		EndAni
 		ShowAsProc "calculate size of IPK$(Pluralise "$size_count") to download"
-		ResumeAni
+		StartAni
 
 		DebugAsDone "$size_count IPK$(Pluralise "$size_count") to download: '$(IPKs-ACdownload-to:List)'"
 		a_sizes=($($r_gnu_grep_cmd -w '^Package:\|^Size:' "$r_external_packages_pathfile" | $r_gnu_grep_cmd --after-context 1 --no-group-separator ": $(/bin/sed 's/ /$ /g;s/\$ /\$\\\|: /g' <<< "$(IPKs-ACdownload-to:List)")" | /bin/grep '^Size:' | /bin/sed 's/^Size: //'))
