@@ -8298,14 +8298,11 @@ CheckWebsitesUp()
 	# Inputs: (global)
 	#	$r_websites[]
 
-	# Outputs: (global)										# directive:omit-from-production
-	#	$r_websites[]										# directive:omit-from-production
+	IsNtDebug || return 0		# Check later when running in debug mode.
 
 	FuncInit
 
 	local -i n
-
-#	r_websites+=(testsiteisdown.com)						# directive:omit-from-production
 
 	if [[ -n ${r_websites:-} ]]; then
 		for ((n=0; n<${#r_websites[@]}; n++)); do
@@ -8350,6 +8347,8 @@ CheckSystemLoad()
 
 CheckOOM()
 	{
+
+	IsNtDebug || return 0		# Check later when running in debug mode.
 
 	FuncInit
 
@@ -19378,9 +19377,11 @@ LoadDatabase()
 	readonly r_qpkg_version
 	readonly r_qpkg_will_log
 
-	if false; then						# directive:omit-from-production
+#	r_websites+=(testsiteisdown.com)		# directive:omit-from-production
+
+	if false; then							# directive:omit-from-production
 		readonly r_websites
-	fi									# directive:omit-from-production
+	fi										# directive:omit-from-production
 
 	DebugVar r_packages_epoch
 
