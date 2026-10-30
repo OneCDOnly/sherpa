@@ -1041,15 +1041,17 @@ DebugLogEnv()
 	#	$useropt_debug
 	#	$useropt_verbose
 
-	if [[ $useropt_show_about = true || $useropt_show_aboutall = true ]]; then
-		useropt_debug=true
-		useropt_verbose=true
-	else
+	if [[ $useropt_show_about = false && $useropt_show_aboutall = false ]]; then
 		[[ $run_package_actions = true ]] || return 0
 		IsDebug || return 0
 	fi
 
 	FuncInit
+
+	if [[ $useropt_show_about = true || $useropt_show_aboutall = true ]]; then
+		useropt_debug=true
+		useropt_verbose=true
+	fi
 
 	local -i n
 	local a
