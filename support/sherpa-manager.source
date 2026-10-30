@@ -1268,11 +1268,11 @@ DebugLogEnv()
 	elif (/bin/df -T &> /dev/null); then
 		Executer '/bin/df -hT' "$r_ramfs_freespace_pathfile" '' 1
 	else
-		Executer "/bin/df -h | /bin/grep -iEv '^(devtmpfs|cgroup_root)'" "$r_ramfs_freespace_pathfile" '' 1
-	fi
+		Executer '/bin/df -h' "$r_ramfs_freespace_pathfile" '' 1
+	fi | /bin/grep -iEv '^(devtmpfs|cgroup_root)'
 
 	DebugInfoMinSepr
-	Executer "/usr/sbin/screen -ls | /bin/sed '$r_regex_process_screen_sessions'" "$r_screen_sessions_pathfile" '' 1
+	Executer '/usr/sbin/screen -ls' "$r_screen_sessions_pathfile" '' 1 | /bin/sed "$r_regex_process_screen_sessions"
 	DebugInfoMinSepr
 
 	if [[ -x $r_gnu_free_cmd ]]; then
