@@ -4138,9 +4138,9 @@ LoadIpkList()
 	# Inputs: (global)
 	#	$r_prev_ipk_list_pathfile
 
-	local name=''
-	local separator=''
-	local version=''
+	local name
+	local separator
+	local version
 
 	if [[ -s $r_prev_ipk_list_pathfile ]]; then
 		DebugInfo "IPKs are being loaded from $(FormatFileName "$r_prev_ipk_list_pathfile")"
@@ -4158,8 +4158,8 @@ LoadPipList()
 	# Inputs: (global)
 	#	$r_prev_pip_list_pathfile
 
-	local name=''
-	local re=''
+	local name
+	local re
 
 	if [[ -s $r_prev_pip_list_pathfile ]]; then
 		DebugInfo "PIPs are being loaded from $(FormatFileName "$r_prev_pip_list_pathfile")"
@@ -4371,11 +4371,12 @@ IPKs:upgrade()
 	local -i z
 	local action
 	local desc
+	local log_pathfile
 	local package_name
 	local package_type
-	local log_pathfile=$r_log_path/ipks.$r_upgrade_log_file
 
 	action=upgrade
+	log_pathfile=$r_log_path/ipks.$r_upgrade_log_file
 	package_name=auxiliary
 	package_type=IPK
 	z=0
@@ -18177,8 +18178,11 @@ ShowAsBug()
 #
 #	[[ -n ${1:-} ]] || return
 #
-#	local a=quiz
-#	local b=$1:
+#	local a
+#	local b
+#
+#	a=quiz
+#	b=$1:
 #
 #	OpStepClearWait "$(TextBrightOrangeBlink "$a")" "$b"
 #	WriteToLog "$a" "$b"
@@ -18190,8 +18194,11 @@ ShowAsBug()
 #
 #	[[ -n ${1:-} ]] || return
 #
-#	local a=quiz
-#	local b=$1
+#	local a
+#	local b
+#
+#	a=quiz
+#	b=$1
 #
 #	OpStepClear "$(TextBrightOrange "$a")" "$b"
 #
@@ -18287,7 +18294,7 @@ ShowAsIterativeProgress()
 	ConfirmVarIsDefined 3 "${3:-}" "$e_nostr" || return
 	ConfirmVarIsDefined 5 "${5:-}" "$e_nostr" || return
 
-	local -i a=${2:-0}
+	local -i a
 	local -i b
 	local c
 	local d
