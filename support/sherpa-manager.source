@@ -499,20 +499,29 @@ LoadConsts()
 
 	# Only for the message pipe enhanced log.
 
-		local date_field_longest_string='Tue 27 May 2025 4:55:42 PM EST '	# directive:omit-from-production
-		readonly r_date_field_length=${#date_field_longest_string}			# directive:omit-from-production
+		local action_field_longest_string							# directive:omit-from-production
+		local date_field_longest_string								# directive:omit-from-production
+		local key1_field_longest_string								# directive:omit-from-production
+		local key2_field_longest_string								# directive:omit-from-production
+		local tier_field_longest_string								# directive:omit-from-production
 
-		local tier_field_longest_string=independent							# directive:omit-from-production
-		readonly r_tier_field_length=${#tier_field_longest_string}			# directive:omit-from-production
+		action_field_longest_string=reactivate						# directive:omit-from-production
+		date_field_longest_string='Tue 27 May 2025 4:55:42 PM EST '	# directive:omit-from-production
+		key1_field_longest_string=update							# directive:omit-from-production
+		key2_field_longest_string=package							# directive:omit-from-production
+		tier_field_longest_string=independent						# directive:omit-from-production
 
-		local action_field_longest_string=reactivate						# directive:omit-from-production
-		readonly r_action_field_length=${#action_field_longest_string}		# directive:omit-from-production
+		r_action_field_length=${#action_field_longest_string}		# directive:omit-from-production
+		r_date_field_length=${#date_field_longest_string}			# directive:omit-from-production
+		r_key1_field_length=${#key1_field_longest_string}			# directive:omit-from-production
+		r_key2_field_length=${#key2_field_longest_string}			# directive:omit-from-production
+		r_tier_field_length=${#tier_field_longest_string}			# directive:omit-from-production
 
-		local key1_field_longest_string=update								# directive:omit-from-production
-		readonly r_key1_field_length=${#key1_field_longest_string}			# directive:omit-from-production
-
-		local key2_field_longest_string=package								# directive:omit-from-production
-		readonly r_key2_field_length=${#key2_field_longest_string}			# directive:omit-from-production
+		readonly r_action_field_length								# directive:omit-from-production
+		readonly r_date_field_length								# directive:omit-from-production
+		readonly r_key1_field_length								# directive:omit-from-production
+		readonly r_key2_field_length								# directive:omit-from-production
+		readonly r_tier_field_length								# directive:omit-from-production
 
 	}
 
@@ -15820,12 +15829,15 @@ UpdateSessionRows()
 
 	a=''
 
-	if IsInTerminal && /usr/bin/which stty; then
-		a=$(stty size)
-		sess_rows=${a% *}
-	else
-		sess_rows=40
+	if IsInTerminal; then
+		if a=$(stty size); then
+			sess_rows=${a% *}
+		elif a=$(tput lines); then
+			sess_rows=$a
+		fi
 	fi
+
+	[[ ${sess_rows:=0} -eq 0 ]] && sess_rows=40
 
 	} &> /dev/null
 
@@ -15839,12 +15851,15 @@ UpdateSessionColumns()
 
 	a=''
 
-	if IsInTerminal && /usr/bin/which stty; then
-		a=$(stty size)
-		sess_columns=${a#* }
-	else
-		sess_columns=156
+	if IsInTerminal; then
+		if a=$(stty size); then
+			sess_columns=${a#* }
+		elif a=$(tput cols); then
+			sess_columns=$a
+		fi
 	fi
+
+	[[ ${sess_columns:=0} -eq 0 ]] && sess_columns=156
 
 	} &> /dev/null
 
