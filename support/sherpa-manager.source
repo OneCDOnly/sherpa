@@ -267,9 +267,9 @@ DebugLogInit()
 	DebugScript info started "$(TextBrightWhite "$(ConvertSecondsToFullDate "$r_script_startseconds")")"
 	DebugScript info PID "$(TextBrightWhite "$$")"
 	DebugInfoMinSepr
-	DebugInfo "Markers: $(Parenthesise '**') detected, $(Parenthesise II) information, $(Parenthesise WW) warning, $(Parenthesise EE) error, $(Parenthesise LL) log file,"
-	DebugInfo "$(Parenthesise '--') processing, $(Parenthesise '==') done, $(Parenthesise '>>') f entry, $(Parenthesise '<<') f exit, $(Parenthesise aa) array name & values,"
-	DebugInfo "$(Parenthesise vv) variable name & value, $(Parenthesise 'NA') not-applicable, $(Parenthesise '$1') positional argument value"
+	DebugInfo "Markers: $(Parenthesise '**') detected, $(Parenthesise II) information, $(Parenthesise WW) warning, $(Parenthesise EE) error, $(Parenthesise LL) log file, $(Parenthesise vv) variable name & value,"
+	DebugInfo "$(Parenthesise '--') processing, $(Parenthesise '==') done, $(Parenthesise '>>') f entry, $(Parenthesise '<<') f exit, $(Parenthesise '\\') async f entry, $(Parenthesise '//') async f exit, $(Parenthesise aa) array name & values,"
+	DebugInfo "$(Parenthesise 'NA') not-applicable, $(Parenthesise '$1') positional argument value"
 	DebugInfoMinSepr
 	DebugVar r_this_script_ver
 	DebugVar r_this_package_ver
@@ -1414,6 +1414,7 @@ CheckTasks()
 
 	if IsValidQpkgInstalled Entware; then
 		if [[ $r_entware_type != none ]]; then
+			pidfile=$r_pid_pathfile
 			_UpdateEntwarePackageList_ &			# Let's try launching this early.
 			WriteToPidFile "$!" "$r_pid_pathfile"
 		else
@@ -2087,6 +2088,7 @@ ProcAction()
 	local -a a_target_packages
 	local -i package_index
 	local -i pid
+	local a
 	local group
 	local msg1_key
 	local msg1_value
@@ -2102,6 +2104,7 @@ ProcAction()
 	local state
 	local target_object_name
 
+	a=_ExecOneActionWithManyForks_
 	a_target_packages=()
 	group=''
 	msg1_key=''
@@ -2168,11 +2171,14 @@ ProcAction()
 			fi
 
 			PauseAni
+
 			CreateAndSetPidFile
-			_ExecOneActionWithManyForks_ "_${r_package_type}:${r_action}_" "${a_target_packages[@]}" &
+			$a "_${r_package_type}:${r_action}_" "${a_target_packages[@]}" &
 			pid=$!
+			DebugAsDone "${FUNCNAME[0]}() has forked '$a()' for action '$r_action' with PID '$pid'"
 			WriteToPidFile "$pid" "$pidfile"
-			WriteToPidFile "$pid" "$r_pid_pathfile"
+
+			AppendToPidsFile "$pid" "$r_pid_pathfile"
 
 			# Read message pipe and process QPKGs and mark action statuses as-per requests contained within.
 
@@ -4000,6 +4006,8 @@ _UpdateEntwarePackageList_()
 		return 1
 	fi
 
+	FuncForkInit
+
 	local -i z
 
 	z=0
@@ -4028,7 +4036,7 @@ _UpdateEntwarePackageList_()
 
 	IsFile "$r_external_packages_archive_pathfile" && IsNtFile "$r_external_packages_pathfile" && OpenIpkArchive
 
-	return 0
+	FuncForkExit
 
 	}
 
@@ -4797,7 +4805,7 @@ _ExecOneActionWithManyForks_()
 	local qpkg_name
 	local r_pid_pathfile
 
-	a=$1
+	a=$1												# Set this, as $1 is lost in the subshell lower-down.
 	pid=0
 	r_pid_pathfile=$(CreatePidFilePathName)
 
@@ -4823,11 +4831,10 @@ _ExecOneActionWithManyForks_()
 			CreateAndSetPidFile
 			$a &
 			pid=$!
-
+			DebugAsDone "${FUNCNAME[0]}() has forked '$a()' for package '$qpkg_name' with PID '$pid'"
 			WriteToPidFile "$pid" "$pidfile"
-			AppendToPidsFile "$pid" "$r_pid_pathfile"
-			DebugAsDone "forked $a() instance for '$qpkg_name' with PID $pid"
 
+			AppendToPidsFile "$pid" "$r_pid_pathfile"
 		)
 
 		UpdateActionForkProgress
@@ -17309,7 +17316,7 @@ FuncForkInit()
 
 	eval "$var_safe_name=$(ConvertNowToNanoseconds)"
 
-	DebugAsFuncEn
+	DebugAsFuncForkEn
 	[[ ${FUNCNAME[1]} != _ExecOneActionWithManyForks_ ]] && MarkActionForkAsEntry	# Ignore entry into primary action launcher as it's not an action fork.
 
 	}
@@ -17337,7 +17344,7 @@ FuncForkExit()
 	var_safe_name=${var_safe_name//:/_}
 
 	[[ ${FUNCNAME[1]} != _ExecOneActionWithManyForks_ ]] && MarkActionForkAsExit	# Ignore exit from primary action launcher as it's not an action fork.
-	DebugAsFuncEx "${1:-0}" "$(ConvertMillisecondsToFuncDuration "$(CalcMillisecondsDiffFromNanoseconds "${!var_safe_name}" "$(ConvertNowToNanoseconds)")")"
+	DebugAsFuncForkEx "${1:-0}" "$(ConvertMillisecondsToFuncDuration "$(CalcMillisecondsDiffFromNanoseconds "${!var_safe_name}" "$(ConvertNowToNanoseconds)")")"
 
 	if [[ -n ${session_active_log_pathfile:-} && -e $session_active_log_pathfile ]]; then
 		if [[ -s $session_active_log_pathfile ]]; then
@@ -17707,6 +17714,20 @@ DebugAsFuncEx()
 	{
 
 	DebugThis "$(Parenthesise '<<') ${FUNCNAME[2]}()|${1:-0}|${2:-}"
+
+	}
+
+DebugAsFuncForkEn()
+	{
+
+	DebugThis "$(Parenthesise '\\') ${FUNCNAME[2]}()"
+
+	}
+
+DebugAsFuncForkEx()
+	{
+
+	DebugThis "$(Parenthesise '//') ${FUNCNAME[2]}() ${1:-0}|${2:-}"
 
 	}
 
