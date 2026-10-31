@@ -242,6 +242,7 @@ StartScriptTimer()
 	#	$r_script_startseconds
 
 	r_script_startseconds=$(ConvertNowToSeconds)
+
 	readonly r_script_startseconds
 
 	}
@@ -267,9 +268,7 @@ DebugLogInit()
 	DebugScript info started "$(TextBrightWhite "$(ConvertSecondsToFullDate "$r_script_startseconds")")"
 	DebugScript info PID "$(TextBrightWhite "$$")"
 	DebugInfoMinSepr
-	DebugInfo "Markers: $(Parenthesise '**') detected, $(Parenthesise II) information, $(Parenthesise WW) warning, $(Parenthesise EE) error, $(Parenthesise LL) log file,"
-	DebugInfo "$(Parenthesise '--') processing, $(Parenthesise '==') done, $(Parenthesise '>>') f entry, $(Parenthesise '<<') f exit, $(Parenthesise aa) array name & values,"
-	DebugInfo "$(Parenthesise vv) variable name & value, $(Parenthesise 'NA') not-applicable, $(Parenthesise '$1') positional argument value"
+	ShowLogMarkersAsDebug
 	DebugInfoMinSepr
 	DebugVar r_this_script_ver
 	DebugVar r_this_package_ver
@@ -388,30 +387,45 @@ LoadConsts()
 
 	# Report, help and debug formatting.
 
-		if true; then												# directive:omit-from-production
-			readonly r_debug_log_first_column_width=10				# directive:omit-from-production
-			readonly r_debug_log_second_column_width=26				# directive:omit-from-production
-			readonly r_report_qpkg_description_column_width=225		# directive:omit-from-production
-		else														# directive:omit-from-production
-			readonly r_debug_log_first_column_width='<?debug_log_first_column_width?>'
-			readonly r_debug_log_second_column_width='<?debug_log_second_column_width?>'
-			readonly r_report_qpkg_description_column_width='<?report_qpkg_description_column_width?>'
-		fi															# directive:omit-from-production
+		if true; then											# directive:omit-from-production
+			r_debug_log_first_column_width=10					# directive:omit-from-production
+			r_debug_log_second_column_width=26					# directive:omit-from-production
+			r_report_qpkg_description_column_width=225			# directive:omit-from-production
+		else													# directive:omit-from-production
+			r_debug_log_first_column_width='<?debug_log_first_column_width?>'
+			r_debug_log_second_column_width='<?debug_log_second_column_width?>'
+			r_report_qpkg_description_column_width='<?report_qpkg_description_column_width?>'
+		fi														# directive:omit-from-production
+
+		readonly r_debug_log_first_column_width
+		readonly r_debug_log_second_column_width
+		readonly r_report_qpkg_description_column_width
 
 		UpdateSessionColumns
-		r_debug_log_width=$((sess_columns-12))						# Subtract debug log line leader width.
-		readonly r_debug_log_width
 
-		readonly r_help_desc_indent=3
-		readonly r_help_syntax_indent=6
-		readonly r_log_tail_lines=5000
-		readonly r_report_action_result_indent=4
-		readonly r_report_column_spacing=2
-		readonly r_report_file_bytes_column_width=14
-		readonly r_report_file_change_date_column_width=60
-		readonly r_report_file_name_column_width=35
-		readonly r_report_highlight_backups_older_than='2 weeks ago'
-		readonly r_report_info_name_column_width=14
+		r_debug_log_width=$((sess_columns-12))					# Subtract debug log line leader width.
+		r_help_desc_indent=3
+		r_help_syntax_indent=6
+		r_log_tail_lines=5000
+		r_report_action_result_indent=4
+		r_report_column_spacing=2
+		r_report_file_bytes_column_width=14
+		r_report_file_change_date_column_width=60
+		r_report_file_name_column_width=35
+		r_report_highlight_backups_older_than='2 weeks ago'
+		r_report_info_name_column_width=14
+
+		readonly r_debug_log_width
+		readonly r_help_desc_indent
+		readonly r_help_syntax_indent
+		readonly r_log_tail_lines
+		readonly r_report_action_result_indent
+		readonly r_report_column_spacing
+		readonly r_report_file_bytes_column_width
+		readonly r_report_file_change_date_column_width
+		readonly r_report_file_name_column_width
+		readonly r_report_highlight_backups_older_than
+		readonly r_report_info_name_column_width
 
 	# Report, help and onscreen messages.
 
@@ -499,20 +513,29 @@ LoadConsts()
 
 	# Only for the message pipe enhanced log.
 
-		local date_field_longest_string='Tue 27 May 2025 4:55:42 PM EST '	# directive:omit-from-production
-		readonly r_date_field_length=${#date_field_longest_string}			# directive:omit-from-production
+		local action_field_longest_string							# directive:omit-from-production
+		local date_field_longest_string								# directive:omit-from-production
+		local key1_field_longest_string								# directive:omit-from-production
+		local key2_field_longest_string								# directive:omit-from-production
+		local tier_field_longest_string								# directive:omit-from-production
 
-		local tier_field_longest_string=independent							# directive:omit-from-production
-		readonly r_tier_field_length=${#tier_field_longest_string}			# directive:omit-from-production
+		action_field_longest_string=reactivate						# directive:omit-from-production
+		date_field_longest_string='Tue 27 May 2025 4:55:42 PM EST '	# directive:omit-from-production
+		key1_field_longest_string=update							# directive:omit-from-production
+		key2_field_longest_string=package							# directive:omit-from-production
+		tier_field_longest_string=independent						# directive:omit-from-production
 
-		local action_field_longest_string=reactivate						# directive:omit-from-production
-		readonly r_action_field_length=${#action_field_longest_string}		# directive:omit-from-production
+		r_action_field_length=${#action_field_longest_string}		# directive:omit-from-production
+		r_date_field_length=${#date_field_longest_string}			# directive:omit-from-production
+		r_key1_field_length=${#key1_field_longest_string}			# directive:omit-from-production
+		r_key2_field_length=${#key2_field_longest_string}			# directive:omit-from-production
+		r_tier_field_length=${#tier_field_longest_string}			# directive:omit-from-production
 
-		local key1_field_longest_string=update								# directive:omit-from-production
-		readonly r_key1_field_length=${#key1_field_longest_string}			# directive:omit-from-production
-
-		local key2_field_longest_string=package								# directive:omit-from-production
-		readonly r_key2_field_length=${#key2_field_longest_string}			# directive:omit-from-production
+		readonly r_action_field_length								# directive:omit-from-production
+		readonly r_date_field_length								# directive:omit-from-production
+		readonly r_key1_field_length								# directive:omit-from-production
+		readonly r_key2_field_length								# directive:omit-from-production
+		readonly r_tier_field_length								# directive:omit-from-production
 
 	}
 
@@ -796,6 +819,58 @@ ConfigEnv()
 
 	}
 
+ShowLogMarkersAsDebug()
+	{
+
+	# Inputs: (global)
+	#	$r_debug_log_width
+
+	local -a a_markers
+	local -i count
+	local -i i
+	local acc
+	local thisline
+
+	a_markers=(Markers:)
+	a_markers+=("$(Parenthesise '**') detected")
+	a_markers+=("$(Parenthesise 'II') information")
+	a_markers+=("$(Parenthesise 'WW') warning")
+	a_markers+=("$(Parenthesise 'EE') error")
+	a_markers+=("$(Parenthesise 'LL') log file")
+	a_markers+=("$(Parenthesise 'vv') variable name & value")
+	a_markers+=("$(Parenthesise 'aa') array name & values")
+	a_markers+=("$(Parenthesise '--') processing")
+	a_markers+=("$(Parenthesise '==') done")
+	a_markers+=("$(Parenthesise '>>') f entry")
+	a_markers+=("$(Parenthesise '<<') f exit")
+	a_markers+=("$(Parenthesise '\\') async f entry")
+	a_markers+=("$(Parenthesise '//') async f exit")
+	a_markers+=("$(Parenthesise 'NA') not-applicable")
+	a_markers+=("$(Parenthesise '$1') positional argument value")
+
+	count=${#a_markers[@]}
+
+	a_markers=("${a_markers[@]/%/,}")				# Append commas to each array element.
+	a_markers[0]=${a_markers[0]/,/}					# Remove comma from first element.
+	a_markers[count-1]=${a_markers[count-1]/,/.}	# Replace comma in last element with a period.
+
+	acc=${a_markers[0]}								# Load accumulator with first element.
+
+	for ((i=1; i<=count-1; i++)); do
+		thisline=${a_markers[i]}
+
+		if [[ $((${#acc}+${#thisline}+2)) -le $r_debug_log_width ]]; then
+			acc+=" $thisline"						# Accumulate.
+		else
+			DebugInfo "$acc"
+			acc=$thisline							# Reset accumulator.
+		fi
+	done
+
+	[[ ${#acc} -gt 0 ]] && DebugInfo "$acc"
+
+	}
+
 LoadLists()
 	{
 
@@ -1041,15 +1116,17 @@ DebugLogEnv()
 	#	$useropt_debug
 	#	$useropt_verbose
 
-	if [[ $useropt_show_about = true || $useropt_show_aboutall = true ]]; then
-		useropt_debug=true
-		useropt_verbose=true
-	else
+	if [[ $useropt_show_about = false && $useropt_show_aboutall = false ]]; then
 		[[ $run_package_actions = true ]] || return 0
 		IsDebug || return 0
 	fi
 
 	FuncInit
+
+	if [[ $useropt_show_about = true || $useropt_show_aboutall = true ]]; then
+		useropt_debug=true
+		useropt_verbose=true
+	fi
 
 	local -i n
 	local a
@@ -1412,6 +1489,7 @@ CheckTasks()
 
 	if IsValidQpkgInstalled Entware; then
 		if [[ $r_entware_type != none ]]; then
+			pidfile=$r_pid_pathfile
 			_UpdateEntwarePackageList_ &			# Let's try launching this early.
 			WriteToPidFile "$!" "$r_pid_pathfile"
 		else
@@ -2085,6 +2163,7 @@ ProcAction()
 	local -a a_target_packages
 	local -i package_index
 	local -i pid
+	local a
 	local group
 	local msg1_key
 	local msg1_value
@@ -2100,6 +2179,7 @@ ProcAction()
 	local state
 	local target_object_name
 
+	a=_ExecOneActionWithManyForks_
 	a_target_packages=()
 	group=''
 	msg1_key=''
@@ -2166,11 +2246,14 @@ ProcAction()
 			fi
 
 			PauseAni
+
 			CreateAndSetPidFile
-			_ExecOneActionWithManyForks_ "_${r_package_type}:${r_action}_" "${a_target_packages[@]}" &
+			$a "_${r_package_type}:${r_action}_" "${a_target_packages[@]}" &
 			pid=$!
+			DebugAsDone "${FUNCNAME[0]}() has forked '$a()' for action '$r_action' with PID '$pid'"
 			WriteToPidFile "$pid" "$pidfile"
-			WriteToPidFile "$pid" "$r_pid_pathfile"
+
+			AppendToPidsFile "$pid" "$r_pid_pathfile"
 
 			# Read message pipe and process QPKGs and mark action statuses as-per requests contained within.
 
@@ -3998,6 +4081,8 @@ _UpdateEntwarePackageList_()
 		return 1
 	fi
 
+	FuncForkInit
+
 	local -i z
 
 	z=0
@@ -4026,7 +4111,7 @@ _UpdateEntwarePackageList_()
 
 	IsFile "$r_external_packages_archive_pathfile" && IsNtFile "$r_external_packages_pathfile" && OpenIpkArchive
 
-	return 0
+	FuncForkExit
 
 	}
 
@@ -4795,7 +4880,7 @@ _ExecOneActionWithManyForks_()
 	local qpkg_name
 	local r_pid_pathfile
 
-	a=$1
+	a=$1												# Set this, as $1 is lost in the subshell lower-down.
 	pid=0
 	r_pid_pathfile=$(CreatePidFilePathName)
 
@@ -4821,11 +4906,10 @@ _ExecOneActionWithManyForks_()
 			CreateAndSetPidFile
 			$a &
 			pid=$!
-
+			DebugAsDone "${FUNCNAME[0]}() has forked '$a()' for package '$qpkg_name' with PID '$pid'"
 			WriteToPidFile "$pid" "$pidfile"
-			AppendToPidsFile "$pid" "$r_pid_pathfile"
-			DebugAsDone "forked $a() instance for '$qpkg_name' with PID $pid"
 
+			AppendToPidsFile "$pid" "$r_pid_pathfile"
 		)
 
 		UpdateActionForkProgress
@@ -8296,14 +8380,11 @@ CheckWebsitesUp()
 	# Inputs: (global)
 	#	$r_websites[]
 
-	# Outputs: (global)										# directive:omit-from-production
-	#	$r_websites[]										# directive:omit-from-production
+	IsNtDebug || return 0		# Check later when running in debug mode.
 
 	FuncInit
 
 	local -i n
-
-#	r_websites+=(testsiteisdown.com)						# directive:omit-from-production
 
 	if [[ -n ${r_websites:-} ]]; then
 		for ((n=0; n<${#r_websites[@]}; n++)); do
@@ -8348,6 +8429,8 @@ CheckSystemLoad()
 
 CheckOOM()
 	{
+
+	IsNtDebug || return 0		# Check later when running in debug mode.
 
 	FuncInit
 
@@ -15812,12 +15895,15 @@ UpdateSessionRows()
 
 	a=''
 
-	if IsInTerminal && /usr/bin/which stty; then
-		a=$(stty size)
-		sess_rows=${a% *}
-	else
-		sess_rows=40
+	if IsInTerminal; then
+		if a=$(stty size); then
+			sess_rows=${a% *}
+		elif a=$(tput lines); then
+			sess_rows=$a
+		fi
 	fi
+
+	[[ ${sess_rows:=0} -eq 0 ]] && sess_rows=40
 
 	} &> /dev/null
 
@@ -15831,12 +15917,15 @@ UpdateSessionColumns()
 
 	a=''
 
-	if IsInTerminal && /usr/bin/which stty; then
-		a=$(stty size)
-		sess_columns=${a#* }
-	else
-		sess_columns=156
+	if IsInTerminal; then
+		if a=$(stty size); then
+			sess_columns=${a#* }
+		elif a=$(tput cols); then
+			sess_columns=$a
+		fi
 	fi
+
+	[[ ${sess_columns:=0} -eq 0 ]] && sess_columns=156
 
 	} &> /dev/null
 
@@ -17308,7 +17397,7 @@ FuncForkInit()
 
 	eval "$var_safe_name=$(ConvertNowToNanoseconds)"
 
-	DebugAsFuncEn
+	DebugAsFuncForkEn
 	[[ ${FUNCNAME[1]} != _ExecOneActionWithManyForks_ ]] && MarkActionForkAsEntry	# Ignore entry into primary action launcher as it's not an action fork.
 
 	}
@@ -17336,7 +17425,7 @@ FuncForkExit()
 	var_safe_name=${var_safe_name//:/_}
 
 	[[ ${FUNCNAME[1]} != _ExecOneActionWithManyForks_ ]] && MarkActionForkAsExit	# Ignore exit from primary action launcher as it's not an action fork.
-	DebugAsFuncEx "${1:-0}" "$(ConvertMillisecondsToFuncDuration "$(CalcMillisecondsDiffFromNanoseconds "${!var_safe_name}" "$(ConvertNowToNanoseconds)")")"
+	DebugAsFuncForkEx "${1:-0}" "$(ConvertMillisecondsToFuncDuration "$(CalcMillisecondsDiffFromNanoseconds "${!var_safe_name}" "$(ConvertNowToNanoseconds)")")"
 
 	if [[ -n ${session_active_log_pathfile:-} && -e $session_active_log_pathfile ]]; then
 		if [[ -s $session_active_log_pathfile ]]; then
@@ -17706,6 +17795,20 @@ DebugAsFuncEx()
 	{
 
 	DebugThis "$(Parenthesise '<<') ${FUNCNAME[2]}()|${1:-0}|${2:-}"
+
+	}
+
+DebugAsFuncForkEn()
+	{
+
+	DebugThis "$(Parenthesise '\\') ${FUNCNAME[2]}()"
+
+	}
+
+DebugAsFuncForkEx()
+	{
+
+	DebugThis "$(Parenthesise '//') ${FUNCNAME[2]}() ${1:-0}|${2:-}"
 
 	}
 
@@ -19376,9 +19479,11 @@ LoadDatabase()
 	readonly r_qpkg_version
 	readonly r_qpkg_will_log
 
-	if false; then						# directive:omit-from-production
+#	r_websites+=(testsiteisdown.com)		# directive:omit-from-production
+
+	if false; then							# directive:omit-from-production
 		readonly r_websites
-	fi									# directive:omit-from-production
+	fi										# directive:omit-from-production
 
 	DebugVar r_packages_epoch
 
