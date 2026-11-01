@@ -7644,6 +7644,7 @@ DisplayFileInViewport()
 		options+=' --quit-if-one-screen'
 		options+=' --quit-on-intr'
 		options+=' --redraw-on-quit'
+#		options+=' --use-color'				# NOTE: this doesn't enable granular colour control of prompt elements.
 
 		if IsReportLargerThanViewport "$report_pathfile"; then
 			IsLessSupportHeaders && [[ $headers = true ]] && options+=' --header=1,'$(CalcReportFirstColumnWidth "$report_pathfile")
