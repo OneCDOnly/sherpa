@@ -1017,12 +1017,12 @@ ShowLogMarkersAsDebug()
 		if [[ $((${#d}+${#e}+2)) -le $r_debug_log_width ]]; then
 			d+=" $e"				# Accumulate.
 		else
-			DebugInfo "$d"
+			DebugInfo "$(TextDarkGrey "$d")"
 			d=$e					# Reset accumulator.
 		fi
 	done
 
-	[[ ${#d} -gt 0 ]] && DebugInfo "$d"
+	[[ ${#d} -gt 0 ]] && DebugInfo "$(TextDarkGrey "$d")"
 
 	}
 
@@ -17161,7 +17161,7 @@ DebugInfoMajSepr()
 	# Inputs: (global)
 	#	$r_debug_log_width
 
-	DebugInfo "$(eval printf '%0.s═' "{1..${r_debug_log_width:=1}}")"	# `seq` is unavailable in QTS, so must resort to `eval` trickery instead.
+	DebugInfo "$(TextDarkGrey "$(eval printf '%0.s═' "{1..${r_debug_log_width:=1}}")")"	# `seq` is unavailable in QTS, so must resort to `eval` trickery instead.
 
 	}
 
@@ -17173,7 +17173,7 @@ DebugInfoMinSepr()
 	# Inputs: (global)
 	#	$r_debug_log_width
 
-	DebugInfo "$(eval printf '%0.s─' "{1..${r_debug_log_width:=1}}")"	# `seq` is unavailable in QTS, so must resort to `eval` trickery instead.
+	DebugInfo "$(TextDarkGrey "$(eval printf '%0.s─' "{1..${r_debug_log_width:=1}}")")"	# `seq` is unavailable in QTS, so must resort to `eval` trickery instead.
 
 	}
 
