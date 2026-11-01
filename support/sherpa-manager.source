@@ -63,7 +63,7 @@ Init()
 	ParseManagementArgs || return
 	ParseHelpArgs || return
 	ArchivePriorSessLog
-	DebugLogInit
+	StartDebugLog
 	ParseShowArgs || return
 	ParseListArgs || return
 	ParseActionArgs || return
@@ -89,7 +89,6 @@ ShowResults()
 	#	$generate_help_report
 	#	$generate_list_report
 	#	$generate_show_report
-	#	$r_script_startseconds
 	#	$show_action_results_report
 	#	$show_backuploc
 	#	$show_suggest_raise_issue
@@ -221,10 +220,8 @@ ShowResults()
 	[[ ${show_backuploc:=false} = true ]] && ShowHelpBackupLocation
 	[[ ${show_suggest_raise_issue:=false} = true ]] && ShowHelpIssue
 
-	DebugInfoMinSepr
-	DebugScript info finished "$(TextBrightWhite "$(ConvertNowToFullDate)")"
-	DebugScript info 'elapsed time' "$(TextBrightWhite "$(ConvertSecondsToDuration "$(($(ConvertNowToSeconds)-r_script_startseconds))")")"
-	DebugInfoMajSepr
+	EndScriptTimer
+	EndDebugLog
 
 	FuncExit
 
@@ -247,6 +244,18 @@ StartScriptTimer()
 
 	}
 
+EndScriptTimer()
+	{
+
+	# Outputs: (global)
+	#	$r_script_endseconds
+
+	r_script_endseconds=$(ConvertNowToSeconds)
+
+	readonly r_script_endseconds
+
+	}
+
 SetTraps()
 	{
 
@@ -255,7 +264,7 @@ SetTraps()
 
 	}
 
-DebugLogInit()
+StartDebugLog()
 	{
 
 	# Inputs: (global)
@@ -265,13 +274,26 @@ DebugLogInit()
 	#	$r_this_script_ver
 
 	DebugInfoMajSepr
-	DebugScript info started "$(TextBrightWhite "$(ConvertSecondsToFullDate "$r_script_startseconds")")"
-	DebugScript info PID "$(TextBrightWhite "$$")"
+	DebugScript info started "$(ConvertSecondsToFullDate "$r_script_startseconds")"
+	DebugScript info PID "$$"
 	DebugInfoMinSepr
 	ShowLogMarkersAsDebug
 	DebugInfoMinSepr
 	DebugVar r_this_script_ver
 	DebugVar r_this_package_ver
+
+	}
+
+EndDebugLog()
+	{
+
+	# Inputs: (global)
+	#	$r_script_endseconds
+
+	DebugInfoMinSepr
+	DebugScript info finished "$(ConvertNowToFullDate)"
+	DebugScript info 'elapsed time' "$(ConvertSecondsToDuration "$((r_script_endseconds-r_script_startseconds))")"
+	DebugInfoMajSepr
 
 	}
 
@@ -1499,7 +1521,7 @@ DebugLogEnv()
 	fi | /bin/grep -iEv '^(devtmpfs|cgroup_root)'
 
 	DebugInfoMinSepr
-	Executer '/usr/sbin/screen -ls' "$r_screen_sessions_pathfile" '' 1 | /bin/sed "$r_regex_process_screen_sessions"
+	Executer '/usr/sbin/screen -ls; true' "$r_screen_sessions_pathfile" '' 1 | /bin/sed "$r_regex_process_screen_sessions"
 	DebugInfoMinSepr
 
 	if [[ -x $r_gnu_free_cmd ]]; then
@@ -11103,13 +11125,13 @@ SaveActionResultMetrics()
 	local r_result_code
 	local r_starttime
 	local r_var_name
-	local var_safe_name
+	local r_var_safe_name
 
 	r_clean_action=${action//\"/}
 		r_action_times_pathfile=$r_action_times_path/$r_clean_action.milliseconds
 	r_var_name=${FUNCNAME[1]}_STARTNANOSECONDS
-		var_safe_name=${r_var_name//[.-]/_}; var_safe_name=${var_safe_name//:/_}
-			r_starttime=$(ConvertNanosecondsToMilliseconds "${!var_safe_name}")
+		r_var_safe_name=${r_var_name//[.-]/_}; r_var_safe_name=${r_var_safe_name//:/_}
+			r_starttime=$(ConvertNanosecondsToMilliseconds "${!r_var_safe_name}")
 				r_duration=$(CalcAmountDiff "$r_starttime" "$(ConvertNowToMilliseconds)")
 	r_qty=${3:-1}
 	r_reason=${2:-}
@@ -11123,6 +11145,7 @@ SaveActionResultMetrics()
 	local -r r_result_code
 	local -r r_starttime
 	local -r r_var_name
+	local -r r_var_safe_name
 
 	# Add new action results entry.
 
@@ -17468,16 +17491,17 @@ FuncInit()
 	# Debug function entry.
 
 	local r_var_name
-	local var_safe_name
+	local r_var_safe_name
 
 	r_var_name=${FUNCNAME[1]}_STARTNANOSECONDS
 
+	r_var_safe_name=${r_var_name//[.-]/_}
+	r_var_safe_name=${r_var_safe_name//:/_}
+
 	local -r r_var_name
+	local -r r_var_safe_name
 
-	var_safe_name=${r_var_name//[.-]/_}
-	var_safe_name=${var_safe_name//:/_}
-
-	eval "$var_safe_name=$(ConvertNowToNanoseconds)"
+	eval "$r_var_safe_name=$(ConvertNowToNanoseconds)"
 
 	DebugAsFuncEn
 
@@ -17489,16 +17513,17 @@ FuncExit()
 	# Debug function exit.
 
 	local r_var_name
-	local var_safe_name
+	local r_var_safe_name
 
 	r_var_name=${FUNCNAME[1]}_STARTNANOSECONDS
 
+	r_var_safe_name=${r_var_name//[.-]/_}
+	r_var_safe_name=${r_var_safe_name//:/_}
+
 	local -r r_var_name
+	local -r r_var_safe_name
 
-	var_safe_name=${r_var_name//[.-]/_}
-	var_safe_name=${var_safe_name//:/_}
-
-	DebugAsFuncEx "${1:-0}" "$(ConvertMillisecondsToFuncDuration "$(CalcMillisecondsDiffFromNanoseconds "${!var_safe_name}" "$(ConvertNowToNanoseconds)")")"
+	DebugAsFuncEx "${1:-0}" "$(ConvertMillisecondsToFuncDuration "$(CalcMillisecondsDiffFromNanoseconds "${!r_var_safe_name}" "$(ConvertNowToNanoseconds)")")"
 
 	return ${1:-0}
 
@@ -17528,16 +17553,17 @@ FuncForkInit()
 	session_active_log_pathfile=$(/bin/mktemp "$r_action_log_path"/"${FUNCNAME[1]}"_XXXXXX)
 
 	local r_var_name
-	local var_safe_name
+	local r_var_safe_name
 
 	r_var_name=${FUNCNAME[1]}_STARTNANOSECONDS
 
+	r_var_safe_name=${r_var_name//[.-]/_}
+	r_var_safe_name=${r_var_safe_name//:/_}
+
 	local -r r_var_name
+	local -r r_var_safe_name
 
-	var_safe_name=${r_var_name//[.-]/_}
-	var_safe_name=${var_safe_name//:/_}
-
-	eval "$var_safe_name=$(ConvertNowToNanoseconds)"
+	eval "$r_var_safe_name=$(ConvertNowToNanoseconds)"
 
 	DebugAsFuncForkEn
 	[[ ${FUNCNAME[1]} != _ExecOneActionWithManyForks_ ]] && MarkActionForkAsEntry	# Ignore entry into primary action launcher as it's not an action fork.
@@ -17557,17 +17583,18 @@ FuncForkExit()
 	#	$session_active_log_pathfile
 
 	local r_var_name
-	local var_safe_name
+	local r_var_safe_name
 
 	r_var_name=${FUNCNAME[1]}_STARTNANOSECONDS
 
-	local -r r_var_name
+	r_var_safe_name=${r_var_name//[.-]/_}
+	r_var_safe_name=${r_var_safe_name//:/_}
 
-	var_safe_name=${r_var_name//[.-]/_}
-	var_safe_name=${var_safe_name//:/_}
+	local -r r_var_name
+	local -r r_var_safe_name
 
 	[[ ${FUNCNAME[1]} != _ExecOneActionWithManyForks_ ]] && MarkActionForkAsExit	# Ignore exit from primary action launcher as it's not an action fork.
-	DebugAsFuncForkEx "${1:-0}" "$(ConvertMillisecondsToFuncDuration "$(CalcMillisecondsDiffFromNanoseconds "${!var_safe_name}" "$(ConvertNowToNanoseconds)")")"
+	DebugAsFuncForkEx "${1:-0}" "$(ConvertMillisecondsToFuncDuration "$(CalcMillisecondsDiffFromNanoseconds "${!r_var_safe_name}" "$(ConvertNowToNanoseconds)")")"
 
 	if [[ -n ${session_active_log_pathfile:-} && -e $session_active_log_pathfile ]]; then
 		if [[ -s $session_active_log_pathfile ]]; then
@@ -17936,7 +17963,7 @@ DebugAsFuncEn()
 DebugAsFuncEx()
 	{
 
-	DebugThis "$(Parenthesise '<<') ${FUNCNAME[2]}()|${1:-0}|${2:-}"
+	DebugThis "$(Parenthesise '<<') ${FUNCNAME[2]}() ${1:-0}|${2:-}"
 
 	}
 
