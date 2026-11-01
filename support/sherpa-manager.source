@@ -63,7 +63,7 @@ Init()
 	ParseManagementArgs || return
 	ParseHelpArgs || return
 	ArchivePriorSessLog
-	DebugLogInit
+	StartDebugLog
 	ParseShowArgs || return
 	ParseListArgs || return
 	ParseActionArgs || return
@@ -89,7 +89,6 @@ ShowResults()
 	#	$generate_help_report
 	#	$generate_list_report
 	#	$generate_show_report
-	#	$r_script_startseconds
 	#	$show_action_results_report
 	#	$show_backuploc
 	#	$show_suggest_raise_issue
@@ -221,10 +220,8 @@ ShowResults()
 	[[ ${show_backuploc:=false} = true ]] && ShowHelpBackupLocation
 	[[ ${show_suggest_raise_issue:=false} = true ]] && ShowHelpIssue
 
-	DebugInfoMinSepr
-	DebugScript info finished "$(TextBrightWhite "$(ConvertNowToFullDate)")"
-	DebugScript info 'elapsed time' "$(TextBrightWhite "$(ConvertSecondsToDuration "$(($(ConvertNowToSeconds)-r_script_startseconds))")")"
-	DebugInfoMajSepr
+	EndScriptTimer
+	EndDebugLog
 
 	FuncExit
 
@@ -247,6 +244,18 @@ StartScriptTimer()
 
 	}
 
+EndScriptTimer()
+	{
+
+	# Outputs: (global)
+	#	$r_script_endseconds
+
+	r_script_endseconds=$(ConvertNowToSeconds)
+
+	readonly r_script_endseconds
+
+	}
+
 SetTraps()
 	{
 
@@ -255,7 +264,7 @@ SetTraps()
 
 	}
 
-DebugLogInit()
+StartDebugLog()
 	{
 
 	# Inputs: (global)
@@ -265,13 +274,26 @@ DebugLogInit()
 	#	$r_this_script_ver
 
 	DebugInfoMajSepr
-	DebugScript info started "$(TextBrightWhite "$(ConvertSecondsToFullDate "$r_script_startseconds")")"
-	DebugScript info PID "$(TextBrightWhite "$$")"
+	DebugScript info started "$(ConvertSecondsToFullDate "$r_script_startseconds")"
+	DebugScript info PID "$$"
 	DebugInfoMinSepr
 	ShowLogMarkersAsDebug
 	DebugInfoMinSepr
 	DebugVar r_this_script_ver
 	DebugVar r_this_package_ver
+
+	}
+
+EndDebugLog()
+	{
+
+	# Inputs: (global)
+	#	$r_script_endseconds
+
+	DebugInfoMinSepr
+	DebugScript info finished "$(ConvertNowToFullDate)"
+	DebugScript info 'elapsed time' "$(ConvertSecondsToDuration "$((r_script_endseconds-r_script_startseconds))")"
+	DebugInfoMajSepr
 
 	}
 
@@ -302,9 +324,9 @@ LoadConsts()
 		r_regex_strip_tail_whitespace='s/[[:blank:]]*$//'
 		r_regex_strip_upto_colon='s/^.*:[[:blank:]]//'
 
-			r_regex_delete_firstlast_empty_lines='1{'$r_regex_delete_empty_lines'};${'$r_regex_delete_empty_lines'}'
-			r_regex_process_ram=$r_regex_strip_upto_colon';s/kB//;s/[[:blank:]]//g'
-			r_regex_process_screen_sessions=$r_regex_delete_empty_lines';'$r_regex_strip_lead_whitespace
+		r_regex_delete_firstlast_empty_lines='1{'$r_regex_delete_empty_lines'};${'$r_regex_delete_empty_lines'}'
+		r_regex_process_ram=$r_regex_strip_upto_colon';s/kB//;s/[[:blank:]]//g'
+		r_regex_process_screen_sessions=$r_regex_delete_empty_lines';'$r_regex_strip_lead_whitespace
 
 		readonly r_regex_delete_empty_lines
 		readonly r_regex_delete_firstlast_empty_lines
@@ -319,83 +341,141 @@ LoadConsts()
 
 	# Error messages.
 
-		readonly e_inurl='invalid URL'
+		e_inurl='invalid URL'
+		e_noact='undefined action'
+		e_nochk='undefined checksum'
+		e_nocmd='undefined command'
+		e_noext='undefined exitcode'
+		e_nofil='undefined filename'
+		e_nofun='undefined function'
+		e_nonam='undefined name'
+		e_noopr='undefined operation'
+		e_nopfi='undefined pathfile'
+		e_nopid='undefined process ID'
+		e_nopnm='undefined package name'
+		e_noprm='undefined prompt'
+		e_nopth='undefined path'
+		e_nopty='undefined package type'
+		e_norea='undefined reason'
+		e_nores='undefined result'
+		e_nostr='undefined string'
+		e_notir='undefined tier'
+		e_nourl='undefined URL'
+		e_noval='undefined value'
+		e_novar='undefined variable'
 
-		readonly e_noact='undefined action'
-		readonly e_nochk='undefined checksum'
-		readonly e_nocmd='undefined command'
-		readonly e_noext='undefined exitcode'
-		readonly e_nofil='undefined filename'
-		readonly e_nofun='undefined function'
-		readonly e_nonam='undefined name'
-		readonly e_noopr='undefined operation'
-		readonly e_nopfi='undefined pathfile'
-		readonly e_nopid='undefined process ID'
-		readonly e_nopnm='undefined package name'
-		readonly e_noprm='undefined prompt'
-		readonly e_nopth='undefined path'
-		readonly e_nopty='undefined package type'
-		readonly e_norea='undefined reason'
-		readonly e_nores='undefined result'
-		readonly e_nostr='undefined string'
-		readonly e_notir='undefined tier'
-		readonly e_nourl='undefined URL'
-		readonly e_noval='undefined value'
-		readonly e_novar='undefined variable'
+		readonly e_inurl
+		readonly e_noact
+		readonly e_nochk
+		readonly e_nocmd
+		readonly e_noext
+		readonly e_nofil
+		readonly e_nofun
+		readonly e_nonam
+		readonly e_noopr
+		readonly e_nopfi
+		readonly e_nopid
+		readonly e_nopnm
+		readonly e_noprm
+		readonly e_nopth
+		readonly e_nopty
+		readonly e_norea
+		readonly e_nores
+		readonly e_nostr
+		readonly e_notir
+		readonly e_nourl
+		readonly e_noval
+		readonly e_novar
 
 	# QPKG actions.
 
-		readonly r_qpkg_disable_timeout_seconds=10
-		readonly r_qpkg_enable_timeout_seconds=10
-		readonly r_qpkg_restart_timeout_seconds=1800		# 30 minutes
-		readonly r_qpkg_start_timeout_seconds=1500			# 25 minutes
-		readonly r_qpkg_status_check_timeout_seconds=15
-		readonly r_qpkg_stop_timeout_seconds=300			# 5 minutes
+		r_qpkg_disable_timeout_seconds=10
+		r_qpkg_enable_timeout_seconds=10
+		r_qpkg_restart_timeout_seconds=1800		# 30 minutes
+		r_qpkg_start_timeout_seconds=1500		# 25 minutes
+		r_qpkg_status_check_timeout_seconds=15
+		r_qpkg_stop_timeout_seconds=300			# 5 minutes
+
+		readonly r_qpkg_disable_timeout_seconds
+		readonly r_qpkg_enable_timeout_seconds
+		readonly r_qpkg_restart_timeout_seconds
+		readonly r_qpkg_start_timeout_seconds
+		readonly r_qpkg_status_check_timeout_seconds
+		readonly r_qpkg_stop_timeout_seconds
 
 	# Fixed-widths for report columns when GNU `awk` isn't available.
 
-		readonly r_report_qpkg_abbreviations_column_width=76
-		readonly r_report_qpkg_action_column_width=27
-		readonly r_report_qpkg_active_test_builtin_column_width=9
-		readonly r_report_qpkg_appl_version_column_width=22
-		readonly r_report_qpkg_author_column_width=20
-		readonly r_report_qpkg_auto_update_column_width=11
-		readonly r_report_qpkg_can_backup_column_width=8
-		readonly r_report_qpkg_can_clean_column_width=9
-		readonly r_report_qpkg_can_start_to_update_column_width=9
-		readonly r_report_qpkg_dependencies_column_width=29
-		readonly r_report_qpkg_install_date_column_width=11
-		readonly r_report_qpkg_is_complete_column_width=9
-		readonly r_report_qpkg_is_enabled_column_width=8
-		readonly r_report_qpkg_is_enhanced_column_width=9
-		readonly r_report_qpkg_is_installed_column_width=10
-		readonly r_report_qpkg_is_managed_column_width=8
-		readonly r_report_qpkg_is_prohibited_column_width=11
-		readonly r_report_qpkg_is_signed_column_width=8
-		readonly r_report_qpkg_min_ram_column_width=13
-		readonly r_report_qpkg_name_column_width=21
-		readonly r_report_qpkg_opt_dependencies_column_width=29
-		readonly r_report_qpkg_os_version_column_width=8
-		readonly r_report_qpkg_path_column_width=47
-		readonly r_report_qpkg_repo_column_width=42
-		readonly r_report_qpkg_status_column_width=23
-		readonly r_report_qpkg_tier_column_width=9
-		readonly r_report_qpkg_uniqueunpack_column_width=9
-		readonly r_report_qpkg_version_column_width=19
+		r_report_lazy_column_width=28						# Use this when I can't be bothered calculating an optimum fixed column width.
+		r_report_qpkg_abbreviations_column_width=76
+		r_report_qpkg_action_column_width=27
+		r_report_qpkg_active_test_builtin_column_width=9
+		r_report_qpkg_appl_version_column_width=22
+		r_report_qpkg_author_column_width=20
+		r_report_qpkg_auto_update_column_width=11
+		r_report_qpkg_can_backup_column_width=8
+		r_report_qpkg_can_clean_column_width=9
+		r_report_qpkg_can_start_to_update_column_width=9
+		r_report_qpkg_dependencies_column_width=29
+		r_report_qpkg_install_date_column_width=11
+		r_report_qpkg_is_complete_column_width=9
+		r_report_qpkg_is_enabled_column_width=8
+		r_report_qpkg_is_enhanced_column_width=9
+		r_report_qpkg_is_installed_column_width=10
+		r_report_qpkg_is_managed_column_width=8
+		r_report_qpkg_is_prohibited_column_width=11
+		r_report_qpkg_is_signed_column_width=8
+		r_report_qpkg_min_ram_column_width=13
+		r_report_qpkg_name_column_width=21
+		r_report_qpkg_opt_dependencies_column_width=29
+		r_report_qpkg_os_version_column_width=8
+		r_report_qpkg_path_column_width=47
+		r_report_qpkg_repo_column_width=42
+		r_report_qpkg_status_column_width=23
+		r_report_qpkg_tier_column_width=9
+		r_report_qpkg_uniqueunpack_column_width=9
+		r_report_qpkg_version_column_width=19
 
-		readonly r_report_lazy_column_width=28				# Use this when I can't be bothered calculating an optimum fixed column width.
+		readonly r_report_lazy_column_width
+		readonly r_report_qpkg_abbreviations_column_width
+		readonly r_report_qpkg_action_column_width
+		readonly r_report_qpkg_active_test_builtin_column_width
+		readonly r_report_qpkg_appl_version_column_width
+		readonly r_report_qpkg_author_column_width
+		readonly r_report_qpkg_auto_update_column_width
+		readonly r_report_qpkg_can_backup_column_width
+		readonly r_report_qpkg_can_clean_column_width
+		readonly r_report_qpkg_can_start_to_update_column_width
+		readonly r_report_qpkg_dependencies_column_width
+		readonly r_report_qpkg_install_date_column_width
+		readonly r_report_qpkg_is_complete_column_width
+		readonly r_report_qpkg_is_enabled_column_width
+		readonly r_report_qpkg_is_enhanced_column_width
+		readonly r_report_qpkg_is_installed_column_width
+		readonly r_report_qpkg_is_managed_column_width
+		readonly r_report_qpkg_is_prohibited_column_width
+		readonly r_report_qpkg_is_signed_column_width
+		readonly r_report_qpkg_min_ram_column_width
+		readonly r_report_qpkg_name_column_width
+		readonly r_report_qpkg_opt_dependencies_column_width
+		readonly r_report_qpkg_os_version_column_width
+		readonly r_report_qpkg_path_column_width
+		readonly r_report_qpkg_repo_column_width
+		readonly r_report_qpkg_status_column_width
+		readonly r_report_qpkg_tier_column_width
+		readonly r_report_qpkg_uniqueunpack_column_width
+		readonly r_report_qpkg_version_column_width
 
 	# Report, help and debug formatting.
 
-		if true; then											# directive:omit-from-production
-			r_debug_log_first_column_width=10					# directive:omit-from-production
-			r_debug_log_second_column_width=26					# directive:omit-from-production
-			r_report_qpkg_description_column_width=225			# directive:omit-from-production
-		else													# directive:omit-from-production
+		if true; then										# directive:omit-from-production
+			r_debug_log_first_column_width=10				# directive:omit-from-production
+			r_debug_log_second_column_width=26				# directive:omit-from-production
+			r_report_qpkg_description_column_width=225		# directive:omit-from-production
+		else												# directive:omit-from-production
 			r_debug_log_first_column_width='<?debug_log_first_column_width?>'
 			r_debug_log_second_column_width='<?debug_log_second_column_width?>'
 			r_report_qpkg_description_column_width='<?report_qpkg_description_column_width?>'
-		fi														# directive:omit-from-production
+		fi													# directive:omit-from-production
 
 		readonly r_debug_log_first_column_width
 		readonly r_debug_log_second_column_width
@@ -403,7 +483,7 @@ LoadConsts()
 
 		UpdateSessionColumns
 
-		r_debug_log_width=$((sess_columns-12))					# Subtract debug log line leader width.
+		r_debug_log_width=$((sess_columns-12))				# Subtract debug log line leader width.
 		r_help_desc_indent=3
 		r_help_syntax_indent=6
 		r_log_tail_lines=5000
@@ -429,34 +509,51 @@ LoadConsts()
 
 	# Report, help and onscreen messages.
 
-		readonly r_chars_alert='! '
-		readonly r_chars_attention='* '
-		readonly r_chars_blank='  '
-		readonly r_chars_bullet='• '
-			readonly r_chars_normal=$r_chars_bullet
-		readonly r_chars_dash='- '
-		readonly r_chars_dropend='└─ '
-		readonly r_chars_note='* '
-		readonly r_chars_regular_prompt='$ '
-			readonly r_chars_sudo_prompt=$r_chars_regular_prompt'sudo '
-		readonly r_chars_results='= '
-		readonly r_chars_super_prompt='# '
+		r_chars_alert='! '
+		r_chars_attention='* '
+		r_chars_blank='  '
+		r_chars_bullet='• '
+		r_chars_dash='- '
+		r_chars_dropend='└─ '
+		r_chars_note='* '
+		r_chars_regular_prompt='$ '
+		r_chars_results='= '
+		r_chars_super_prompt='# '
+		r_extended_datetime_format='+%a %-d %B %Y'
 
-		readonly r_extended_datetime_format='+%a %-d %B %Y'
-			readonly r_full_datetime_format=$r_extended_datetime_format' %-I:%M:%S %p %Z'
+		r_chars_normal=$r_chars_bullet
+		r_chars_sudo_prompt=$r_chars_regular_prompt'sudo '
+		r_full_datetime_format=$r_extended_datetime_format' %-I:%M:%S %p %Z'
 
 		if IsOsCanSudo; then
 			if [[ $(GetUserSudoUID) = undefined ]]; then
-				readonly r_help_syntax_prefix=$r_chars_super_prompt
-				readonly r_help_syntax_sudo_prefix=$r_chars_super_prompt
+				r_help_syntax_prefix=$r_chars_super_prompt
+				r_help_syntax_sudo_prefix=$r_chars_super_prompt
 			else
-				readonly r_help_syntax_prefix=$r_chars_regular_prompt
-				readonly r_help_syntax_sudo_prefix=$r_chars_sudo_prompt
+				r_help_syntax_prefix=$r_chars_regular_prompt
+				r_help_syntax_sudo_prefix=$r_chars_sudo_prompt
 			fi
 		else
-			readonly r_help_syntax_prefix=$r_chars_super_prompt
-			readonly r_help_syntax_sudo_prefix=$r_chars_super_prompt
+			r_help_syntax_prefix=$r_chars_super_prompt
+			r_help_syntax_sudo_prefix=$r_chars_super_prompt
 		fi
+
+		readonly r_chars_alert
+		readonly r_chars_attention
+		readonly r_chars_blank
+		readonly r_chars_bullet
+		readonly r_chars_dash
+		readonly r_chars_dropend
+		readonly r_chars_normal
+		readonly r_chars_note
+		readonly r_chars_regular_prompt
+		readonly r_chars_results
+		readonly r_chars_sudo_prompt
+		readonly r_chars_super_prompt
+		readonly r_extended_datetime_format
+		readonly r_full_datetime_format
+		readonly r_help_syntax_prefix
+		readonly r_help_syntax_sudo_prefix
 
 	# Animation.
 
@@ -484,30 +581,32 @@ LoadConsts()
 #		local -r r_white
 #		local -r r_yellow
 
-		readonly r_ani_colour=$r_orange
-		readonly r_ani_frame_duration=0.06				# In decimal seconds.
-		readonly r_ani_id=1
-		readonly r_ani_reverse_motion=false				# Set 'true' to run animation backwards.
+		r_ani_chars=(2 '⢎⡀' '⢎⠁' '⠎⠑' '⠊⠱' '⠈⡱' '⢀⡱' '⢄⡰' '⢆⡠')	# 5 pixels, clockwise orbit.
+		r_ani_colour=$r_orange
+		r_ani_first_frame=2										# Begin animation at this array element (option base 1).
+		r_ani_frame_duration=0.06								# In decimal seconds.
+		r_ani_frame_step=1										# 1 = show every frame, 2 = show every second frame.
+		r_ani_id=1
+		r_ani_reverse_motion=false								# Set 'true' to run animation backwards.
 
-		# 5 pixels, clockwise orbit.
-		r_ani_chars=(2 '⢎⡀' '⢎⠁' '⠎⠑' '⠊⠱' '⠈⡱' '⢀⡱' '⢄⡰' '⢆⡠')
+		r_ani_width=${r_ani_chars[0]}							# Use first element as animation character width. QTS BusyBox 1.01 doesn't support `wc -m`  so can't measure width.
+		r_ani_total_frames=${#r_ani_chars[@]}					# Total animation frames. A frame is one or-more characters.
+			r_ani_last_frame=$r_ani_total_frames				# Complete animation at this array element (option base 1).
 
-		r_ani_width=${r_ani_chars[0]}					# Use first element as animation character width. QTS BusyBox 1.01 doesn't support `wc -m`  so can't measure width.
-		r_ani_total_frames=${#r_ani_chars[@]}			# Total animation frames. A frame is one or-more characters.
-			r_ani_last_frame=$r_ani_total_frames		# Complete animation at this array element (option base 1).
-		r_ani_first_frame=2								# Begin animation at this array element (option base 1).
-		r_ani_frame_step=1								# 1 = show every frame, 2 = show every second frame.
-
-		if [[ $r_ani_reverse_motion = true ]]; then		# Reverse processing order.
+		if [[ $r_ani_reverse_motion = true ]]; then				# Reverse processing order.
 			r_ani_first_frame=$r_ani_total_frames
 			r_ani_last_frame=2
 			r_ani_frame_step=-$r_ani_frame_step
 		fi
 
 		readonly r_ani_chars
+		readonly r_ani_colour
 		readonly r_ani_first_frame
+		readonly r_ani_frame_duration
 		readonly r_ani_frame_step
+		readonly r_ani_id
 		readonly r_ani_last_frame
+		readonly r_ani_reverse_motion
 		readonly r_ani_total_frames
 		readonly r_ani_width
 
@@ -629,21 +728,38 @@ SetCMDs()
 
 	# Cherry-pick Entware binaries.
 
-		readonly r_gnu_awk_cmd=/opt/bin/awk
-		readonly r_gnu_dd_cmd=/opt/bin/dd
-		readonly r_gnu_df_cmd=/opt/bin/df
-		readonly r_gnu_find_cmd=/opt/bin/find
-		readonly r_gnu_free_cmd=/opt/bin/free
-		readonly r_gnu_grep_cmd=/opt/bin/grep
-		readonly r_gnu_more_cmd=/opt/bin/more
-		readonly r_gnu_nice_cmd=/opt/bin/nice
-		readonly r_gnu_timeout_cmd=/opt/bin/timeout
-		readonly r_gnu_uname_cmd=/opt/bin/uname
-		readonly r_less_cmd=/opt/bin/less
-		readonly r_opkg_cmd=/opt/bin/opkg
-		readonly r_python3_cmd=/opt/bin/python3
-			readonly r_pip_cmd=$r_python3_cmd' -m pip'
-		readonly r_python_cmd=/opt/bin/python
+		r_gnu_awk_cmd=/opt/bin/awk
+		r_gnu_dd_cmd=/opt/bin/dd
+		r_gnu_df_cmd=/opt/bin/df
+		r_gnu_find_cmd=/opt/bin/find
+		r_gnu_free_cmd=/opt/bin/free
+		r_gnu_grep_cmd=/opt/bin/grep
+		r_gnu_more_cmd=/opt/bin/more
+		r_gnu_nice_cmd=/opt/bin/nice
+		r_gnu_timeout_cmd=/opt/bin/timeout
+		r_gnu_uname_cmd=/opt/bin/uname
+		r_less_cmd=/opt/bin/less
+		r_opkg_cmd=/opt/bin/opkg
+		r_python3_cmd=/opt/bin/python3
+		r_python_cmd=/opt/bin/python
+
+		r_pip_cmd=$r_python3_cmd' -m pip'
+
+		readonly r_gnu_awk_cmd
+		readonly r_gnu_dd_cmd
+		readonly r_gnu_df_cmd
+		readonly r_gnu_find_cmd
+		readonly r_gnu_free_cmd
+		readonly r_gnu_grep_cmd
+		readonly r_gnu_more_cmd
+		readonly r_gnu_nice_cmd
+		readonly r_gnu_timeout_cmd
+		readonly r_gnu_uname_cmd
+		readonly r_less_cmd
+		readonly r_opkg_cmd
+		readonly r_pip_cmd
+		readonly r_python3_cmd
+		readonly r_python_cmd
 
 	[[ ! -x /bin/less ]] && /bin/ln -sf /bin/busybox /bin/less			# KLUDGE: `/bin/less` isn't always there in QTS.
 	[[ ! -x /usr/bin/sort ]] && /bin/ln -sf /bin/busybox /usr/bin/sort	# KLUDGE: `/usr/bin/sort` randomly disappears from QTS.
@@ -662,9 +778,7 @@ IsCMDsOk()
 	local -a b
 	local c
 
-	a=()
 	b=()
-	c=''
 
 	a=(awk busybox cat chmod date df grep ln ls md5sum mkdir mknod mktemp more mv pidof ping ps renice rm rmdir sed sh sha1sum tar touch tr uname uniq)
 	b+=("${a[@]/#//bin/}")
@@ -703,41 +817,48 @@ ConfigEnv()
 	SetNasArch
 	SetQpkgArch
 
-	local default_vol_mount_point
+	local r_default_vol_mount_point
 	local r_sherpa_packages_base_url
-	readonly r_concurrency=$r_cpu_threads		# Maximum concurrent package actions to run. Should probably make this account for CPU speed too.
 
 	a_args=()
 	a_args_incomplete=()
-	default_vol_mount_point=''
 	qpkg_index=0
+	r_concurrency=$r_cpu_threads		# Maximum concurrent package actions to run. Should probably make this account for CPU speed too.
 	r_entware_type=$(GetQpkgEntwareType)
 	r_sherpa_packages_base_url='<?sherpa_packages_base_url?>'
 	r_this_package_ver=$(GetQpkgInstalledVer)
-
-	local -r r_sherpa_packages_base_url
-	readonly r_entware_type
-	readonly r_this_package_ver
-
 	useropt_branch=$(GetUserGitBranch)
-		readonly r_objects_archive_url='<?sherpa_base_raw_url?>'/$useropt_branch/objects.tar.gz
 
 	[[ $useropt_branch = unstable ]] && package_release_version=testing
 
-	readonly r_packages_archive_url=$r_sherpa_packages_base_url/releases/download/$package_release_version/$r_nas_qpkg_arch.packages.tar.gz
+	r_objects_archive_url='<?sherpa_base_raw_url?>'/$useropt_branch/objects.tar.gz
+	r_packages_archive_url=$r_sherpa_packages_base_url/releases/download/$package_release_version/$r_nas_qpkg_arch.packages.tar.gz
+
+	local -r r_sherpa_packages_base_url
+	readonly r_concurrency
+	readonly r_entware_type
+	readonly r_objects_archive_url
+	readonly r_packages_archive_url
+	readonly r_this_package_ver
 
 	# Essential paths.
 
-		readonly r_sys_log_path=/var/log
-			readonly r_qpkg_service_result_path=$r_sys_log_path
-		readonly r_sys_run_path=/var/run
-
-		default_vol_mount_point=$(GetUserDefVol)
-		ConfirmVarIsDefined default_vol_mount_point "${default_vol_mount_point:-}" "$e_nopth" || return
-			readonly r_qpkg_bu_path=$default_vol_mount_point/.qpkg_config_backup
-
+		r_default_vol_mount_point=$(GetUserDefVol)
+		r_sys_log_path=/var/log
+		r_sys_run_path=/var/run
 		r_this_package_path=$(GetQpkgInstalledPath)
+
+		r_qpkg_bu_path=$r_default_vol_mount_point/.qpkg_config_backup
+		r_qpkg_service_result_path=$r_sys_log_path
+
+		readonly r_default_vol_mount_point
+		readonly r_qpkg_bu_path
+		readonly r_qpkg_service_result_path
+		readonly r_sys_log_path
+		readonly r_sys_run_path
 		readonly r_this_package_path
+
+		ConfirmVarIsDefined r_default_vol_mount_point "${r_default_vol_mount_point:-}" "$e_nopth" || return
 
 		if ! ConfirmVarIsDefined r_this_package_path "${r_this_package_path:-}" "$e_nopth" &> /dev/null || [[ ! -d $r_this_package_path ]]; then
 			ShowAsError "$(ShowAsTitleName) installation path not found. Please reinstall the $(ShowAsTitleName) QPKG"
@@ -745,77 +866,133 @@ ConfigEnv()
 			return 1
 		fi
 
-		readonly r_cache_path=$r_this_package_path/cache
-			readonly r_ipk_cache_path=$r_cache_path/IPKs
-				readonly r_ipk_downgrade_path=$r_ipk_cache_path/downgrade
-				readonly r_ipk_download_path=$r_ipk_cache_path/downloads
+		r_cache_path=$r_this_package_path/cache
+		r_log_path=$r_this_package_path/log
 
-			readonly r_pip_cache_path=$r_cache_path/PIPs
-			readonly r_qpkg_cache_path=$r_cache_path/QPKGs
-				readonly r_qpkg_download_path=$r_qpkg_cache_path/downloads
+		r_ipk_cache_path=$r_cache_path/IPKs
+		r_pip_cache_path=$r_cache_path/PIPs
+		r_qpkg_cache_path=$r_cache_path/QPKGs
 
-		readonly r_log_path=$r_this_package_path/log
+		r_ipk_downgrade_path=$r_ipk_cache_path/downgrade
+		r_ipk_download_path=$r_ipk_cache_path/downloads
+		r_qpkg_download_path=$r_qpkg_cache_path/downloads
+
+		readonly r_cache_path
+		readonly r_ipk_cache_path
+		readonly r_ipk_downgrade_path
+		readonly r_ipk_download_path
+		readonly r_log_path
+		readonly r_pip_cache_path
+		readonly r_qpkg_cache_path
+		readonly r_qpkg_download_path
 
 	# Essential pathfilenames.
 
-		readonly r_inhibit_display_pathfile=$r_cache_path/display.inhibit
-		readonly r_objects_archive_pathfile=$r_cache_path/objects.tar.gz
-		readonly r_objects_pathfile=$r_cache_path/objects
-		readonly r_packages_archive_pathfile=$r_cache_path/$r_nas_qpkg_arch.packages.tar.gz
-		readonly r_packages_pathfile=$r_cache_path/$r_nas_qpkg_arch.packages
-		readonly r_prev_ipk_list_pathfile=$r_ipk_cache_path/ipk-list.save
-		readonly r_prev_pip_list_pathfile=$r_pip_cache_path/pip-list.save
-		readonly r_session_archive_log_pathfile=$r_log_path/session.archive.log
+		r_inhibit_display_pathfile=$r_cache_path/display.inhibit
+		r_objects_archive_pathfile=$r_cache_path/objects.tar.gz
+		r_objects_pathfile=$r_cache_path/objects
+		r_packages_archive_pathfile=$r_cache_path/$r_nas_qpkg_arch.packages.tar.gz
+		r_packages_pathfile=$r_cache_path/$r_nas_qpkg_arch.packages
+		r_prev_ipk_list_pathfile=$r_ipk_cache_path/ipk-list.save
+		r_prev_pip_list_pathfile=$r_pip_cache_path/pip-list.save
+		r_session_archive_log_pathfile=$r_log_path/session.archive.log
+
+		readonly r_inhibit_display_pathfile
+		readonly r_objects_archive_pathfile
+		readonly r_objects_pathfile
+		readonly r_packages_archive_pathfile
+		readonly r_packages_pathfile
+		readonly r_prev_ipk_list_pathfile
+		readonly r_prev_pip_list_pathfile
+		readonly r_session_archive_log_pathfile
 
 	# Ephemeral paths.
 
-		readonly r_temp_run_path=$r_sys_run_path/sherpa.d
-			readonly r_action_counts_path=$r_temp_run_path/action/count
-			readonly r_async_procs_path=$r_temp_run_path/proc
-				readonly r_animation_path=$r_async_procs_path/animation
-			readonly r_qpkg_states_path=$r_temp_run_path/qpkg/state
-			readonly r_run_logs_path=$r_temp_run_path/log
-			readonly r_temp_report_path=$r_temp_run_path/report
-				readonly r_report_flags_path=$r_temp_report_path/flag
-				readonly r_report_rows_path=$r_temp_report_path/row
+		r_temp_log_path=$r_sys_log_path/sherpa.d
+		r_temp_run_path=$r_sys_run_path/sherpa.d
 
-		readonly r_temp_log_path=$r_sys_log_path/sherpa.d
-			readonly r_action_log_path=$r_temp_log_path/action/log
-				readonly r_action_times_path=$r_action_log_path/times
-			readonly r_report_path=$r_temp_log_path/report
+		r_action_counts_path=$r_temp_run_path/action/count
+		r_action_log_path=$r_temp_log_path/action/log
+		r_async_procs_path=$r_temp_run_path/proc
+		r_qpkg_states_path=$r_temp_run_path/qpkg/state
+		r_report_path=$r_temp_log_path/report
+		r_run_logs_path=$r_temp_run_path/log
+		r_temp_report_path=$r_temp_run_path/report
+
+		r_action_times_path=$r_action_log_path/times
+		r_animation_path=$r_async_procs_path/animation
+		r_report_flags_path=$r_temp_report_path/flag
+		r_report_rows_path=$r_temp_report_path/row
+
+		readonly r_action_counts_path
+		readonly r_action_log_path
+		readonly r_action_times_path
+		readonly r_animation_path
+		readonly r_async_procs_path
+		readonly r_qpkg_states_path
+		readonly r_report_flags_path
+		readonly r_report_path
+		readonly r_report_rows_path
+		readonly r_run_logs_path
+		readonly r_temp_log_path
+		readonly r_temp_report_path
+		readonly r_temp_run_path
 
 	# Ephemeral pathfilenames.
 
-		readonly r_abort_actions_pathfile=$r_temp_run_path/abort.action
-		readonly r_action_msg_pipe=$r_temp_run_path/action-messages.pipe
-		readonly r_action_msg_pipe_log_pathfile=/share/Public/enhanced-action-messages-pipe.log		# directive:omit-from-production
-		readonly r_action_results_pathfile=$r_action_log_path/action-results.log
-		readonly r_oom_log_pathfile=$r_temp_log_path/oom.log
-		readonly r_ram_freeused_pathfile=$r_temp_log_path/ram.freeused
-		readonly r_ramfs_freespace_pathfile=$r_temp_log_path/ramfs.freespace
-		readonly r_report_output_pathfile=$r_temp_log_path/report.ansi
-		readonly r_screen_sessions_pathfile=$r_temp_log_path/screen.sessions
-		readonly r_session_last_pathfile=$r_temp_log_path/session-last.log
-		readonly r_session_tail_pathfile=$r_temp_log_path/session-tail.log
-
+		r_abort_actions_pathfile=$r_temp_run_path/abort.action
+		r_action_msg_pipe=$r_temp_run_path/action-messages.pipe
+		r_action_msg_pipe_log_pathfile=/share/Public/enhanced-action-messages-pipe.log	# directive:omit-from-production
+		r_action_results_pathfile=$r_action_log_path/action-results.log
+		r_oom_log_pathfile=$r_temp_log_path/oom.log
+		r_ram_freeused_pathfile=$r_temp_log_path/ram.freeused
+		r_ramfs_freespace_pathfile=$r_temp_log_path/ramfs.freespace
+		r_report_output_pathfile=$r_temp_log_path/report.ansi
+		r_screen_sessions_pathfile=$r_temp_log_path/screen.sessions
+		r_session_last_pathfile=$r_temp_log_path/session-last.log
+		r_session_tail_pathfile=$r_temp_log_path/session-tail.log
 		session_active_log_pathfile=$r_temp_log_path/session.$$.active.log
+
+		readonly r_abort_actions_pathfile
+		readonly r_action_msg_pipe
+		readonly r_action_msg_pipe_log_pathfile											# directive:omit-from-production
+		readonly r_action_results_pathfile
+		readonly r_oom_log_pathfile
+		readonly r_ram_freeused_pathfile
+		readonly r_ramfs_freespace_pathfile
+		readonly r_report_output_pathfile
+		readonly r_screen_sessions_pathfile
+		readonly r_session_last_pathfile
+		readonly r_session_tail_pathfile
 
 	# Entware.
 
-		readonly r_external_apps_path=/opt
-			readonly r_external_apps_temp_path=$r_external_apps_path.temp
-			readonly r_external_packages_archive_pathfile=$r_external_apps_path/var/opkg-lists/entware
+		r_external_apps_path=/opt
 
-		readonly r_external_packages_pathfile=$r_cache_path/Packages
+		r_external_apps_temp_path=$r_external_apps_path.temp
+		r_external_packages_archive_pathfile=$r_external_apps_path/var/opkg-lists/entware
+		r_external_packages_pathfile=$r_cache_path/Packages
 
-	/bin/rm -f "$r_report_output_pathfile" "$r_ramfs_freespace_pathfile" "$r_inhibit_display_pathfile" 2> /dev/null
+		readonly r_external_apps_path
+		readonly r_external_apps_temp_path
+		readonly r_external_packages_archive_pathfile
+		readonly r_external_packages_pathfile
 
-	readonly r_ani_end_pathfile=$r_animation_path/$r_ani_id.end			# Internal fileflag (to stop animation cleanly).
-	readonly r_ani_frame_pathfile=$r_animation_path/$r_ani_id.frame		# Next frame to be displayed by animator process.
-	readonly r_ani_pid_pathfile=$r_animation_path/$r_ani_id.pid			# PID of forked animator process.
-	readonly r_ani_resume_pathfile=$r_animation_path/$r_ani_id.resume	# If exists, animation was running prior to PauseAni(), and should be started again ASAP.
+	# Animator.
 
-	ClearAnimationFiles
+		r_ani_end_pathfile=$r_animation_path/$r_ani_id.end			# Internal fileflag (to stop animation cleanly).
+		r_ani_frame_pathfile=$r_animation_path/$r_ani_id.frame		# Next frame to be displayed by animator process.
+		r_ani_pid_pathfile=$r_animation_path/$r_ani_id.pid			# PID of forked animator process.
+		r_ani_resume_pathfile=$r_animation_path/$r_ani_id.resume	# If exists, animation was running prior to PauseAni(), and should be started again ASAP.
+
+		readonly r_ani_end_pathfile
+		readonly r_ani_frame_pathfile
+		readonly r_ani_pid_pathfile
+		readonly r_ani_resume_pathfile
+
+		ClearAnimationFiles
+
+	/bin/rm -f "$r_report_output_pathfile" "$r_ramfs_freespace_pathfile" "$r_inhibit_display_pathfile"
 
 	}
 
@@ -825,49 +1002,49 @@ ShowLogMarkersAsDebug()
 	# Inputs: (global)
 	#	$r_debug_log_width
 
-	local -a a_markers
-	local -i count
-	local -i i
-	local acc
-	local thisline
+	local -a a_a
+	local -i b
+	local -i c
+	local d
+	local e
 
-	a_markers=(Markers:)
-	a_markers+=("$(Parenthesise '**') detected")
-	a_markers+=("$(Parenthesise 'II') information")
-	a_markers+=("$(Parenthesise 'WW') warning")
-	a_markers+=("$(Parenthesise 'EE') error")
-	a_markers+=("$(Parenthesise 'LL') log file")
-	a_markers+=("$(Parenthesise 'vv') variable name & value")
-	a_markers+=("$(Parenthesise 'aa') array name & values")
-	a_markers+=("$(Parenthesise '--') processing")
-	a_markers+=("$(Parenthesise '==') done")
-	a_markers+=("$(Parenthesise '>>') f entry")
-	a_markers+=("$(Parenthesise '<<') f exit")
-	a_markers+=("$(Parenthesise '\\') async f entry")
-	a_markers+=("$(Parenthesise '//') async f exit")
-	a_markers+=("$(Parenthesise 'NA') not-applicable")
-	a_markers+=("$(Parenthesise '$1') positional argument value")
+	a_a=(Markers:)
+	a_a+=("$(Parenthesise '**') detected")
+	a_a+=("$(Parenthesise 'II') information")
+	a_a+=("$(Parenthesise 'WW') warning")
+	a_a+=("$(Parenthesise 'EE') error")
+	a_a+=("$(Parenthesise 'LL') log file")
+	a_a+=("$(Parenthesise 'vv') variable name & value")
+	a_a+=("$(Parenthesise 'aa') array name & values")
+	a_a+=("$(Parenthesise '--') processing")
+	a_a+=("$(Parenthesise '==') done")
+	a_a+=("$(Parenthesise '>>') f entry")
+	a_a+=("$(Parenthesise '<<') f exit")
+	a_a+=("$(Parenthesise '\\') async f entry")
+	a_a+=("$(Parenthesise '//') async f exit")
+	a_a+=("$(Parenthesise 'NA') not-applicable")
+	a_a+=("$(Parenthesise '$1') positional argument value")
 
-	count=${#a_markers[@]}
+	b=${#a_a[@]}
 
-	a_markers=("${a_markers[@]/%/,}")				# Append commas to each array element.
-	a_markers[0]=${a_markers[0]/,/}					# Remove comma from first element.
-	a_markers[count-1]=${a_markers[count-1]/,/.}	# Replace comma in last element with a period.
+	a_a=("${a_a[@]/%/,}")			# Append commas to each array element.
+	a_a[0]=${a_a[0]/,/}				# Remove comma from first element.
+	a_a[b-1]=${a_a[b-1]/,/.}		# Replace comma in last element with a period.
 
-	acc=${a_markers[0]}								# Load accumulator with first element.
+	d=${a_a[0]}						# Load accumulator with first element.
 
-	for ((i=1; i<=count-1; i++)); do
-		thisline=${a_markers[i]}
+	for ((c=1; c<=b-1; c++)); do
+		e=${a_a[c]}
 
-		if [[ $((${#acc}+${#thisline}+2)) -le $r_debug_log_width ]]; then
-			acc+=" $thisline"						# Accumulate.
+		if [[ $((${#d}+${#e}+2)) -le $r_debug_log_width ]]; then
+			d+=" $e"				# Accumulate.
 		else
-			DebugInfo "$acc"
-			acc=$thisline							# Reset accumulator.
+			DebugInfo "$(TextDarkGrey "$d")"
+			d=$e					# Reset accumulator.
 		fi
 	done
 
-	[[ ${#acc} -gt 0 ]] && DebugInfo "$acc"
+	[[ ${#d} -gt 0 ]] && DebugInfo "$(TextDarkGrey "$d")"
 
 	}
 
@@ -895,6 +1072,8 @@ LoadLists()
 
 	[[ ${lists_loaded:=false} = false ]] || return 0
 
+	local a
+
 	# These are used internally by sherpa.
 	# Ordered.
 
@@ -905,27 +1084,29 @@ LoadLists()
 
 	ar_qpkg_basic_states=(complete enabled installed)
 	ar_qpkg_extended_states=(active backedup downloaded installable missing signed upgradable)
-	ar_qpkg_transient_states=(restarting slow starting stopping unknown)
-		ar_qpkg_is_states=(${ar_qpkg_basic_states[*]} ${ar_qpkg_extended_states[*]} ${ar_qpkg_transient_states[*]})
-		ar_qpkg_isnt_states=(${ar_qpkg_basic_states[*]} ${ar_qpkg_extended_states[*]} ${ar_qpkg_transient_states[*]})
 	ar_qpkg_is_groups=(all canbackup canclean canrestarttoupdate dependent hasdependents independent optional)
 	ar_qpkg_isnt_groups=(canclean)
 	ar_qpkg_service_results=(failed ok)
+	ar_qpkg_transient_states=(restarting slow starting stopping unknown)
+
+	ar_qpkg_is_states=(${ar_qpkg_basic_states[*]} ${ar_qpkg_extended_states[*]} ${ar_qpkg_transient_states[*]})
+	ar_qpkg_isnt_states=(${ar_qpkg_basic_states[*]} ${ar_qpkg_extended_states[*]} ${ar_qpkg_transient_states[*]})
 
 	# Ordered.
 
-	ar_qpkg_actions=(status list rebuild reassign download backup resign unsign deactivate disable uninstall update upgrade reinstall install enableau disableau sign restore clean enable activate reactivate)
 	ar_ipk_actions=(downgrade download uninstall upgrade install)
 	ar_pip_actions=(uninstall upgrade install)
+	ar_qpkg_actions=(status list rebuild reassign download backup resign unsign deactivate disable uninstall update upgrade reinstall install enableau disableau sign restore clean enable activate reactivate)
 
 	# These actions may be specified by the user.
 	# Sorted.
 
 	ar_user_qpkg_actions=(activate backup clean deactivate disable disableau enable enableau install list reactivate reassign rebuild reinstall resign restore status uninstall update upgrade)
 
+	readonly ar_ipk_actions
 	readonly ar_package_tiers
-	readonly ar_qpkg_tiers
-
+	readonly ar_pip_actions
+	readonly ar_qpkg_actions
 	readonly ar_qpkg_basic_states
 	readonly ar_qpkg_extended_states
 	readonly ar_qpkg_is_groups
@@ -933,15 +1114,9 @@ LoadLists()
 	readonly ar_qpkg_isnt_groups
 	readonly ar_qpkg_isnt_states
 	readonly ar_qpkg_service_results
+	readonly ar_qpkg_tiers
 	readonly ar_qpkg_transient_states
-
-	readonly ar_qpkg_actions
-	readonly ar_ipk_actions
-	readonly ar_pip_actions
-
 	readonly ar_user_qpkg_actions
-
-	local a
 
 	for a in "${ar_qpkg_actions[@]}" debug downgrade fix; do
 		readonly r_"$(Lowercase "$a")"_log_file=$a.log
@@ -1131,9 +1306,6 @@ DebugLogEnv()
 	local -i n
 	local a
 	local b
-
-	a=''
-	b=''
 
 	SetHardwarePlatform
 	SetOsKernelPageSize
@@ -1349,7 +1521,7 @@ DebugLogEnv()
 	fi | /bin/grep -iEv '^(devtmpfs|cgroup_root)'
 
 	DebugInfoMinSepr
-	Executer '/usr/sbin/screen -ls' "$r_screen_sessions_pathfile" '' 1 | /bin/sed "$r_regex_process_screen_sessions"
+	Executer '/usr/sbin/screen -ls; true' "$r_screen_sessions_pathfile" '' 1 | /bin/sed "$r_regex_process_screen_sessions"
 	DebugInfoMinSepr
 
 	if [[ -x $r_gnu_free_cmd ]]; then
@@ -1633,9 +1805,6 @@ AssignQpkgsToActions()
 	local action
 	local prospect
 	local qpkg_name
-
-	action=''
-	prospect=''
 
 	# KLUDGE: ensure Entware is reinstalled when IPKs database is upgraded.
 	# Don't auto re-install Entware if only 'status' action is requested.
@@ -1990,11 +2159,8 @@ ProcActions()
 	local state
 	local tier
 
-	action=''
-	state=''
-	tier=''
-
 	/bin/rm -f "$r_action_results_pathfile" 2> /dev/null
+
 #	OpenMsgPipeEnhancedLog								# directive:omit-from-production
 
 	# -> Package preparation phase <-
@@ -2163,6 +2329,7 @@ ProcAction()
 	local -a a_target_packages
 	local -i package_index
 	local -i pid
+	local -i total_count
 	local a
 	local group
 	local msg1_key
@@ -2181,12 +2348,10 @@ ProcAction()
 
 	a=_ExecOneActionWithManyForks_
 	a_target_packages=()
-	group=''
 	msg1_key=''
 	msg1_value=''
 	msg2_key=''
 	msg2_value=''
-	package=''
 	pid=0
 	r_action=${1:?${FUNCNAME[0]}(): $e_noact}
 	r_action_intransitive_msg=${4:?${FUNCNAME[0]}(): $e_noact message}
@@ -2194,8 +2359,6 @@ ProcAction()
 	r_pid_pathfile=$(CreatePidFilePathName)
 	r_tier=${2:?${FUNCNAME[0]}(): $e_notir}
 	re=''
-	state=''
-	target_object_name=''
 	total_count=0
 
 	local -r r_action
@@ -4138,9 +4301,9 @@ LoadIpkList()
 	# Inputs: (global)
 	#	$r_prev_ipk_list_pathfile
 
-	local name=''
-	local separator=''
-	local version=''
+	local name
+	local separator
+	local version
 
 	if [[ -s $r_prev_ipk_list_pathfile ]]; then
 		DebugInfo "IPKs are being loaded from $(FormatFileName "$r_prev_ipk_list_pathfile")"
@@ -4158,8 +4321,8 @@ LoadPipList()
 	# Inputs: (global)
 	#	$r_prev_pip_list_pathfile
 
-	local name=''
-	local re=''
+	local name
+	local re
 
 	if [[ -s $r_prev_pip_list_pathfile ]]; then
 		DebugInfo "PIPs are being loaded from $(FormatFileName "$r_prev_pip_list_pathfile")"
@@ -4371,11 +4534,12 @@ IPKs:upgrade()
 	local -i z
 	local action
 	local desc
+	local log_pathfile
 	local package_name
 	local package_type
-	local log_pathfile=$r_log_path/ipks.$r_upgrade_log_file
 
 	action=upgrade
+	log_pathfile=$r_log_path/ipks.$r_upgrade_log_file
 	package_name=auxiliary
 	package_type=IPK
 	z=0
@@ -7643,7 +7807,7 @@ ExtractPrevSessFromTail()
 
 	if [[ -s $r_session_tail_pathfile ]]; then
 		end_line=$(GetLogSessFinishLine "$old_session")
-		start_line=$((end_line+1))		# Ensure an invalid condition, to be solved by the loop.
+		start_line=end_line+1		# Ensure an invalid condition, to be solved by the loop.
 
 		while [[ $start_line -ge $end_line ]]; do
 			start_line=$(GetLogSessStartLine "$old_session")
@@ -9235,7 +9399,7 @@ ReportAllActionResults()
 		b=$(ConvertMillisecondsToSeconds "$b")
 		c=$(ConvertMillisecondsToSeconds "$c")
 
-		[[ $b -gt 0 ]] && e=$((b+c+1))			# Use last non-zero iteration of $datetime as beginning of last action, then add duration to it.
+		[[ $b -gt 0 ]] && e=b+c+1			# Use last non-zero iteration of $datetime as beginning of last action, then add duration to it.
 
 		if [[ $show_action_results_ok = true || $show_action_results_skipped = true || $show_action_results_failed = true || $show_action_results_zero = true ]]; then
 			{
@@ -10961,13 +11125,13 @@ SaveActionResultMetrics()
 	local r_result_code
 	local r_starttime
 	local r_var_name
-	local var_safe_name
+	local r_var_safe_name
 
 	r_clean_action=${action//\"/}
 		r_action_times_pathfile=$r_action_times_path/$r_clean_action.milliseconds
 	r_var_name=${FUNCNAME[1]}_STARTNANOSECONDS
-		var_safe_name=${r_var_name//[.-]/_}; var_safe_name=${var_safe_name//:/_}
-			r_starttime=$(ConvertNanosecondsToMilliseconds "${!var_safe_name}")
+		r_var_safe_name=${r_var_name//[.-]/_}; r_var_safe_name=${r_var_safe_name//:/_}
+			r_starttime=$(ConvertNanosecondsToMilliseconds "${!r_var_safe_name}")
 				r_duration=$(CalcAmountDiff "$r_starttime" "$(ConvertNowToMilliseconds)")
 	r_qty=${3:-1}
 	r_reason=${2:-}
@@ -10981,6 +11145,7 @@ SaveActionResultMetrics()
 	local -r r_result_code
 	local -r r_starttime
 	local -r r_var_name
+	local -r r_var_safe_name
 
 	# Add new action results entry.
 
@@ -16888,11 +17053,11 @@ FormatNWords()
 	[[ ${#1} -gt 0 ]] || return
 
 	local -i n
+	local -i word_count
+	local -i words_max
 	local a
 	local word_colour
-	local word_count
 	local words
-	local words_max
 
 	a=''
 	word_colour=${3:-TextUncoloured}
@@ -17019,7 +17184,7 @@ DebugInfoMajSepr()
 	# Inputs: (global)
 	#	$r_debug_log_width
 
-	DebugInfo "$(eval printf '%0.s═' "{1..${r_debug_log_width:=1}}")"	# `seq` is unavailable in QTS, so must resort to `eval` trickery instead.
+	DebugInfo "$(TextDarkGrey "$(eval printf '%0.s═' "{1..${r_debug_log_width:=1}}")")"	# `seq` is unavailable in QTS, so must resort to `eval` trickery instead.
 
 	}
 
@@ -17031,7 +17196,7 @@ DebugInfoMinSepr()
 	# Inputs: (global)
 	#	$r_debug_log_width
 
-	DebugInfo "$(eval printf '%0.s─' "{1..${r_debug_log_width:=1}}")"	# `seq` is unavailable in QTS, so must resort to `eval` trickery instead.
+	DebugInfo "$(TextDarkGrey "$(eval printf '%0.s─' "{1..${r_debug_log_width:=1}}")")"	# `seq` is unavailable in QTS, so must resort to `eval` trickery instead.
 
 	}
 
@@ -17326,16 +17491,17 @@ FuncInit()
 	# Debug function entry.
 
 	local r_var_name
-	local var_safe_name
+	local r_var_safe_name
 
 	r_var_name=${FUNCNAME[1]}_STARTNANOSECONDS
 
+	r_var_safe_name=${r_var_name//[.-]/_}
+	r_var_safe_name=${r_var_safe_name//:/_}
+
 	local -r r_var_name
+	local -r r_var_safe_name
 
-	var_safe_name=${r_var_name//[.-]/_}
-	var_safe_name=${var_safe_name//:/_}
-
-	eval "$var_safe_name=$(ConvertNowToNanoseconds)"
+	eval "$r_var_safe_name=$(ConvertNowToNanoseconds)"
 
 	DebugAsFuncEn
 
@@ -17347,16 +17513,17 @@ FuncExit()
 	# Debug function exit.
 
 	local r_var_name
-	local var_safe_name
+	local r_var_safe_name
 
 	r_var_name=${FUNCNAME[1]}_STARTNANOSECONDS
 
+	r_var_safe_name=${r_var_name//[.-]/_}
+	r_var_safe_name=${r_var_safe_name//:/_}
+
 	local -r r_var_name
+	local -r r_var_safe_name
 
-	var_safe_name=${r_var_name//[.-]/_}
-	var_safe_name=${var_safe_name//:/_}
-
-	DebugAsFuncEx "${1:-0}" "$(ConvertMillisecondsToFuncDuration "$(CalcMillisecondsDiffFromNanoseconds "${!var_safe_name}" "$(ConvertNowToNanoseconds)")")"
+	DebugAsFuncEx "${1:-0}" "$(ConvertMillisecondsToFuncDuration "$(CalcMillisecondsDiffFromNanoseconds "${!r_var_safe_name}" "$(ConvertNowToNanoseconds)")")"
 
 	return ${1:-0}
 
@@ -17386,16 +17553,17 @@ FuncForkInit()
 	session_active_log_pathfile=$(/bin/mktemp "$r_action_log_path"/"${FUNCNAME[1]}"_XXXXXX)
 
 	local r_var_name
-	local var_safe_name
+	local r_var_safe_name
 
 	r_var_name=${FUNCNAME[1]}_STARTNANOSECONDS
 
+	r_var_safe_name=${r_var_name//[.-]/_}
+	r_var_safe_name=${r_var_safe_name//:/_}
+
 	local -r r_var_name
+	local -r r_var_safe_name
 
-	var_safe_name=${r_var_name//[.-]/_}
-	var_safe_name=${var_safe_name//:/_}
-
-	eval "$var_safe_name=$(ConvertNowToNanoseconds)"
+	eval "$r_var_safe_name=$(ConvertNowToNanoseconds)"
 
 	DebugAsFuncForkEn
 	[[ ${FUNCNAME[1]} != _ExecOneActionWithManyForks_ ]] && MarkActionForkAsEntry	# Ignore entry into primary action launcher as it's not an action fork.
@@ -17415,17 +17583,18 @@ FuncForkExit()
 	#	$session_active_log_pathfile
 
 	local r_var_name
-	local var_safe_name
+	local r_var_safe_name
 
 	r_var_name=${FUNCNAME[1]}_STARTNANOSECONDS
 
-	local -r r_var_name
+	r_var_safe_name=${r_var_name//[.-]/_}
+	r_var_safe_name=${r_var_safe_name//:/_}
 
-	var_safe_name=${r_var_name//[.-]/_}
-	var_safe_name=${var_safe_name//:/_}
+	local -r r_var_name
+	local -r r_var_safe_name
 
 	[[ ${FUNCNAME[1]} != _ExecOneActionWithManyForks_ ]] && MarkActionForkAsExit	# Ignore exit from primary action launcher as it's not an action fork.
-	DebugAsFuncForkEx "${1:-0}" "$(ConvertMillisecondsToFuncDuration "$(CalcMillisecondsDiffFromNanoseconds "${!var_safe_name}" "$(ConvertNowToNanoseconds)")")"
+	DebugAsFuncForkEx "${1:-0}" "$(ConvertMillisecondsToFuncDuration "$(CalcMillisecondsDiffFromNanoseconds "${!r_var_safe_name}" "$(ConvertNowToNanoseconds)")")"
 
 	if [[ -n ${session_active_log_pathfile:-} && -e $session_active_log_pathfile ]]; then
 		if [[ -s $session_active_log_pathfile ]]; then
@@ -17794,7 +17963,7 @@ DebugAsFuncEn()
 DebugAsFuncEx()
 	{
 
-	DebugThis "$(Parenthesise '<<') ${FUNCNAME[2]}()|${1:-0}|${2:-}"
+	DebugThis "$(Parenthesise '<<') ${FUNCNAME[2]}() ${1:-0}|${2:-}"
 
 	}
 
@@ -18177,8 +18346,11 @@ ShowAsBug()
 #
 #	[[ -n ${1:-} ]] || return
 #
-#	local a=quiz
-#	local b=$1:
+#	local a
+#	local b
+#
+#	a=quiz
+#	b=$1:
 #
 #	OpStepClearWait "$(TextBrightOrangeBlink "$a")" "$b"
 #	WriteToLog "$a" "$b"
@@ -18190,8 +18362,11 @@ ShowAsBug()
 #
 #	[[ -n ${1:-} ]] || return
 #
-#	local a=quiz
-#	local b=$1
+#	local a
+#	local b
+#
+#	a=quiz
+#	b=$1
 #
 #	OpStepClear "$(TextBrightOrange "$a")" "$b"
 #
@@ -18251,7 +18426,7 @@ PercFrac()
 	local -i b
 	local c
 
-	a=$((${1:-0}+${2:-0}+${3:-0}))
+	a=${1:-0}+${2:-0}+${3:-0}
 	b=${4:-0}
 	c=''
 
@@ -18287,7 +18462,7 @@ ShowAsIterativeProgress()
 	ConfirmVarIsDefined 3 "${3:-}" "$e_nostr" || return
 	ConfirmVarIsDefined 5 "${5:-}" "$e_nostr" || return
 
-	local -i a=${2:-0}
+	local -i a
 	local -i b
 	local c
 	local d
@@ -18868,6 +19043,7 @@ SetHardwareCpuThreads()
 
 	if [[ ${r_cpu_threads:-unset} = unset ]]; then
 		r_cpu_threads=$(GetHardwareCpuThreads)
+
 		readonly r_cpu_threads
 	fi
 
@@ -18882,11 +19058,13 @@ SetHardwareInstalledRAM()
 
 	if [[ ${r_nas_ram_kb:-unset} = unset ]]; then
 		r_nas_ram_kb=$(GetHardwareInstalledRAMkb)
+
 		readonly r_nas_ram_kb
 	fi
 
 	if [[ ${r_nas_ram_gb:-unset} = unset ]]; then
 		r_nas_ram_gb=$(GetHardwareInstalledRAMgb)
+
 		readonly r_nas_ram_gb
 	fi
 
@@ -18900,6 +19078,7 @@ SetHardwarePlatform()
 
 	if [[ ${r_nas_platform:-unset} = unset ]]; then
 		r_nas_platform=$(GetHardwarePlatform)
+
 		readonly r_nas_platform
 	fi
 
@@ -18946,6 +19125,7 @@ SetOsKernelPageSize()
 
 	if [[ ${r_kernel_page_size:-unset} = unset ]]; then
 		r_kernel_page_size=$(GetOsKernelPageSize)
+
 		readonly r_kernel_page_size
 	fi
 
@@ -18959,6 +19139,7 @@ SetOsFirmwareVersion()
 
 	if [[ ${r_nas_firmware_version:-unset} = unset ]]; then
 		r_nas_firmware_version=$(GetOsFirmwareVersion).$(GetOsFirmwareBuild)
+
 		readonly r_nas_firmware_version
 	fi
 
@@ -18974,6 +19155,7 @@ SetOsFirmwareVer()
 
 	if [[ ${r_nas_firmware_ver:-unset} = unset ]]; then
 		r_nas_firmware_ver=$(GetOsFirmwareVer)
+
 		readonly r_nas_firmware_ver
 	fi
 
@@ -18987,6 +19169,7 @@ SetOsFirmwareDate()
 
 	if [[ ${r_nas_firmware_date:-unset} = unset ]]; then
 		r_nas_firmware_date=$(GetOsFirmwareDate)
+
 		readonly r_nas_firmware_date
 	fi
 
@@ -19000,6 +19183,7 @@ SetNasArch()
 
 	if [[ ${r_nas_arch:-unset} = unset ]]; then
 		r_nas_arch=$(GetNasArch)
+
 		readonly r_nas_arch
 	fi
 
@@ -19013,6 +19197,7 @@ SetQpkgArch()
 
 	if [[ ${r_nas_qpkg_arch:-unset} = unset ]]; then
 		r_nas_qpkg_arch=$(GetQpkgArch)
+
 		readonly r_nas_qpkg_arch
 	fi
 
