@@ -1009,21 +1009,21 @@ ShowLogMarkersAsDebug()
 	local e
 
 	a_a=(Markers:)
-	a_a+=("$(Parenthesise '**') detected")
-	a_a+=("$(Parenthesise 'II') information")
-	a_a+=("$(Parenthesise 'WW') warning")
-	a_a+=("$(Parenthesise 'EE') error")
-	a_a+=("$(Parenthesise 'LL') log file")
-	a_a+=("$(Parenthesise 'vv') variable name & value")
-	a_a+=("$(Parenthesise 'aa') array name & values")
-	a_a+=("$(Parenthesise '--') processing")
-	a_a+=("$(Parenthesise '==') done")
-	a_a+=("$(Parenthesise '>>') f entry")
-	a_a+=("$(Parenthesise '<<') f exit")
-	a_a+=("$(Parenthesise '\\') async f entry")
-	a_a+=("$(Parenthesise '//') async f exit")
-	a_a+=("$(Parenthesise 'NA') not-applicable")
-	a_a+=("$(Parenthesise '$1') positional argument value")
+	a_a+=('(**) detected')
+	a_a+=('(II) information')
+	a_a+=('(WW) warning')
+	a_a+=('(EE) error')
+	a_a+=('(LL) log file')
+	a_a+=('(vv) variable name & value')
+	a_a+=('(aa) array name & values')
+	a_a+=('(--) processing')
+	a_a+=('(==) done')
+	a_a+=('(>>) f entry')
+	a_a+=('(<<) f exit')
+	a_a+=('(\\) async f entry')
+	a_a+=('(//) async f exit')
+	a_a+=('(NA) not-applicable')
+	a_a+=('($1) positional argument value')
 
 	b=${#a_a[@]}
 
@@ -2387,7 +2387,7 @@ ProcAction()
 			DebugVar total_count
 
 			if [[ $total_count -eq 0 ]]; then
-				DebugInfo 'nothing to process'
+				DebugInfo 'nothing to process.'
 
 				FuncExit; return
 			fi
@@ -2413,7 +2413,7 @@ ProcAction()
 			CreateAndSetPidFile
 			$a "_${r_package_type}:${r_action}_" "${a_target_packages[@]}" &
 			pid=$!
-			DebugAsDone "${FUNCNAME[0]}() has forked '$a()' for action '$r_action' with PID '$pid'"
+			DebugAsDone "${FUNCNAME[0]}() has forked '$a()' for action '$r_action' with PID: '$pid'"
 			WriteToPidFile "$pid" "$pidfile"
 
 			AppendToPidsFile "$pid" "$r_pid_pathfile"
@@ -2679,7 +2679,7 @@ SetMaxForks()
 		[[ $max_forks -ne $default_forks ]] && reason="'$1' was requested"
 	fi
 
-	[[ -n $reason ]] && DebugInfo "setting \$max_forks to $max_forks because $reason"
+	[[ -n $reason ]] && DebugInfo "setting \$max_forks to $max_forks because $reason."
 
 	}
 
@@ -4254,13 +4254,13 @@ _UpdateEntwarePackageList_()
 
 	if ! IsFileRecent "$r_external_packages_archive_pathfile" "$r_file_change_threshold_minutes" || [[ ! -f $r_external_packages_archive_pathfile || $useropt_fix = true ]]; then
 		if IsEntwareSiteUp; then
-			DebugAsProc "updating $(FormatPackageName Entware) package list"
+			DebugAsProc "updating $(FormatPackageName Entware) package list ..."
 
 			Executer "$r_opkg_cmd update" "$r_action_log_path/Entware.$r_update_log_file" log:failure-only
 			z=$?
 
 			if [[ $z -eq 0 ]]; then
-				DebugAsDone "updated $(FormatPackageName Entware) package list"
+				DebugAsDone "updated $(FormatPackageName Entware) package list."
 				CloseIpkArchive
 			else		# No-big-deal.
 				DebugAsWarn "Unable to update $(FormatPackageName Entware) package list $(FormatExitcode "$z")"
@@ -4269,7 +4269,7 @@ _UpdateEntwarePackageList_()
 			DebugAsWarn 'unable to update Entware package list'
 		fi
 	else
-		DebugInfo "$(FormatPackageName Entware) package list was updated less than $r_file_change_threshold_minutes minutes ago: skipping update"
+		DebugInfo "$(FormatPackageName Entware) package list was updated less than $r_file_change_threshold_minutes minutes ago: skipping update."
 	fi
 
 	IsFile "$r_external_packages_archive_pathfile" && IsNtFile "$r_external_packages_pathfile" && OpenIpkArchive
@@ -5070,7 +5070,7 @@ _ExecOneActionWithManyForks_()
 			CreateAndSetPidFile
 			$a &
 			pid=$!
-			DebugAsDone "${FUNCNAME[0]}() has forked '$a()' for package '$qpkg_name' with PID '$pid'"
+			DebugAsDone "${FUNCNAME[0]}() has forked '$a()' for package '$qpkg_name' with PID: '$pid'"
 			WriteToPidFile "$pid" "$pidfile"
 
 			AppendToPidsFile "$pid" "$r_pid_pathfile"
@@ -5747,13 +5747,13 @@ _GenerateStatusReportDataRow_()
 
 				case $result in
 					aborted|failed)
-						action+=' '$(Parenthesise "$(TextBrightRed "$result")")
+						action+=" ($(TextBrightRed "$result"))"
 						;;
 					in-progress)
-						action+=' '$(Parenthesise "$(TextBrightOrange "$result")")
+						action+=" ($(TextBrightOrange "$result"))"
 						;;
 					ok)
-						action+=' '$(Parenthesise "$(TextBrightGreen "$(Uppercase "$result")")")
+						action+=" ($(TextBrightGreen "$(Uppercase "$result")"))"
 				esac
 			else
 				action=unsupported
@@ -5908,7 +5908,7 @@ _GenerateStatusReportDataRow_()
 	esac
 
 	if QPKGs-ISupgradable.Exist "$qpkg_name"; then
-		ver_msg+=' '$(Parenthesise "$(TextBrightOrange "$(GetQpkgDbVer)")")
+		ver_msg+=" ($(TextBrightOrange "$(GetQpkgDbVer)"))"
 		/bin/touch "$r_report_flags_path"/state-upgradable
 	fi
 
@@ -7644,6 +7644,7 @@ DisplayFileInViewport()
 		options+=' --quit-if-one-screen'
 		options+=' --quit-on-intr'
 		options+=' --redraw-on-quit'
+#		options+=' --use-color'				# NOTE: this doesn't enable granular colour control of prompt elements.
 
 		if IsReportLargerThanViewport "$report_pathfile"; then
 			IsLessSupportHeaders && [[ $headers = true ]] && options+=' --header=1,'$(CalcReportFirstColumnWidth "$report_pathfile")
@@ -8631,7 +8632,7 @@ BuildExtendedQPKGsStates()
 	FuncInit
 
 	if [[ ${qpkgs_states_built:=false} = true ]]; then
-		DebugAsDetect 'states are already built'
+		DebugAsDetect 'states are already built.'
 
 		FuncExit; return
 	fi
@@ -9461,10 +9462,10 @@ ReportActionResults()
 					DisplayAsHelpTitle "this package action completed $(TextBrightGreen OK):"
 					;;
 				sk)
-					DisplayAsHelpTitle "this package action was $(TextBrightOrange skipped) $(Parenthesise 'and why'):"
+					DisplayAsHelpTitle "this package action was $(TextBrightOrange skipped) (and why):"
 					;;
 				er)
-					DisplayAsHelpTitle "this package action $(TextBrightRed failed) $(Parenthesise 'and why'):"
+					DisplayAsHelpTitle "this package action $(TextBrightRed failed) (and why):"
 			esac
 		elif [[ $count -gt 1 ]]; then
 			case $1 in
@@ -9472,10 +9473,10 @@ ReportActionResults()
 					DisplayAsHelpTitle "these package actions completed $(TextBrightGreen OK):"
 					;;
 				sk)
-					DisplayAsHelpTitle "these package actions were $(TextBrightOrange skipped) $(Parenthesise 'and why'):"
+					DisplayAsHelpTitle "these package actions were $(TextBrightOrange skipped) (and why):"
 					;;
 				er)
-					DisplayAsHelpTitle "these package actions $(TextBrightRed failed) $(Parenthesise 'and why'):"
+					DisplayAsHelpTitle "these package actions $(TextBrightRed failed) (and why):"
 			esac
 		fi
 
@@ -11030,7 +11031,7 @@ ClaimLockfile()
 
 	for a in sherpa-manager.sh sherpa-manager.source; do
 		if [[ -e $r_lock_pathfile && -d /proc/$(< "$r_lock_pathfile") && $(< /proc/"$(< "$r_lock_pathfile")"/cmdline) =~ $a ]]; then
-			ShowAsAbort "a running $(ShowAsTitleName) instance was found $(Parenthesise "PID:$(< "$r_lock_pathfile")"), please wait for it to complete"
+			ShowAsAbort "a running $(ShowAsTitleName) instance was found (PID:$(< "$r_lock_pathfile")), please wait for it to complete"
 			release_lock=false
 
 			return 1
@@ -11239,7 +11240,7 @@ _QPKG:status_()
 
 	[[ $z -eq 0 ]] || FuncForkExit
 
-	DebugAsProc "$action $(FormatPackageName)"
+	DebugAsProcActionPackageName
 
 	a=$(GetQpkgDbActiveTest)
 	IsDebug && b+='DEBUG_QPKG=true '
@@ -11342,7 +11343,7 @@ _QPKG:rebuild_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	DebugAsProc "$action $(FormatPackageName)"
+	DebugAsProcActionPackageName
 
 	# Nothing-to-do here, real QPKG actions have already been assigned in CheckTasks().
 
@@ -11404,7 +11405,7 @@ _QPKG:reassign_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	DebugAsProc "$action $(FormatPackageName)"
+	DebugAsProcActionPackageName
 
 	Executer "/sbin/setcfg -e $qpkg_name store -f /etc/config/qpkg.conf" "$r_log_pathfile" log:failure-only
 	z=$?
@@ -11528,7 +11529,7 @@ _QPKG:download_()
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	if IsNtFile "$r_local_pathfile"; then
-		DebugAsProc "$action $(FormatFileName "$r_remote_filename")"
+		DebugAsProc "$action $(FormatFileName "$r_remote_filename") ..."
 		IsOsCanSecureDownload || curl_insecure_opt='--insecure'
 
 		/bin/rm -f "$r_log_pathfile" 2> /dev/null
@@ -11638,13 +11639,13 @@ _QPKG:install_()
 		if [[ -d $r_external_apps_path && ! -L $r_external_apps_path && ! -e $r_external_apps_temp_path ]]; then
 			# Shift all files from /opt into temporary path.
 
-			DebugAsProc "move-aside $r_external_apps_path"
+			DebugAsProc "move-aside $r_external_apps_path ..."
 			/bin/mv "$r_external_apps_path" "$r_external_apps_temp_path"
 			DebugAsDone complete
 		fi
 	fi
 
-	DebugAsProc "$action $(FormatPackageName)"
+	DebugAsProcActionPackageName
 
 	IsDebug && a+='DEBUG_QPKG=true '
 	[[ ${a_QPKGs_were_installed_name[*]:-} = *"$qpkg_name"* ]] && a+="QINSTALL_PATH=$(GetQpkgInstalledOriginalPath "$qpkg_name") "
@@ -11670,7 +11671,7 @@ _QPKG:install_()
 			if [[ -L $r_external_apps_path && -d $r_external_apps_temp_path ]]; then
 				# Shift all files from temporary path back into /opt
 
-				DebugAsProc "restore-into $r_external_apps_path"
+				DebugAsProc "restore-into $r_external_apps_path ..."
 				(shopt -s dotglob; /bin/mv "$r_external_apps_temp_path"/* "$r_external_apps_path"/)
 				/bin/rm -rf "${r_external_apps_temp_path:?${FUNCNAME[0]}(): $e_nopth}"
 				DebugAsDone complete
@@ -11758,7 +11759,7 @@ _QPKG:reinstall_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	DebugAsProc "$action $(FormatPackageName)"
+	DebugAsProcActionPackageName
 
 	IsDebug && a+='DEBUG_QPKG=true '
 	IsValidQpkgInstalled && a+="QINSTALL_PATH=$(/usr/bin/dirname "$(GetQpkgInstalledPath)") "
@@ -11859,7 +11860,7 @@ _QPKG:update_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	DebugAsProc "$action $(FormatPackageName)"
+	DebugAsProcActionPackageName
 
 	IsDebug && a+='DEBUG_QPKG=true '
 
@@ -11956,7 +11957,7 @@ _QPKG:upgrade_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	DebugAsProc "$action $(FormatPackageName)"
+	DebugAsProcActionPackageName
 
 	prev_ver=$(GetQpkgInstalledVer)
 	IsDebug && a+='DEBUG_QPKG=true '
@@ -12075,7 +12076,7 @@ _QPKG:uninstall_()
 
 	current_ver=$(GetQpkgInstalledVer)
 
-	DebugAsProc "$action $(FormatPackageName)"
+	DebugAsProcActionPackageName
 
 	IsDebug && a+='DEBUG_QPKG=true '
 
@@ -12179,7 +12180,7 @@ _QPKG:activate_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	DebugAsProc "$action $(FormatPackageName)"
+	DebugAsProcActionPackageName
 
 	IsOsCanQpkgTimeout && timeout='-t '$r_qpkg_start_timeout_seconds
 
@@ -12294,7 +12295,7 @@ _QPKG:reactivate_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	DebugAsProc "$action $(FormatPackageName)"
+	DebugAsProcActionPackageName
 
 	IsOsCanQpkgTimeout && timeout='-t '$r_qpkg_restart_timeout_seconds
 
@@ -12401,7 +12402,7 @@ _QPKG:deactivate_()
 
 	IsOsCanQpkgTimeout && timeout='-t '$r_qpkg_stop_timeout_seconds
 
-	DebugAsProc "$action $(FormatPackageName)"
+	DebugAsProcActionPackageName
 
 	if IsDebug; then
 		a+='DEBUG_QPKG=true '
@@ -12500,7 +12501,7 @@ _QPKG:enable_()
 
 	IsOsCanQpkgTimeout && timeout='-t '$r_qpkg_enable_timeout_seconds
 
-	DebugAsProc "$action $(FormatPackageName)"
+	DebugAsProcActionPackageName
 
 	Executer "/usr/local/sbin/qpkg_service $timeout enable $qpkg_name" "$r_log_pathfile" log:failure-only
 	SaveActionResultMetrics ok
@@ -12575,7 +12576,7 @@ _QPKG:disable_()
 
 	IsOsCanQpkgTimeout && timeout='-t '$r_qpkg_disable_timeout_seconds
 
-	DebugAsProc "$action $(FormatPackageName)"
+	DebugAsProcActionPackageName
 
 	Executer "/usr/local/sbin/qpkg_service $timeout disable $qpkg_name" "$r_log_pathfile" log:failure-only
 	SaveActionResultMetrics ok
@@ -12659,7 +12660,7 @@ _QPKG:enableau_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	DebugAsProc "enable auto-update $(FormatPackageName)"
+	DebugAsProc "enable auto-update $(FormatPackageName) ..."
 
 	IsDebug && a+='DEBUG_QPKG=true '
 
@@ -12755,7 +12756,7 @@ _QPKG:disableau_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	DebugAsProc "disable auto-update $(FormatPackageName)"
+	DebugAsProc "disable auto-update $(FormatPackageName) ..."
 
 	IsDebug && a+='DEBUG_QPKG=true '
 
@@ -12847,7 +12848,7 @@ _QPKG:backup_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	DebugAsProc "$action $(FormatPackageName) configuration"
+	DebugAsProc "$action $(FormatPackageName) configuration ..."
 
 	IsDebug && a+='DEBUG_QPKG=true '
 
@@ -12951,7 +12952,7 @@ _QPKG:restore_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	DebugAsProc "$action $(FormatPackageName) configuration"
+	DebugAsProc "$action $(FormatPackageName) configuration ..."
 
 	IsDebug && a+='DEBUG_QPKG=true '
 
@@ -13044,7 +13045,7 @@ _QPKG:clean_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	DebugAsProc "$action $(FormatPackageName)"
+	DebugAsProcActionPackageName
 
 	IsDebug && a+='DEBUG_QPKG=true '
 
@@ -13137,7 +13138,7 @@ _QPKG:sign_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	DebugAsProc "\"$action\" $(FormatPackageName)"
+	DebugAsProcActionPackageName
 
 	# https://pynative.com/python-sqlite-insert-into-table/
 
@@ -13179,7 +13180,7 @@ EOB
 		SendPackageStateChange ISsigned
 		MarkActionForkAsDoneOk
 	else
-		SaveActionResultMetrics er "$(Parenthesise "$z") but don't know why. Please report this as a bug"
+		SaveActionResultMetrics er "($z) but don't know why. Please report this as a bug"
 		SendParentCommand 'show_suggest_raise_issue=true'
 		MarkActionForkAsDoneError
 	fi
@@ -13246,7 +13247,7 @@ _QPKG:unsign_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	DebugAsProc "\"$action\" $(FormatPackageName)"
+	DebugAsProcActionPackageName
 
 	# https://pynative.com/python-sqlite-delete-from-table/
 
@@ -13290,7 +13291,7 @@ EOB
 		SendPackageStateChange ISsigned
 		MarkActionForkAsDoneOk
 	else
-		SaveActionResultMetrics er "$(Parenthesise "$z") but don't know why. Please report this as a bug"
+		SaveActionResultMetrics er "($z) but don't know why. Please report this as a bug"
 		SendParentCommand 'show_suggest_raise_issue=true'
 		MarkActionForkAsDoneError
 	fi
@@ -16693,13 +16694,6 @@ Capitalise()
 
 	}
 
-Parenthesise()
-	{
-
-	printf '(%s)' "${1:-}"			# Allow empty $1.
-
-	}
-
 Bracketise()
 	{
 
@@ -17956,98 +17950,105 @@ ConvertFirmwareVersionStringToNumber()
 DebugAsFuncEn()
 	{
 
-	DebugThis "$(Parenthesise '>>') ${FUNCNAME[2]}()"
+	DebugThis "(>>) ${FUNCNAME[2]}()"
 
 	}
 
 DebugAsFuncEx()
 	{
 
-	DebugThis "$(Parenthesise '<<') ${FUNCNAME[2]}() ${1:-0}|${2:-}"
+	DebugThis "(<<) ${FUNCNAME[2]}()${1:-0}|${2:-}"
 
 	}
 
 DebugAsFuncForkEn()
 	{
 
-	DebugThis "$(Parenthesise '\\') ${FUNCNAME[2]}()"
+	DebugThis '(\\) '"${FUNCNAME[2]}()"
 
 	}
 
 DebugAsFuncForkEx()
 	{
 
-	DebugThis "$(Parenthesise '//') ${FUNCNAME[2]}() ${1:-0}|${2:-}"
+	DebugThis "(//) ${FUNCNAME[2]}()${1:-0}|${2:-}"
 
 	}
 
 DebugAsProc()
 	{
 
-	[[ -n ${1:-} ]] && DebugThis "$(Parenthesise '--') $1"
+	[[ -n ${1:-} ]] && DebugThis "(--) $1"
+
+	}
+
+DebugAsProcActionPackageName()
+	{
+
+	DebugAsProc "$action $(FormatPackageName) ..."
 
 	}
 
 DebugAsDone()
 	{
 
-	[[ -n ${1:-} ]] && DebugThis "$(Parenthesise '==') $1"
+	[[ -n ${1:-} ]] && DebugThis "(==) $1"
 
 	}
 
 DebugAsDetect()
 	{
 
-	[[ -n ${1:-} ]] && DebugThis "$(Parenthesise '**') $1"
+	[[ -n ${1:-} ]] && DebugThis "(**) $1"
 
 	}
 
 DebugAsInfo()
 	{
 
-	[[ -n ${1:-} ]] && DebugThis "$(Parenthesise II) $1"
+	[[ -n ${1:-} ]] && DebugThis "(II) $1"
 
 	}
 
 DebugAsWarn()
 	{
 
-	[[ -n ${1:-} ]] && DebugThis "$(Parenthesise "$(TextBrightOrange WW)") $(TextBrightOrange "$1")"
+	[[ -n ${1:-} ]] && DebugThis "($(TextBrightOrange WW)) $(TextBrightOrange "$1")"
 
 	}
 
 DebugAsError()
 	{
 
-	[[ -n ${1:-} ]] && DebugThis "$(Parenthesise "$(TextBrightRed EE)") $(TextBrightRed "$1")"
+	[[ -n ${1:-} ]] && DebugThis "($(TextBrightRed EE)) $(TextBrightRed "$1")"
 
 	}
 
 DebugAsLog()
 	{
 
-	[[ -n ${1:-} ]] && DebugThis "$(Parenthesise LL) $1"
+	[[ -n ${1:-} ]] && DebugThis "(LL) $1"
 
 	}
 
 DebugAsVar()
 	{
 
-	[[ -n ${1:-} ]] && DebugThis "$(Parenthesise vv) $1"
+	[[ -n ${1:-} ]] && DebugThis "(vv) $1"
 
 	}
 
 DebugAsArray()
 	{
 
-	[[ -n ${1:-} ]] && DebugThis "$(Parenthesise aa) $1"
+	[[ -n ${1:-} ]] && DebugThis "(aa) $1"
 
 	}
 
 DebugAsNA()
 	{
 
-	[[ -n ${1:-} ]] && DebugThis "$(Parenthesise "$(TextDarkGrey NA)") $(TextDarkGrey "$1")"
+	[[ -n ${1:-} ]] && DebugThis "($(TextDarkGrey NA)) $(TextDarkGrey "$1")"
 
 	}
 
@@ -19403,7 +19404,7 @@ RefreshArchive()
 	fi
 
 	if [[ $download = true ]]; then
-		DebugAsProc "download '$archive_name' archive file"
+		DebugAsProc "download '$archive_name' archive file ..."
 
 		IsOsCanSecureDownload || curl_insecure_opt=' --insecure'
 		/sbin/curl --silent --location --fail $curl_insecure_opt "$archive_url" > "$archive_pathfile" 2> /dev/null
@@ -19448,7 +19449,7 @@ RefreshArchive()
 
 	if [[ $extract = true ]]; then
 		if IsFile "$archive_pathfile"; then
-			DebugAsProc "extract '$archive_name' file from archive file"
+			DebugAsProc "extract '$archive_name' file from archive file ..."
 			/bin/tar --extract --gzip --no-same-owner --file="$archive_pathfile" --directory="$r_cache_path"
 
 			if IsFile "$target_pathfile"; then
