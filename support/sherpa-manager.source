@@ -1568,7 +1568,6 @@ CheckTasks()
 	local build_extended_states
 	local group
 	local installed_version
-	local r_pid_pathfile
 	local state
 	local target_packages
 
@@ -1577,11 +1576,8 @@ CheckTasks()
 	build_extended_states=false		# These cannot be found in `/etc/config/qpkg.conf`
 	group=''
 	installed_version=''
-	r_pid_pathfile=$(CreatePidFilePathName)
 	state=''
 	target_packages=''
-
-	local -r r_pid_pathfile
 
 	if [[ $useropt_fix = true || $useropt_show_status = true ]]; then
 		build_extended_states=true
@@ -1660,11 +1656,7 @@ CheckTasks()
 	[[ $build_extended_states = true ]] && BuildExtendedQPKGsStates
 
 	if IsValidQpkgInstalled Entware; then
-		if [[ $r_entware_type != none ]]; then
-			pidfile=$r_pid_pathfile
-			_UpdateEntwarePackageList_ &			# Let's try launching this early.
-			WriteToPidFile "$!" "$r_pid_pathfile"
-		else
+		if [[ $r_entware_type = none ]]; then
 			DebugAsWarn "$(FormatPackageName Entware) appears to be installed but is inactive. Please consider starting the $(FormatPackageName Entware) QPKG."
 		fi
 
@@ -1768,8 +1760,6 @@ CheckTasks()
 		ShowAsNote "the $(TextBrightOrange sherpa) QPKG will be upgraded"
 		QPKGs-ACupgrade-to:Add sherpa
 	fi
-
-	WaitForPidsThenRemove "$r_pid_pathfile"		# Ensure Entware package updater completes before continuing.
 
 	FuncExit
 
@@ -4224,60 +4214,6 @@ PatchEntwareService()
 
 	}
 
-_UpdateEntwarePackageList_()
-	{
-
-	# * This function runs as an asynchronous process *
-
-	# Inputs: (global)
-	#	$r_action_log_path
-	#	$r_external_packages_archive_pathfile
-	#	$r_external_packages_pathfile
-	#	$r_file_change_threshold_minutes
-	#	$r_opkg_cmd
-	#	$r_update_log_file
-	#	$useropt_fix
-
-	if IsNtCriticalFile $r_opkg_cmd; then
-		DisplayAsProjSynExam 'try reactivating Entware' 'reactivate ew'
-
-		return 1
-	fi
-
-	FuncForkInit
-
-	local -i z
-
-	z=0
-
-	# If Entware package list was recently updated, don't update again.
-
-	if ! IsFileRecent "$r_external_packages_archive_pathfile" "$r_file_change_threshold_minutes" || [[ ! -f $r_external_packages_archive_pathfile || $useropt_fix = true ]]; then
-		if IsEntwareSiteUp; then
-			DebugAsProc "updating $(FormatPackageName Entware) package list ..."
-
-			Executer "$r_opkg_cmd update" "$r_action_log_path/Entware.$r_update_log_file" log:failure-only
-			z=$?
-
-			if [[ $z -eq 0 ]]; then
-				DebugAsDone "updated $(FormatPackageName Entware) package list."
-				CloseIpkArchive
-			else		# No-big-deal.
-				DebugAsWarn "Unable to update $(FormatPackageName Entware) package list $(FormatExitcode "$z")"
-			fi
-		else
-			DebugAsWarn 'unable to update Entware package list'
-		fi
-	else
-		DebugInfo "$(FormatPackageName Entware) package list was updated less than $r_file_change_threshold_minutes minutes ago: skipping update."
-	fi
-
-	IsFile "$r_external_packages_archive_pathfile" && IsNtFile "$r_external_packages_pathfile" && OpenIpkArchive
-
-	FuncForkExit
-
-	}
-
 SaveIpkAndPipList()
 	{
 
@@ -4390,6 +4326,14 @@ CalcIpkDepsToInstall()
 		FuncExit 1; return
 	fi
 
+	IsFile "$r_external_packages_archive_pathfile" && IsNtFile "$r_external_packages_pathfile" && OpenIpkArchive
+
+	if IsNtFile "$r_external_packages_pathfile"; then
+		DebugAsWarn 'no external package file found'
+
+		FuncExit 1; return
+	fi
+
 	EndAni
 
 	DebugInfo "$requested_count IPK$(Pluralise "$requested_count") requested" "'$req_list' "
@@ -4483,6 +4427,14 @@ CalcIpkDownloadSize()
 	local -i size_count
 
 	size_count=$(IPKs-ACdownload-to:Count)
+
+	IsFile "$r_external_packages_archive_pathfile" && IsNtFile "$r_external_packages_pathfile" && OpenIpkArchive
+
+	if IsNtFile "$r_external_packages_pathfile"; then
+		DebugAsWarn 'no external package file found'
+
+		FuncExit 1; return
+	fi
 
 	if [[ $size_count -gt 0 ]]; then
 		EndAni
@@ -11665,7 +11617,6 @@ _QPKG:install_()
 
 		if [[ $qpkg_name = Entware ]]; then
 			SendParentCommand ModPathToEntware
-			SendParentCommand _UpdateEntwarePackageList_
 			PatchEntwareService
 
 			if [[ -L $r_external_apps_path && -d $r_external_apps_temp_path ]]; then
@@ -14586,7 +14537,7 @@ IsFile()
 
 	a=${1%% *}	# Extract first word-group.
 
-	[[ -f $a && -s $a ]]
+	[[ -s $a ]]
 
 	}
 
@@ -19898,10 +19849,11 @@ CaughtEXIT()
 
 	trap - EXIT
 
+	CloseIpkArchive
+	ReleaseLockfile
 	EndAni
 	ShowKeystrokes
 	ShowCursor
-	ReleaseLockfile
 
 	}
 
