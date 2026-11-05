@@ -316,17 +316,21 @@ LoadConsts()
 
 	# Regexes.
 
-		r_regex_delete_empty_lines='/^$/d;/^[[:space:]]*$/d'
-		r_regex_fix_kib='s/kB/kiB/'
-		r_regex_strip_ansi='s/\x1b\[[0-9;]*m//g'
-		r_regex_strip_comments='/^#[[:blank:]].*/d;/#$/d;s/[[:blank:]]#[[:blank:]].*//'
-		r_regex_strip_lead_whitespace='s/^[[:blank:]]*//'
-		r_regex_strip_tail_whitespace='s/[[:blank:]]*$//'
-		r_regex_strip_upto_colon='s/^.*:[[:blank:]]//'
+		# Simple.
 
-		r_regex_delete_firstlast_empty_lines='1{'$r_regex_delete_empty_lines'};${'$r_regex_delete_empty_lines'}'
-		r_regex_process_ram=$r_regex_strip_upto_colon';s/kB//;s/[[:blank:]]//g'
-		r_regex_process_screen_sessions=$r_regex_delete_empty_lines';'$r_regex_strip_lead_whitespace
+			r_regex_delete_empty_lines='/^$/d;/^[[:space:]]*$/d'
+			r_regex_fix_kib='s/kB/kiB/'
+			r_regex_strip_ansi='s/\x1b\[[0-9;]*m//g'
+			r_regex_strip_comments='/^#[[:blank:]].*/d;/#$/d;s/[[:blank:]]#[[:blank:]].*//'
+			r_regex_strip_lead_whitespace='s/^[[:blank:]]*//'
+			r_regex_strip_tail_whitespace='s/[[:blank:]]*$//'
+			r_regex_strip_upto_colon='s/^.*:[[:blank:]]//'
+
+		# Compound.
+
+			r_regex_delete_firstlast_empty_lines='1{'$r_regex_delete_empty_lines'};${'$r_regex_delete_empty_lines'}'
+			r_regex_process_ram=$r_regex_strip_upto_colon';s/kB//;s/[[:blank:]]//g'
+			r_regex_process_screen_sessions=$r_regex_delete_empty_lines';'$r_regex_strip_lead_whitespace
 
 		readonly r_regex_delete_empty_lines
 		readonly r_regex_delete_firstlast_empty_lines
@@ -481,19 +485,24 @@ LoadConsts()
 		readonly r_debug_log_second_column_width
 		readonly r_report_qpkg_description_column_width
 
-		UpdateSessionColumns
+		# Simple.
 
-		r_debug_log_width=$((sess_columns-12))				# Subtract debug log line leader width.
-		r_help_desc_indent=3
-		r_help_syntax_indent=6
-		r_log_tail_lines=5000
-		r_report_action_result_indent=4
-		r_report_column_spacing=2
-		r_report_file_bytes_column_width=14
-		r_report_file_change_date_column_width=60
-		r_report_file_name_column_width=35
-		r_report_highlight_backups_older_than='2 weeks ago'
-		r_report_info_name_column_width=14
+			r_help_desc_indent=3
+			r_help_syntax_indent=6
+			r_log_tail_lines=5000
+			r_report_action_result_indent=4
+			r_report_column_spacing=2
+			r_report_file_bytes_column_width=14
+			r_report_file_change_date_column_width=60
+			r_report_file_name_column_width=35
+			r_report_highlight_backups_older_than='2 weeks ago'
+			r_report_info_name_column_width=14
+
+		# Compound.
+
+			UpdateSessionColumns
+
+			r_debug_log_width=$((sess_columns-12))			# Subtract debug log line leader width.
 
 		readonly r_debug_log_width
 		readonly r_help_desc_indent
@@ -509,34 +518,38 @@ LoadConsts()
 
 	# Report, help and onscreen messages.
 
-		r_chars_alert='! '
-		r_chars_attention='* '
-		r_chars_blank='  '
-		r_chars_bullet='• '
-		r_chars_dash='- '
-		r_chars_dropend='└─ '
-		r_chars_note='* '
-		r_chars_regular_prompt='$ '
-		r_chars_results='= '
-		r_chars_super_prompt='# '
-		r_extended_datetime_format='+%a %-d %B %Y'
+		# Simple.
 
-		r_chars_normal=$r_chars_bullet
-		r_chars_sudo_prompt=$r_chars_regular_prompt'sudo '
-		r_full_datetime_format=$r_extended_datetime_format' %-I:%M:%S %p %Z'
+			r_chars_alert='! '
+			r_chars_attention='* '
+			r_chars_blank='  '
+			r_chars_bullet='• '
+			r_chars_dash='- '
+			r_chars_dropend='└─ '
+			r_chars_note='* '
+			r_chars_regular_prompt='$ '
+			r_chars_results='= '
+			r_chars_super_prompt='# '
+			r_extended_datetime_format='+%a %-d %B %Y'
 
-		if IsOsCanSudo; then
-			if [[ $(GetUserSudoUID) = undefined ]]; then
+		# Compound.
+
+			r_chars_normal=$r_chars_bullet
+			r_chars_sudo_prompt=$r_chars_regular_prompt'sudo '
+			r_full_datetime_format=$r_extended_datetime_format' %-I:%M:%S %p %Z'
+
+			if IsOsCanSudo; then
+				if [[ $(GetUserSudoUID) = undefined ]]; then
+					r_help_syntax_prefix=$r_chars_super_prompt
+					r_help_syntax_sudo_prefix=$r_chars_super_prompt
+				else
+					r_help_syntax_prefix=$r_chars_regular_prompt
+					r_help_syntax_sudo_prefix=$r_chars_sudo_prompt
+				fi
+			else
 				r_help_syntax_prefix=$r_chars_super_prompt
 				r_help_syntax_sudo_prefix=$r_chars_super_prompt
-			else
-				r_help_syntax_prefix=$r_chars_regular_prompt
-				r_help_syntax_sudo_prefix=$r_chars_sudo_prompt
 			fi
-		else
-			r_help_syntax_prefix=$r_chars_super_prompt
-			r_help_syntax_sudo_prefix=$r_chars_super_prompt
-		fi
 
 		readonly r_chars_alert
 		readonly r_chars_attention
@@ -581,23 +594,27 @@ LoadConsts()
 #		local -r r_white
 #		local -r r_yellow
 
-		r_ani_chars=(2 '⢎⡀' '⢎⠁' '⠎⠑' '⠊⠱' '⠈⡱' '⢀⡱' '⢄⡰' '⢆⡠')	# 5 pixels, clockwise orbit.
-		r_ani_colour=$r_orange
-		r_ani_first_frame=2										# Begin animation at this array element (option base 1).
-		r_ani_frame_duration=0.06								# In decimal seconds.
-		r_ani_frame_step=1										# 1 = show every frame, 2 = show every second frame.
-		r_ani_id=1
-		r_ani_reverse_motion=false								# Set 'true' to run animation backwards.
+		# Simple.
 
-		r_ani_width=${r_ani_chars[0]}							# Use first element as animation character width. QTS BusyBox 1.01 doesn't support `wc -m`  so can't measure width.
-		r_ani_total_frames=${#r_ani_chars[@]}					# Total animation frames. A frame is one or-more characters.
-			r_ani_last_frame=$r_ani_total_frames				# Complete animation at this array element (option base 1).
+			r_ani_chars=(2 '⢎⡀' '⢎⠁' '⠎⠑' '⠊⠱' '⠈⡱' '⢀⡱' '⢄⡰' '⢆⡠')	# 5 pixels, clockwise orbit.
+			r_ani_colour=$r_orange
+			r_ani_first_frame=2										# Begin animation at this array element (option base 1).
+			r_ani_frame_duration=0.06								# In decimal seconds.
+			r_ani_frame_step=1										# 1 = show every frame, 2 = show every second frame.
+			r_ani_id=1
+			r_ani_reverse_motion=false								# Set 'true' to run animation backwards.
 
-		if [[ $r_ani_reverse_motion = true ]]; then				# Reverse processing order.
-			r_ani_first_frame=$r_ani_total_frames
-			r_ani_last_frame=2
-			r_ani_frame_step=-$r_ani_frame_step
-		fi
+		# Compound.
+
+			r_ani_width=${r_ani_chars[0]}							# Use first element as animation character width. QTS BusyBox 1.01 doesn't support `wc -m`  so can't measure width.
+			r_ani_total_frames=${#r_ani_chars[@]}					# Total animation frames. A frame is one or-more characters.
+				r_ani_last_frame=$r_ani_total_frames				# Complete animation at this array element (option base 1).
+
+			if [[ $r_ani_reverse_motion = true ]]; then				# Reverse processing order.
+				r_ani_first_frame=$r_ani_total_frames
+				r_ani_last_frame=2
+				r_ani_frame_step=-$r_ani_frame_step
+			fi
 
 		readonly r_ani_chars
 		readonly r_ani_colour
@@ -612,29 +629,33 @@ LoadConsts()
 
 	# Only for the message pipe enhanced log.
 
-		local action_field_longest_string							# directive:omit-from-production
-		local date_field_longest_string								# directive:omit-from-production
-		local key1_field_longest_string								# directive:omit-from-production
-		local key2_field_longest_string								# directive:omit-from-production
-		local tier_field_longest_string								# directive:omit-from-production
+		local action_field_longest_string			# directive:omit-from-production
+		local date_field_longest_string				# directive:omit-from-production
+		local key1_field_longest_string				# directive:omit-from-production
+		local key2_field_longest_string				# directive:omit-from-production
+		local tier_field_longest_string				# directive:omit-from-production
 
-		action_field_longest_string=reactivate						# directive:omit-from-production
-		date_field_longest_string='Tue 27 May 2025 4:55:42 PM EST '	# directive:omit-from-production
-		key1_field_longest_string=update							# directive:omit-from-production
-		key2_field_longest_string=package							# directive:omit-from-production
-		tier_field_longest_string=independent						# directive:omit-from-production
+		# Simple.
 
-		r_action_field_length=${#action_field_longest_string}		# directive:omit-from-production
-		r_date_field_length=${#date_field_longest_string}			# directive:omit-from-production
-		r_key1_field_length=${#key1_field_longest_string}			# directive:omit-from-production
-		r_key2_field_length=${#key2_field_longest_string}			# directive:omit-from-production
-		r_tier_field_length=${#tier_field_longest_string}			# directive:omit-from-production
+			action_field_longest_string=reactivate						# directive:omit-from-production
+			date_field_longest_string='Tue 27 May 2025 4:55:42 PM EST '	# directive:omit-from-production
+			key1_field_longest_string=update							# directive:omit-from-production
+			key2_field_longest_string=package							# directive:omit-from-production
+			tier_field_longest_string=independent						# directive:omit-from-production
 
-		readonly r_action_field_length								# directive:omit-from-production
-		readonly r_date_field_length								# directive:omit-from-production
-		readonly r_key1_field_length								# directive:omit-from-production
-		readonly r_key2_field_length								# directive:omit-from-production
-		readonly r_tier_field_length								# directive:omit-from-production
+		# Compound.
+
+			r_action_field_length=${#action_field_longest_string}		# directive:omit-from-production
+			r_date_field_length=${#date_field_longest_string}			# directive:omit-from-production
+			r_key1_field_length=${#key1_field_longest_string}			# directive:omit-from-production
+			r_key2_field_length=${#key2_field_longest_string}			# directive:omit-from-production
+			r_tier_field_length=${#tier_field_longest_string}			# directive:omit-from-production
+
+		readonly r_action_field_length				# directive:omit-from-production
+		readonly r_date_field_length				# directive:omit-from-production
+		readonly r_key1_field_length				# directive:omit-from-production
+		readonly r_key2_field_length				# directive:omit-from-production
+		readonly r_tier_field_length				# directive:omit-from-production
 
 	}
 
@@ -728,22 +749,26 @@ SetCMDs()
 
 	# Cherry-pick Entware binaries.
 
-		r_gnu_awk_cmd=/opt/bin/awk
-		r_gnu_dd_cmd=/opt/bin/dd
-		r_gnu_df_cmd=/opt/bin/df
-		r_gnu_find_cmd=/opt/bin/find
-		r_gnu_free_cmd=/opt/bin/free
-		r_gnu_grep_cmd=/opt/bin/grep
-		r_gnu_more_cmd=/opt/bin/more
-		r_gnu_nice_cmd=/opt/bin/nice
-		r_gnu_timeout_cmd=/opt/bin/timeout
-		r_gnu_uname_cmd=/opt/bin/uname
-		r_less_cmd=/opt/bin/less
-		r_opkg_cmd=/opt/bin/opkg
-		r_python3_cmd=/opt/bin/python3
-		r_python_cmd=/opt/bin/python
+		# Simple.
 
-		r_pip_cmd=$r_python3_cmd' -m pip'
+			r_gnu_awk_cmd=/opt/bin/awk
+			r_gnu_dd_cmd=/opt/bin/dd
+			r_gnu_df_cmd=/opt/bin/df
+			r_gnu_find_cmd=/opt/bin/find
+			r_gnu_free_cmd=/opt/bin/free
+			r_gnu_grep_cmd=/opt/bin/grep
+			r_gnu_more_cmd=/opt/bin/more
+			r_gnu_nice_cmd=/opt/bin/nice
+			r_gnu_timeout_cmd=/opt/bin/timeout
+			r_gnu_uname_cmd=/opt/bin/uname
+			r_less_cmd=/opt/bin/less
+			r_opkg_cmd=/opt/bin/opkg
+			r_python3_cmd=/opt/bin/python3
+			r_python_cmd=/opt/bin/python
+
+		# Compound.
+
+			r_pip_cmd=$r_python3_cmd' -m pip'
 
 		readonly r_gnu_awk_cmd
 		readonly r_gnu_dd_cmd
@@ -843,13 +868,17 @@ ConfigEnv()
 
 	# Essential paths.
 
-		r_default_vol_mount_point=$(GetUserDefVol)
-		r_sys_log_path=/var/log
-		r_sys_run_path=/var/run
-		r_this_package_path=$(GetQpkgInstalledPath)
+		# Simple.
 
-		r_qpkg_bu_path=$r_default_vol_mount_point/.qpkg_config_backup
-		r_qpkg_service_result_path=$r_sys_log_path
+			r_default_vol_mount_point=$(GetUserDefVol)
+			r_sys_log_path=/var/log
+			r_sys_run_path=/var/run
+			r_this_package_path=$(GetQpkgInstalledPath)
+
+		# Compound.
+
+			r_qpkg_bu_path=$r_default_vol_mount_point/.qpkg_config_backup
+			r_qpkg_service_result_path=$r_sys_log_path
 
 		readonly r_default_vol_mount_point
 		readonly r_qpkg_bu_path
@@ -866,16 +895,18 @@ ConfigEnv()
 			return 1
 		fi
 
-		r_cache_path=$r_this_package_path/cache
-		r_log_path=$r_this_package_path/log
+		# Compound.
 
-		r_ipk_cache_path=$r_cache_path/IPKs
-		r_pip_cache_path=$r_cache_path/PIPs
-		r_qpkg_cache_path=$r_cache_path/QPKGs
+			r_cache_path=$r_this_package_path/cache
+			r_log_path=$r_this_package_path/log
 
-		r_ipk_downgrade_path=$r_ipk_cache_path/downgrade
-		r_ipk_download_path=$r_ipk_cache_path/downloads
-		r_qpkg_download_path=$r_qpkg_cache_path/downloads
+			r_ipk_cache_path=$r_cache_path/IPKs
+			r_pip_cache_path=$r_cache_path/PIPs
+			r_qpkg_cache_path=$r_cache_path/QPKGs
+
+			r_ipk_downgrade_path=$r_ipk_cache_path/downgrade
+			r_ipk_download_path=$r_ipk_cache_path/downloads
+			r_qpkg_download_path=$r_qpkg_cache_path/downloads
 
 		readonly r_cache_path
 		readonly r_ipk_cache_path
@@ -888,14 +919,16 @@ ConfigEnv()
 
 	# Essential pathfilenames.
 
-		r_inhibit_display_pathfile=$r_cache_path/display.inhibit
-		r_objects_archive_pathfile=$r_cache_path/objects.tar.gz
-		r_objects_pathfile=$r_cache_path/objects
-		r_packages_archive_pathfile=$r_cache_path/$r_nas_qpkg_arch.packages.tar.gz
-		r_packages_pathfile=$r_cache_path/$r_nas_qpkg_arch.packages
-		r_prev_ipk_list_pathfile=$r_ipk_cache_path/ipk-list.save
-		r_prev_pip_list_pathfile=$r_pip_cache_path/pip-list.save
-		r_session_archive_log_pathfile=$r_log_path/session.archive.log
+		# Compound.
+
+			r_inhibit_display_pathfile=$r_cache_path/display.inhibit
+			r_objects_archive_pathfile=$r_cache_path/objects.tar.gz
+			r_objects_pathfile=$r_cache_path/objects
+			r_packages_archive_pathfile=$r_cache_path/$r_nas_qpkg_arch.packages.tar.gz
+			r_packages_pathfile=$r_cache_path/$r_nas_qpkg_arch.packages
+			r_prev_ipk_list_pathfile=$r_ipk_cache_path/ipk-list.save
+			r_prev_pip_list_pathfile=$r_pip_cache_path/pip-list.save
+			r_session_archive_log_pathfile=$r_log_path/session.archive.log
 
 		readonly r_inhibit_display_pathfile
 		readonly r_objects_archive_pathfile
@@ -908,21 +941,23 @@ ConfigEnv()
 
 	# Ephemeral paths.
 
-		r_temp_log_path=$r_sys_log_path/sherpa.d
-		r_temp_run_path=$r_sys_run_path/sherpa.d
+		# Compound.
 
-		r_action_counts_path=$r_temp_run_path/action/count
-		r_action_log_path=$r_temp_log_path/action/log
-		r_async_procs_path=$r_temp_run_path/proc
-		r_qpkg_states_path=$r_temp_run_path/qpkg/state
-		r_report_path=$r_temp_log_path/report
-		r_run_logs_path=$r_temp_run_path/log
-		r_temp_report_path=$r_temp_run_path/report
+			r_temp_log_path=$r_sys_log_path/sherpa.d
+			r_temp_run_path=$r_sys_run_path/sherpa.d
 
-		r_action_times_path=$r_action_log_path/times
-		r_animation_path=$r_async_procs_path/animation
-		r_report_flags_path=$r_temp_report_path/flag
-		r_report_rows_path=$r_temp_report_path/row
+			r_action_counts_path=$r_temp_run_path/action/count
+			r_action_log_path=$r_temp_log_path/action/log
+			r_async_procs_path=$r_temp_run_path/proc
+			r_qpkg_states_path=$r_temp_run_path/qpkg/state
+			r_report_path=$r_temp_log_path/report
+			r_run_logs_path=$r_temp_run_path/log
+			r_temp_report_path=$r_temp_run_path/report
+
+			r_action_times_path=$r_action_log_path/times
+			r_animation_path=$r_async_procs_path/animation
+			r_report_flags_path=$r_temp_report_path/flag
+			r_report_rows_path=$r_temp_report_path/row
 
 		readonly r_action_counts_path
 		readonly r_action_log_path
@@ -940,18 +975,20 @@ ConfigEnv()
 
 	# Ephemeral pathfilenames.
 
-		r_abort_actions_pathfile=$r_temp_run_path/abort.action
-		r_action_msg_pipe=$r_temp_run_path/action-messages.pipe
-		r_action_msg_pipe_log_pathfile=/share/Public/enhanced-action-messages-pipe.log	# directive:omit-from-production
-		r_action_results_pathfile=$r_action_log_path/action-results.log
-		r_oom_log_pathfile=$r_temp_log_path/oom.log
-		r_ram_freeused_pathfile=$r_temp_log_path/ram.freeused
-		r_ramfs_freespace_pathfile=$r_temp_log_path/ramfs.freespace
-		r_report_output_pathfile=$r_temp_log_path/report.ansi
-		r_screen_sessions_pathfile=$r_temp_log_path/screen.sessions
-		r_session_last_pathfile=$r_temp_log_path/session-last.log
-		r_session_tail_pathfile=$r_temp_log_path/session-tail.log
-		session_active_log_pathfile=$r_temp_log_path/session.$$.active.log
+		# Compound.
+
+			r_abort_actions_pathfile=$r_temp_run_path/abort.action
+			r_action_msg_pipe=$r_temp_run_path/action-messages.pipe
+			r_action_msg_pipe_log_pathfile=/share/Public/enhanced-action-messages-pipe.log	# directive:omit-from-production
+			r_action_results_pathfile=$r_action_log_path/action-results.log
+			r_oom_log_pathfile=$r_temp_log_path/oom.log
+			r_ram_freeused_pathfile=$r_temp_log_path/ram.freeused
+			r_ramfs_freespace_pathfile=$r_temp_log_path/ramfs.freespace
+			r_report_output_pathfile=$r_temp_log_path/report.ansi
+			r_screen_sessions_pathfile=$r_temp_log_path/screen.sessions
+			r_session_last_pathfile=$r_temp_log_path/session-last.log
+			r_session_tail_pathfile=$r_temp_log_path/session-tail.log
+			session_active_log_pathfile=$r_temp_log_path/session.$$.active.log
 
 		readonly r_abort_actions_pathfile
 		readonly r_action_msg_pipe
@@ -967,11 +1004,15 @@ ConfigEnv()
 
 	# Entware.
 
-		r_external_apps_path=/opt
+		# Simple.
 
-		r_external_apps_temp_path=$r_external_apps_path.temp
-		r_external_packages_archive_pathfile=$r_external_apps_path/var/opkg-lists/entware
-		r_external_packages_pathfile=$r_cache_path/Packages
+			r_external_apps_path=/opt
+
+		# Compound.
+
+			r_external_apps_temp_path=$r_external_apps_path.temp
+			r_external_packages_archive_pathfile=$r_external_apps_path/var/opkg-lists/entware
+			r_external_packages_pathfile=$r_cache_path/Packages
 
 		readonly r_external_apps_path
 		readonly r_external_apps_temp_path
@@ -980,10 +1021,12 @@ ConfigEnv()
 
 	# Animator.
 
-		r_ani_end_pathfile=$r_animation_path/$r_ani_id.end			# Internal fileflag (to stop animation cleanly).
-		r_ani_frame_pathfile=$r_animation_path/$r_ani_id.frame		# Next frame to be displayed by animator process.
-		r_ani_pid_pathfile=$r_animation_path/$r_ani_id.pid			# PID of forked animator process.
-		r_ani_resume_pathfile=$r_animation_path/$r_ani_id.resume	# If exists, animation was running prior to PauseAni(), and should be started again ASAP.
+		# Compound.
+
+			r_ani_end_pathfile=$r_animation_path/$r_ani_id.end			# Internal fileflag (to stop animation cleanly).
+			r_ani_frame_pathfile=$r_animation_path/$r_ani_id.frame		# Next frame to be displayed by animator process.
+			r_ani_pid_pathfile=$r_animation_path/$r_ani_id.pid			# PID of forked animator process.
+			r_ani_resume_pathfile=$r_animation_path/$r_ani_id.resume	# If exists, animation was running prior to PauseAni(), and should be started again ASAP.
 
 		readonly r_ani_end_pathfile
 		readonly r_ani_frame_pathfile
@@ -1082,15 +1125,19 @@ LoadLists()
 
 	# Sorted.
 
-	ar_qpkg_basic_states=(complete enabled installed)
-	ar_qpkg_extended_states=(active backedup downloaded installable missing signed upgradable)
-	ar_qpkg_is_groups=(all canbackup canclean canrestarttoupdate dependent hasdependents independent optional)
-	ar_qpkg_isnt_groups=(canclean)
-	ar_qpkg_service_results=(failed ok)
-	ar_qpkg_transient_states=(restarting slow starting stopping unknown)
+	# Simple.
 
-	ar_qpkg_is_states=(${ar_qpkg_basic_states[*]} ${ar_qpkg_extended_states[*]} ${ar_qpkg_transient_states[*]})
-	ar_qpkg_isnt_states=(${ar_qpkg_basic_states[*]} ${ar_qpkg_extended_states[*]} ${ar_qpkg_transient_states[*]})
+		ar_qpkg_basic_states=(complete enabled installed)
+		ar_qpkg_extended_states=(active backedup downloaded installable missing signed upgradable)
+		ar_qpkg_is_groups=(all canbackup canclean canrestarttoupdate dependent hasdependents independent optional)
+		ar_qpkg_isnt_groups=(canclean)
+		ar_qpkg_service_results=(failed ok)
+		ar_qpkg_transient_states=(restarting slow starting stopping unknown)
+
+	# Compound.
+
+		ar_qpkg_is_states=(${ar_qpkg_basic_states[*]} ${ar_qpkg_extended_states[*]} ${ar_qpkg_transient_states[*]})
+		ar_qpkg_isnt_states=(${ar_qpkg_basic_states[*]} ${ar_qpkg_extended_states[*]} ${ar_qpkg_transient_states[*]})
 
 	# Ordered.
 
@@ -17004,11 +17051,16 @@ FormatNWords()
 	local word_colour
 	local words
 
-	a=''
-	word_colour=${3:-TextUncoloured}
-	words=($1)
+	# Simple.
+
+		a=''
+		word_colour=${3:-TextUncoloured}
+		words=($1)
+		words_max=${2:-3}
+
+	# Compound.
+
 		word_count=${#words[@]}
-	words_max=${2:-3}
 
 	for ((n=1; n<=word_count; n++)); do
 		if [[ $n -eq 1 && $words_max -eq 1 ]]; then
@@ -17438,10 +17490,14 @@ FuncInit()
 	local r_var_name
 	local r_var_safe_name
 
-	r_var_name=${FUNCNAME[1]}_STARTNANOSECONDS
+	# Simple.
 
-	r_var_safe_name=${r_var_name//[.-]/_}
-	r_var_safe_name=${r_var_safe_name//:/_}
+		r_var_name=${FUNCNAME[1]}_STARTNANOSECONDS
+
+	# Compound.
+
+		r_var_safe_name=${r_var_name//[.-]/_}
+		r_var_safe_name=${r_var_safe_name//:/_}
 
 	local -r r_var_name
 	local -r r_var_safe_name
@@ -17460,10 +17516,14 @@ FuncExit()
 	local r_var_name
 	local r_var_safe_name
 
-	r_var_name=${FUNCNAME[1]}_STARTNANOSECONDS
+	# Simple.
 
-	r_var_safe_name=${r_var_name//[.-]/_}
-	r_var_safe_name=${r_var_safe_name//:/_}
+		r_var_name=${FUNCNAME[1]}_STARTNANOSECONDS
+
+	# Compound.
+
+		r_var_safe_name=${r_var_name//[.-]/_}
+		r_var_safe_name=${r_var_safe_name//:/_}
 
 	local -r r_var_name
 	local -r r_var_safe_name
@@ -17500,10 +17560,14 @@ FuncForkInit()
 	local r_var_name
 	local r_var_safe_name
 
-	r_var_name=${FUNCNAME[1]}_STARTNANOSECONDS
+	# Simple.
 
-	r_var_safe_name=${r_var_name//[.-]/_}
-	r_var_safe_name=${r_var_safe_name//:/_}
+		r_var_name=${FUNCNAME[1]}_STARTNANOSECONDS
+
+	# Compound.
+
+		r_var_safe_name=${r_var_name//[.-]/_}
+		r_var_safe_name=${r_var_safe_name//:/_}
 
 	local -r r_var_name
 	local -r r_var_safe_name
@@ -17530,10 +17594,14 @@ FuncForkExit()
 	local r_var_name
 	local r_var_safe_name
 
-	r_var_name=${FUNCNAME[1]}_STARTNANOSECONDS
+	# Simple.
 
-	r_var_safe_name=${r_var_name//[.-]/_}
-	r_var_safe_name=${r_var_safe_name//:/_}
+		r_var_name=${FUNCNAME[1]}_STARTNANOSECONDS
+
+	# Compound.
+
+		r_var_safe_name=${r_var_name//[.-]/_}
+		r_var_safe_name=${r_var_safe_name//:/_}
 
 	local -r r_var_name
 	local -r r_var_safe_name
