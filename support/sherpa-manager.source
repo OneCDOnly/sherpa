@@ -871,6 +871,7 @@ ConfigEnv()
 		# Simple.
 
 			r_default_vol_mount_point=$(GetUserDefVol)
+			r_screen_socket_path=/var/run/.screen
 			r_sys_log_path=/var/log
 			r_sys_run_path=/var/run
 			r_this_package_path=$(GetQpkgInstalledPath)
@@ -883,6 +884,7 @@ ConfigEnv()
 		readonly r_default_vol_mount_point
 		readonly r_qpkg_bu_path
 		readonly r_qpkg_service_result_path
+		readonly r_screen_socket_path
 		readonly r_sys_log_path
 		readonly r_sys_run_path
 		readonly r_this_package_path
@@ -982,10 +984,10 @@ ConfigEnv()
 			r_action_msg_pipe_log_pathfile=/share/Public/enhanced-action-messages-pipe.log	# directive:omit-from-production
 			r_action_results_pathfile=$r_action_log_path/action-results.log
 			r_oom_log_pathfile=$r_temp_log_path/oom.log
-			r_ram_freeused_pathfile=$r_temp_log_path/ram.freeused
-			r_ramfs_freespace_pathfile=$r_temp_log_path/ramfs.freespace
+			r_ram_freeused_output_pathfile=$r_temp_log_path/ram.freeused
+			r_ramfs_freespace_output_pathfile=$r_temp_log_path/ramfs.freespace
 			r_report_output_pathfile=$r_temp_log_path/report.ansi
-			r_screen_sessions_pathfile=$r_temp_log_path/screen.sessions
+			r_screen_sessions_output_pathfile=$r_temp_log_path/screen.sessions
 			r_session_last_pathfile=$r_temp_log_path/session-last.log
 			r_session_tail_pathfile=$r_temp_log_path/session-tail.log
 			session_active_log_pathfile=$r_temp_log_path/session.$$.active.log
@@ -995,10 +997,10 @@ ConfigEnv()
 		readonly r_action_msg_pipe_log_pathfile											# directive:omit-from-production
 		readonly r_action_results_pathfile
 		readonly r_oom_log_pathfile
-		readonly r_ram_freeused_pathfile
-		readonly r_ramfs_freespace_pathfile
+		readonly r_ram_freeused_output_pathfile
+		readonly r_ramfs_freespace_output_pathfile
 		readonly r_report_output_pathfile
-		readonly r_screen_sessions_pathfile
+		readonly r_screen_sessions_output_pathfile
 		readonly r_session_last_pathfile
 		readonly r_session_tail_pathfile
 
@@ -1035,7 +1037,7 @@ ConfigEnv()
 
 		ClearAnimationFiles
 
-	/bin/rm -f "$r_report_output_pathfile" "$r_ramfs_freespace_pathfile" "$r_inhibit_display_pathfile"
+	/bin/rm -f "$r_report_output_pathfile" "$r_ramfs_freespace_output_pathfile" "$r_inhibit_display_pathfile"
 
 	}
 
@@ -1319,9 +1321,9 @@ DebugLogEnv()
 	#	$r_objects_epoch
 	#	$r_oom_log_pathfile
 	#	$r_packages_epoch
-	#	$r_ram_freeused_pathfile
-	#	$r_ramfs_freespace_pathfile
-	#	$r_screen_sessions_pathfile
+	#	$r_ram_freeused_output_pathfile
+	#	$r_ramfs_freespace_output_pathfile
+	#	$r_screen_sessions_output_pathfile
 	#	$r_script_built_epoch
 	#	$r_this_package_ver
 	#	$r_this_script_ver
@@ -1560,23 +1562,23 @@ DebugLogEnv()
 	DebugInfoMinSepr
 
 	if [[ -x $r_gnu_df_cmd ]]; then
-		Executer "$r_gnu_df_cmd --human-readable --local --print-type -t ext2 -t ext3 -t ext4 -t zfs -t tmpfs" "$r_ramfs_freespace_pathfile" '' 1
+		Executer "$r_gnu_df_cmd --human-readable --local --print-type -t ext2 -t ext3 -t ext4 -t zfs -t tmpfs" "$r_ramfs_freespace_output_pathfile" '' 1
 	elif (/bin/df -T &> /dev/null); then
-		Executer '/bin/df -hT' "$r_ramfs_freespace_pathfile" '' 1
+		Executer '/bin/df -hT' "$r_ramfs_freespace_output_pathfile" '' 1
 	else
-		Executer '/bin/df -h' "$r_ramfs_freespace_pathfile" '' 1
+		Executer '/bin/df -h' "$r_ramfs_freespace_output_pathfile" '' 1
 	fi | /bin/grep -iEv '^(devtmpfs|cgroup_root)'
 
 	DebugInfoMinSepr
-	Executer '/usr/sbin/screen -ls; true' "$r_screen_sessions_pathfile" '' 1 | /bin/sed "$r_regex_process_screen_sessions"
+	Executer "SCREENDIR=$r_screen_socket_path /usr/sbin/screen -ls" "$r_screen_sessions_output_pathfile" '' 1 | /bin/sed "$r_regex_process_screen_sessions"
 	DebugInfoMinSepr
 
 	if [[ -x $r_gnu_free_cmd ]]; then
-		Executer "$r_gnu_free_cmd --human --total" "$r_ram_freeused_pathfile" '' 1
+		Executer "$r_gnu_free_cmd --human --total" "$r_ram_freeused_output_pathfile" '' 1
 	elif (/usr/bin/free -m &> /dev/null); then
-		Executer '/usr/bin/free -m' "$r_ram_freeused_pathfile" '' 1
+		Executer '/usr/bin/free -m' "$r_ram_freeused_output_pathfile" '' 1
 	else
-		Executer '/usr/bin/free' "$r_ram_freeused_pathfile" '' 1
+		Executer '/usr/bin/free' "$r_ram_freeused_output_pathfile" '' 1
 	fi
 
 	DebugInfoMinSepr
