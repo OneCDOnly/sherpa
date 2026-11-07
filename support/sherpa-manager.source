@@ -7622,7 +7622,7 @@ DisplayFileInViewport()
 	linenumbers=false
 	linewrap=false
 	options=''
-	r_prompt=' Report viewer\: use arrow-keys to scroll up-down & left-right, press Q to quit '
+	r_prompt=' File viewer\: use arrow-keys to scroll up-down & left-right, press Q to quit '
 	scrolltoend=false
 
 	local -r r_prompt
@@ -10677,6 +10677,7 @@ GetBusyBoxFunctionCount()
 	else					# BusyBox 1.01 doesn't support the `--list` arg, but can get a rough count of included functions by counting the commas shown by the BusyBox help screen.
 		a=$(/bin/busybox)
 		a=${a//[!\,]/}		# Remove all chars except commas.
+
 		printf '%s' "${#a}"
 	fi
 
@@ -10743,8 +10744,10 @@ GetHardwareInstalledRAMgb()
 	local c
 
 	a=$(/bin/grep MemTotal /proc/meminfo | /bin/sed "$r_regex_process_ram")
-		b=$((((a/1024)*1000)/1024))
-			c=${b%???}.${b:${#b}<3?0:-3}
+
+	b=$((((a/1024)*1000)/1024))
+
+	c=${b%???}.${b:${#b}<3?0:-3}
 
 	printf '%.2f' "$c"
 
@@ -11129,15 +11132,22 @@ SaveActionResultMetrics()
 	local r_var_name
 	local r_var_safe_name
 
-	r_clean_action=${action//\"/}
+	# Simple.
+
+		r_clean_action=${action//\"/}
+		r_var_name=${FUNCNAME[1]}_STARTNANOSECONDS
+		r_qty=${3:-1}
+		r_reason=${2:-}
+		r_result_code=${1:?${FUNCNAME[0]}(): $e_nores}
+
+	# Compound.
+
 		r_action_times_pathfile=$r_action_times_path/$r_clean_action.milliseconds
-	r_var_name=${FUNCNAME[1]}_STARTNANOSECONDS
 		r_var_safe_name=${r_var_name//[.-]/_}; r_var_safe_name=${r_var_safe_name//:/_}
-			r_starttime=$(ConvertNanosecondsToMilliseconds "${!r_var_safe_name}")
-				r_duration=$(CalcAmountDiff "$r_starttime" "$(ConvertNowToMilliseconds)")
-	r_qty=${3:-1}
-	r_reason=${2:-}
-	r_result_code=${1:?${FUNCNAME[0]}(): $e_nores}
+
+		r_starttime=$(ConvertNanosecondsToMilliseconds "${!r_var_safe_name}")
+
+		r_duration=$(CalcAmountDiff "$r_starttime" "$(ConvertNowToMilliseconds)")
 
 	local -r r_action_times_pathfile
 	local -r r_clean_action
@@ -11455,16 +11465,23 @@ _QPKG:download_()
 	local r_remote_hash
 	local r_remote_url
 
-	action=download
-	package_name=$qpkg_name
-	package_type=QPKG
-	r_log_pathfile=$r_action_log_path/$qpkg_name.$r_download_log_file
-	r_remote_hash=$(GetQpkgDbHash)
-	r_remote_url=$(GetQpkgDbURL)
+	# Simple.
+
+		action=download
+		package_name=$qpkg_name
+		package_type=QPKG
+		r_log_pathfile=$r_action_log_path/$qpkg_name.$r_download_log_file
+		r_remote_hash=$(GetQpkgDbHash)
+		r_remote_url=$(GetQpkgDbURL)
+		z=0
+
+	# Compound.
+
 		r_remote_filename=$(/usr/bin/basename "$r_remote_url")
-			r_local_pathfile=$r_qpkg_download_path/$r_remote_filename
-				r_local_filename=$(/usr/bin/basename "$r_local_pathfile")
-	z=0
+
+		r_local_pathfile=$r_qpkg_download_path/$r_remote_filename
+
+		r_local_filename=$(/usr/bin/basename "$r_local_pathfile")
 
 	local -r r_local_filename
 	local -r r_local_pathfile
@@ -14801,6 +14818,7 @@ IsOsCanSecureDownload()
 	#		QTS 5.2.5.3145
 	#		QTS 5.2.9.3451
 	#		QTS 5.2.10.3577
+	#		QTS 6.1.0.3656
 
 	# Tested with:
 	#		curl 'https://raw.githubusercontent.com/OneCDOnly/sherpa/stable/sherpa-manager.tar.gz' > /share/Public/temp.tar.gz
@@ -14847,6 +14865,12 @@ IsOsCanSecureDownload()
 	# Release-Date: 2023-12-06
 	# Protocols: dict file ftp ftps gopher gophers http https imap imaps mqtt pop3 pop3s rtsp smb smbs smtp smtps telnet tftp
 	# Features: alt-svc AsynchDNS GSS-API HSTS HTTPS-proxy IPv6 Kerberos Largefile libz NTLM SPNEGO SSL threadsafe TLS-SRP UnixSockets
+
+	#		QTS 6.1.0.3656
+	# curl 8.5.0 (x86_64-QNAP_gcc13-linux-gnu) libcurl/8.5.0 OpenSSL/3.5.7 zlib/1.3.2
+	# Release-Date: 2023-12-06
+	# Protocols: dict file ftp ftps gopher gophers http https imap imaps mqtt pop3 pop3s rtsp smb smbs smtp smtps telnet tftp
+	# Features: alt-svc AsynchDNS HSTS HTTPS-proxy IPv6 Largefile libz NTLM SSL threadsafe TLS-SRP UnixSockets
 
 	# Inputs: (global)
 	#	$r_nas_firmware_ver
@@ -15167,7 +15191,12 @@ IsQpkgBackupExist()
 	local new
 	local old
 
-	a=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}.config.tar.gz
+	# Simple.
+
+		a=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}.config.tar.gz
+
+	# Compound.
+
 		new=$r_qpkg_bu_path/$a
 		old=$r_qpkg_bu_path/O$a
 
