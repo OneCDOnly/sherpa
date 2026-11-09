@@ -13122,16 +13122,20 @@ _QPKG:sign_()
 
 	local -i retries
 	local -i z
-	local a
 	local action
-	local b
 	local package_name
 	local package_type
+	local pysqlite_command
+	local query
+	local table
 
-	action='"sign"'
-	package_name=$qpkg_name
-	package_type=QPKG
-	z=0
+	# Simple.
+
+		action='"sign"'
+		package_name=$qpkg_name
+		package_type=QPKG
+		table=Certificate
+		z=0
 
 	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
@@ -13159,28 +13163,40 @@ _QPKG:sign_()
 
 	# https://pynative.com/python-sqlite-insert-into-table/
 
-	a="INSERT INTO Certificate (Type,QpkgName,Cert,DigitalSignature) VALUES ('qpkg','$qpkg_name','$r_qpkg_certificate','$r_qpkg_signature')"
+	# Compound.
 
-	read -r -d '' b <<EOB
-import sqlite3, sys
+		query="INSERT INTO $table (Type,QpkgName,Cert,DigitalSignature) VALUES ('qpkg','$package_name','$r_qpkg_certificate','$r_qpkg_signature')"
+		uri="file:$r_cert_db_pathfile"
+
+		read -r -d '' pysqlite_command <<EOB
+import sqlite3
+import sys
+import ctypes
+
+from ctypes import util
+
+# Force SQLite to allow global URI parsing in Python 2.7
+sqlite_path = ctypes.util.find_library('sqlite3')
+
+if sqlite_path:
+    sqlite3_lib = ctypes.CDLL(sqlite_path)													# directive:ignore-leader
+    sqlite3_lib.sqlite3_config(17, 1)	# SQLITE_CONFIG_URI is constant 17. 1 turns it ON.	# directive:ignore-leader
+
+conn = sqlite3.connect('$uri')
+cursor = conn.cursor()
 
 try:
-    sqliteConnection = sqlite3.connect('$r_cert_db_pathfile')	# directive:ignore-leader
-
-    cursor = sqliteConnection.cursor()							# directive:ignore-leader
-    sqlite_add_query = """$a"""									# directive:ignore-leader
-    cursor.execute(sqlite_add_query)							# directive:ignore-leader
-    sqliteConnection.commit()									# directive:ignore-leader
-    cursor.close()												# directive:ignore-leader
-    sys.exit()													# directive:ignore-leader
+    cursor.execute("""$query""")															# directive:ignore-leader
+    conn.commit()																			# directive:ignore-leader
 
 finally:
-    if sqliteConnection:										# directive:ignore-leader
-        sqliteConnection.close()								# directive:ignore-leader
+    cursor.close()																			# directive:ignore-leader
+    conn.close()																			# directive:ignore-leader
+    sys.exit()																				# directive:ignore-leader
 EOB
 
 	for ((retries=0; retries<10; retries++)); do
-		/usr/local/bin/python2 -c "$b"
+		/usr/local/bin/python2 -c "$pysqlite_command"
 		z=$?
 
 		case $z in
@@ -13231,16 +13247,22 @@ _QPKG:unsign_()
 
 	local -i retries
 	local -i z
-	local a
 	local action
-	local b
+	local match_column
 	local package_name
 	local package_type
+	local pysqlite_command
+	local query
+	local table
 
-	action='"unsign"'
-	package_name=$qpkg_name
-	package_type=QPKG
-	z=0
+	# Simple.
+
+		action='"unsign"'
+		match_column=QpkgName
+		package_name=$qpkg_name
+		package_type=QPKG
+		table=Certificate
+		z=0
 
 	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
@@ -13268,28 +13290,40 @@ _QPKG:unsign_()
 
 	# https://pynative.com/python-sqlite-delete-from-table/
 
-	a="DELETE from Certificate WHERE QpkgName = '$qpkg_name'"
+	# Compound.
 
-	read -r -d '' b <<EOB
-import sqlite3, sys
+		query="DELETE from $table WHERE $match_column = ?"
+		uri="file:$r_cert_db_pathfile"
+
+		read -r -d '' pysqlite_command <<EOB
+import sqlite3
+import sys
+import ctypes
+
+from ctypes import util
+
+# Force SQLite to allow global URI parsing in Python 2.7
+sqlite_path = ctypes.util.find_library('sqlite3')
+
+if sqlite_path:
+    sqlite3_lib = ctypes.CDLL(sqlite_path)													# directive:ignore-leader
+    sqlite3_lib.sqlite3_config(17, 1)	# SQLITE_CONFIG_URI is constant 17. 1 turns it ON.	# directive:ignore-leader
+
+conn = sqlite3.connect('$uri')
+cursor = conn.cursor()
 
 try:
-    sqliteConnection = sqlite3.connect('$r_cert_db_pathfile')	# directive:ignore-leader
-
-    cursor = sqliteConnection.cursor()							# directive:ignore-leader
-    sqlite_delete_query = """$a"""								# directive:ignore-leader
-    cursor.execute(sqlite_delete_query)							# directive:ignore-leader
-    sqliteConnection.commit()									# directive:ignore-leader
-    cursor.close()												# directive:ignore-leader
-    sys.exit()													# directive:ignore-leader
+    cursor.execute("""$query""", ('$package_name',))										# directive:ignore-leader
+    conn.commit()																			# directive:ignore-leader
 
 finally:
-    if sqliteConnection:										# directive:ignore-leader
-        sqliteConnection.close()								# directive:ignore-leader
+    cursor.close()																			# directive:ignore-leader
+    conn.close()																			# directive:ignore-leader
+    sys.exit()																				# directive:ignore-leader
 EOB
 
 	for ((retries=0; retries<10; retries++)); do
-		/usr/local/bin/python2 -c "$b"
+		/usr/local/bin/python2 -c "$pysqlite_command"
 		z=$?
 
 		case $z in
@@ -15916,31 +15950,54 @@ IsQpkgSigned()
 
 	# https://pynative.com/python-sqlite-select-from-table/
 
-	local a
-	local b
+	local match_column
+	local package_name
+	local pysqlite_command
+	local query
+	local select_column
+	local table
+	local uri
 
-	a="SELECT 1 from Certificate WHERE QpkgName = '${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}'"
-	b=''
+	# Simple.
 
-	read -r -d '' b <<EOB
-import sqlite3, sys
+		match_column=QpkgName
+		select_column=Cert
+		table=Certificate
+
+	# Compound.
+
+		package_name=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}
+		query="SELECT $select_column from $table WHERE $match_column = ?"
+		uri="file:$r_cert_db_pathfile?mode=ro"		# Open as read-only.
+
+		read -r -d '' pysqlite_command <<EOB
+import sqlite3
+import sys
+import ctypes
+
+from ctypes import util
+
+# Force SQLite to allow global URI parsing in Python 2.7
+sqlite_path = ctypes.util.find_library('sqlite3')
+
+if sqlite_path:
+    sqlite3_lib = ctypes.CDLL(sqlite_path)													# directive:ignore-leader
+    sqlite3_lib.sqlite3_config(17, 1)	# SQLITE_CONFIG_URI is constant 17. 1 turns it ON.	# directive:ignore-leader
+
+conn = sqlite3.connect('$uri')
+cursor = conn.cursor()
 
 try:
-    sqliteConnection = sqlite3.connect('$r_cert_db_pathfile')	# directive:ignore-leader
-
-    cursor = sqliteConnection.cursor()							# directive:ignore-leader
-    sqlite_select_query = """$a"""								# directive:ignore-leader
-    cursor.execute(sqlite_select_query)							# directive:ignore-leader
-    records = cursor.fetchall()									# directive:ignore-leader
-    sys.exit(len(records) == 0)									# directive:ignore-leader
-    cursor.close()												# directive:ignore-leader
+    cursor.execute("""$query""", ('$package_name',))										# directive:ignore-leader
+    records = cursor.fetchall()																# directive:ignore-leader
 
 finally:
-    if sqliteConnection:										# directive:ignore-leader
-        sqliteConnection.close()								# directive:ignore-leader
+    cursor.close()																			# directive:ignore-leader
+    conn.close()																			# directive:ignore-leader
+    sys.exit(len(records) == 0)																# directive:ignore-leader
 EOB
 
-	/usr/local/bin/python2 -c "$b"
+	/usr/local/bin/python2 -c "$pysqlite_command"
 
 	}
 
@@ -16193,6 +16250,7 @@ LoadQpkgSigningCert()
 
 	# This certificate is the same used by QNAP for Malware Remover v6.6.8
 	# Expires: 1st May 2028
+	# TODO: upgrade to certificate used for myQNAPcloud QPKG.
 
 	read -r -d '' r_qpkg_certificate <<EOB
 -----BEGIN CERTIFICATE-----
@@ -16222,6 +16280,7 @@ EOB
 
 	# This signature is the same used by QNAP for Malware Remover v6.6.8
 	# Expires: 1st May 2028
+	# TODO: upgrade to signature used for myQNAPcloud QPKG.
 
 	read -r -d '' r_qpkg_signature <<EOB
 MIME-Version: 1.0
