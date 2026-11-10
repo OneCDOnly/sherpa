@@ -303,7 +303,7 @@ LoadConsts()
 	# Various.
 
 		r_cert_db_pathfile=/etc/config/nas_sign_qpkg.db
-		r_entware_packages_last_updated=20260407
+		r_entware_packages_last_updated=20261106
 		r_file_change_threshold_minutes=60
 		r_script_built_epoch='<?manager_epoch?>'
 		r_this_script_ver='<?manager_version?>'
@@ -17948,7 +17948,7 @@ ConvertLongDateAsHuman()
 		return 1
 	fi
 
-	b=${a:6:2}
+	b=10#${a:6:2}
 	c=''
 
 	if ((b >= 1 && b <= 10)); then
