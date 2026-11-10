@@ -6266,7 +6266,7 @@ GenerateDepsReportTitleRow()
 
 	local -a a_headers
 
-	a_headers=('QPKG name:' 'Dependencies:' 'Optionals:' 'Prohibited?' 'Installed?' 'Enabled?' 'Complete?' 'Managed?' 'Signed?' 'Certificate start date:' 'Certificate end date:' 'Certificate valid?' 'Minimum RAM:' 'Min. OS:' 'Max. OS:' 'Installed QPKG author:')
+	a_headers=('QPKG name:' 'Dependencies:' 'Optionals:' 'Prohibited?' 'Installed?' 'Enabled?' 'Complete?' 'Managed?' 'Signed?' 'Certificate start datetime:' 'Certificate end datetime:' 'Cert. valid?' 'Minimum RAM:' 'Min. OS:' 'Max. OS:' 'Installed QPKG author:')
 
 	if IsOsCanAutowidthTableColumns; then
 		(
