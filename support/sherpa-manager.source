@@ -419,6 +419,9 @@ LoadConsts()
 		r_report_qpkg_can_backup_column_width=8
 		r_report_qpkg_can_clean_column_width=9
 		r_report_qpkg_can_start_to_update_column_width=9
+		r_report_qpkg_cert_enddate_column_width=45
+		r_report_qpkg_cert_startdate_column_width=45
+		r_report_qpkg_cert_valid_column_width=18
 		r_report_qpkg_dependencies_column_width=29
 		r_report_qpkg_install_date_column_width=11
 		r_report_qpkg_is_complete_column_width=9
@@ -530,13 +533,14 @@ LoadConsts()
 			r_chars_regular_prompt='$ '
 			r_chars_results='= '
 			r_chars_super_prompt='# '
-			r_extended_datetime_format='+%a %-d %B %Y'
+			r_extended_date_format='+%A %-d %B %Y'
+			r_extended_time_format='%-I:%M:%S %p %Z'
 
 		# Compound.
 
 			r_chars_normal=$r_chars_bullet
 			r_chars_sudo_prompt=$r_chars_regular_prompt'sudo '
-			r_full_datetime_format=$r_extended_datetime_format' %-I:%M:%S %p %Z'
+			r_full_datetime_format=$r_extended_date_format' '$r_extended_time_format
 
 			if IsOsCanSudo; then
 				if [[ $(GetUserSudoUID) = undefined ]]; then
@@ -551,6 +555,7 @@ LoadConsts()
 				r_help_syntax_sudo_prefix=$r_chars_super_prompt
 			fi
 
+		local -r r_extended_time_format
 		readonly r_chars_alert
 		readonly r_chars_attention
 		readonly r_chars_blank
@@ -563,7 +568,7 @@ LoadConsts()
 		readonly r_chars_results
 		readonly r_chars_sudo_prompt
 		readonly r_chars_super_prompt
-		readonly r_extended_datetime_format
+		readonly r_extended_date_format
 		readonly r_full_datetime_format
 		readonly r_help_syntax_prefix
 		readonly r_help_syntax_sudo_prefix
@@ -811,7 +816,7 @@ IsCMDsOk()
 	a=(curl getcfg ldd rmcfg setcfg)
 	b+=("${a[@]/#//sbin/}")
 
-	a=(basename cp cut dirname du free head readlink stat tail tee unzip uptime wc which xargs)
+	a=(basename cp cut dirname du free head openssl readlink stat tail tee unzip uptime wc which xargs)
 	b+=("${a[@]/#//usr/bin/}")
 
 	a=(python2)
@@ -6241,6 +6246,9 @@ GenerateDepsReportTitleRow()
 
 	# Inputs: (global)
 	#	$r_report_lazy_column_width
+	#	$r_report_qpkg_cert_enddate_column_width
+	#	$r_report_qpkg_cert_startdate_column_width
+	#	$r_report_qpkg_cert_valid_column_width
 	#	$r_report_qpkg_dependencies_column_width
 	#	$r_report_qpkg_is_complete_column_width
 	#	$r_report_qpkg_is_enabled_column_width
@@ -6255,7 +6263,7 @@ GenerateDepsReportTitleRow()
 
 	local -a a_headers
 
-	a_headers=('QPKG name:' 'Dependencies:' 'Optionals:' 'Prohibited?' 'Installed?' 'Enabled?' 'Complete?' 'Managed?' 'Signed?' 'Min. RAM:' 'Min. OS:' 'Max. OS:' 'Installed QPKG author:')
+	a_headers=('QPKG name:' 'Dependencies:' 'Optionals:' 'Prohibited?' 'Installed?' 'Enabled?' 'Complete?' 'Managed?' 'Signed?' 'Certificate start date:' 'Certificate end date:' 'Certificate valid?' 'Minimum RAM:' 'Min. OS:' 'Max. OS:' 'Installed QPKG author:')
 
 	if IsOsCanAutowidthTableColumns; then
 		(
@@ -6274,10 +6282,13 @@ GenerateDepsReportTitleRow()
 		FormatReportFieldWidth "${a_headers[6]}" "$r_report_qpkg_is_complete_column_width"
 		FormatReportFieldWidth "${a_headers[7]}" "$r_report_qpkg_is_managed_column_width"
 		FormatReportFieldWidth "${a_headers[8]}" "$r_report_qpkg_is_signed_column_width"
-		FormatReportFieldWidth "${a_headers[9]}" "$r_report_qpkg_min_ram_column_width"
-		FormatReportFieldWidth "${a_headers[10]}" "$r_report_qpkg_os_version_column_width"
-		FormatReportFieldWidth "${a_headers[11]}" "$r_report_qpkg_os_version_column_width"
-		FormatReportFieldWidth "${a_headers[12]}" "$r_report_lazy_column_width"
+		FormatReportFieldWidth "${a_headers[9]}" "$r_report_qpkg_cert_startdate_column_width"
+		FormatReportFieldWidth "${a_headers[10]}" "$r_report_qpkg_cert_enddate_column_width"
+		FormatReportFieldWidth "${a_headers[11]}" "$r_report_qpkg_cert_valid_column_width"
+		FormatReportFieldWidth "${a_headers[12]}" "$r_report_qpkg_min_ram_column_width"
+		FormatReportFieldWidth "${a_headers[13]}" "$r_report_qpkg_os_version_column_width"
+		FormatReportFieldWidth "${a_headers[14]}" "$r_report_qpkg_os_version_column_width"
+		FormatReportFieldWidth "${a_headers[15]}" "$r_report_lazy_column_width"
 	fi
 
 	printf '\n'
@@ -6295,7 +6306,9 @@ _GenerateDepsReportDataRow_()
 	# Inputs: (global)
 	#	$qpkg_name
 	#	$r_report_flags_path
-	#	$r_report_lazy_column_width
+	#	$r_report_qpkg_cert_enddate_column_width
+	#	$r_report_qpkg_cert_startdate_column_width
+	#	$r_report_qpkg_cert_valid_column_width
 	#	$r_report_qpkg_dependencies_column_width
 	#	$r_report_qpkg_is_complete_column_width
 	#	$r_report_qpkg_is_enabled_column_width
@@ -6321,17 +6334,27 @@ _GenerateDepsReportDataRow_()
 	local req_notice
 	local req_oops
 
-	a_column_vars=(author auxiliary complete deps enabled installed managed max_os min_os min_ram name opt_deps prohibited signed)
-	auxiliary_column=deps		# Auxiliary messages are shown in this column name.
-	dep_name=''
-	deps_raw=$(GetQpkgDbDependencies "$qpkg_name")
-	mode=''
-	opt_deps_raw=$(GetQpkgDbOptDependencies "$qpkg_name")
-	req_alert=false
-	req_attention=false
-	req_normal_notice=false
-	req_notice=false
-	req_oops=false
+	# Simple.
+		a_column_vars=(author auxiliary cert_enddate cert_startdate cert_valid complete deps enabled installed managed max_os min_os min_ram name opt_deps prohibited signed)
+		auxiliary_column=deps		# Auxiliary messages are shown in this column name.
+		dep_name=''
+		mode=''
+		req_alert=false
+		req_attention=false
+		req_normal_notice=false
+		req_notice=false
+		req_oops=false
+
+	# Compound.
+
+		db_qpkg_cert=$(GetQpkgDbCert)
+
+		db_qpkg_cert_issuer=$(GetQpkgDbCertIssuer)
+		deps_raw=$(GetQpkgDbDependencies "$qpkg_name")
+		opt_deps_raw=$(GetQpkgDbOptDependencies "$qpkg_name")
+
+		db_qpkg_cert_enddate_epoch=$(GetQpkgDbCertEndDateEpoch)
+		db_qpkg_cert_startdate_epoch=$(GetQpkgDbCertStartDateEpoch)
 
 	for a in "${a_column_vars[@]}"; do
 		local ${a}=false
@@ -6347,8 +6370,10 @@ _GenerateDepsReportDataRow_()
 	IsQpkgEnabled "$name" && enabled=true
 	IsQpkgComplete "$name" && complete=true
 	IsQpkgSigned "$name" && signed=true
+	[[ $db_qpkg_cert_startdate_epoch -gt 0 ]] && cert_startdate=$(ConvertSecondsToFullDate "$db_qpkg_cert_startdate_epoch")
+	[[ $db_qpkg_cert_enddate_epoch -gt 0 ]] && cert_enddate=$(ConvertSecondsToFullDate "$db_qpkg_cert_enddate_epoch")
+	IsQpkgDbCertValid && cert_valid=true
 	IsQpkgProhibited "$name" && prohibited=true
-
 	[[ -z $deps_raw ]] && deps_raw=none
 	[[ -z $opt_deps_raw ]] && opt_deps_raw=none
 	[[ -n $max_os && $max_os != none && ${#max_os} -eq 3 ]] && max_os=${max_os:0:1}.${max_os:1:1}.${max_os:2:1}
@@ -6431,6 +6456,9 @@ _GenerateDepsReportDataRow_()
 			complete_msg=$(FormatReportField N/A mute)
 			managed_msg=$(FormatReportField N/A mute)
 			signed_msg=$(FormatReportField N/A mute)
+			cert_startdate_msg=$(FormatReportField N/A mute)
+			cert_enddate_msg=$(FormatReportField N/A mute)
+			cert_valid_msg=$(FormatReportField N/A mute)
 
 			if ! IsQpkgProhibited "$qpkg_name"; then
 				prohibited_msg=$(FormatReportField "$prohibited" mute)
@@ -6568,12 +6596,36 @@ _GenerateDepsReportDataRow_()
 			if IsOsCanManageSignedPackages; then
 				if [[ $signed = true ]]; then
 					signed_msg=$(FormatReportField "$signed" ok)
+
+					if [[ $db_qpkg_cert_startdate_epoch -lt $(ConvertNowToSeconds) ]]; then
+						cert_startdate_msg=$(FormatReportField "$cert_startdate" ok)
+					else
+						cert_startdate_msg=$(FormatReportField "$cert_startdate" highlight)
+					fi
+
+					if [[ $db_qpkg_cert_enddate_epoch -gt $(ConvertNowToSeconds) ]]; then
+						cert_enddate_msg=$(FormatReportField "$cert_enddate" ok)
+					else
+						cert_enddate_msg=$(FormatReportField "$cert_enddate" oops)
+					fi
+
+					if [[ $cert_valid = true ]]; then
+						cert_valid_msg=$(FormatReportField "$cert_valid" ok)
+					else
+						cert_valid_msg=$(FormatReportField "$cert_valid" oops)
+					fi
 				else
 					signed_msg=$(FormatReportField "$signed" alert)
+					cert_startdate_msg=$(FormatReportField N/A alert)
+					cert_enddate_msg=$(FormatReportField N/A alert)
+					cert_valid_msg=$(FormatReportField "$cert_valid" alert)
 					req_oops=true
 				fi
 			else
 				signed_msg=$(FormatReportField N/A ok)
+				cert_startdate_msg=$(FormatReportField N/A ok)
+				cert_enddate_msg=$(FormatReportField N/A ok)
+				cert_valid_msg=$(FormatReportField N/A ok)
 			fi
 	esac
 
@@ -6583,9 +6635,9 @@ _GenerateDepsReportDataRow_()
 
 	if IsOsCanAutowidthTableColumns; then
 		if IsThisAnAlternateLine "$1"; then
-			TextOnDarkGrey "$(printf '%s' "$name_msg|$deps_msg|$opt_deps_msg|$prohibited_msg|$installed_msg|$enabled_msg|$complete_msg|$managed_msg|$signed_msg|$min_ram_msg|$min_os_msg|$max_os_msg|$(FormatReportFieldWidth "$author_msg" "$r_report_qpkg_author_column_width")")"
+			TextOnDarkGrey "$(printf '%s' "$name_msg|$deps_msg|$opt_deps_msg|$prohibited_msg|$installed_msg|$enabled_msg|$complete_msg|$managed_msg|$signed_msg|$cert_startdate_msg|$cert_enddate_msg|$cert_valid_msg|$min_ram_msg|$min_os_msg|$max_os_msg|$(FormatReportFieldWidth "$author_msg" "$r_report_qpkg_author_column_width")")"
 		else
-			printf '%s' "$name_msg|$deps_msg|$opt_deps_msg|$prohibited_msg|$installed_msg|$enabled_msg|$complete_msg|$managed_msg|$signed_msg|$min_ram_msg|$min_os_msg|$max_os_msg|$author_msg"
+			printf '%s' "$name_msg|$deps_msg|$opt_deps_msg|$prohibited_msg|$installed_msg|$enabled_msg|$complete_msg|$managed_msg|$signed_msg|$cert_startdate_msg|$cert_enddate_msg|$cert_valid_msg|$min_ram_msg|$min_os_msg|$max_os_msg|$author_msg"
 		fi
 	else
 		FormatReportFieldWidth "$name_msg" "$r_report_qpkg_name_column_width"
@@ -6597,6 +6649,9 @@ _GenerateDepsReportDataRow_()
 		FormatReportFieldWidth "$complete_msg" "$r_report_qpkg_is_complete_column_width"
 		FormatReportFieldWidth "$managed_msg" "$r_report_qpkg_is_managed_column_width"
 		FormatReportFieldWidth "$signed_msg" "$r_report_qpkg_is_signed_column_width"
+		FormatReportFieldWidth "$cert_startdate_msg" "$r_report_qpkg_cert_startdate_column_width"
+		FormatReportFieldWidth "$cert_enddate_msg" "$r_report_qpkg_cert_enddate_column_width"
+		FormatReportFieldWidth "$cert_valid_msg" "$r_report_qpkg_cert_valid_column_width"
 		FormatReportFieldWidth "$min_ram_msg" "$r_report_qpkg_min_ram_column_width"
 		FormatReportFieldWidth "$min_os_msg" "$r_report_qpkg_os_version_column_width"
 		FormatReportFieldWidth "$max_os_msg" "$r_report_qpkg_os_version_column_width"
@@ -17929,7 +17984,7 @@ ConvertAsSmartDate()
 	#	$1 = epoch time. Example: '1234567890' with 10 digits. Since 9th September 2001, epoch time has-been 10 digits and will remain-so until 21st November 2286.
 
 	# Inputs: (global)
-	#	$r_extended_datetime_format
+	#	$r_extended_date_format
 	#	$r_full_datetime_format
 
 	# Outputs: (local)
@@ -17945,13 +18000,13 @@ ConvertAsSmartDate()
 
 	case ${#a} in
 		6)		# Assume input is datecode, so convert to extended date format.
-			b=$(/bin/date -d "${a::2}-${a:2:2}-${a:4:2}" "$r_extended_datetime_format")
+			b=$(/bin/date -d "${a::2}-${a:2:2}-${a:4:2}" "$r_extended_date_format")
 			;;
 		7)		# Assume input is datecode with a 'v' prefix, so convert to extended date format.
-			b=$(/bin/date -d "${a:1:2}-${a:3:2}-${a:5:2}" "$r_extended_datetime_format")
+			b=$(/bin/date -d "${a:1:2}-${a:3:2}-${a:5:2}" "$r_extended_date_format")
 			;;
 		8)		# Assume input is longdatecode, so convert to extended date format.
-			b=$(/bin/date -d ${a::4}-${a:4:2}-${a:6:2} "$r_extended_datetime_format")
+			b=$(/bin/date -d ${a::4}-${a:4:2}-${a:6:2} "$r_extended_date_format")
 			;;
 		10)		# Assume input is epoch time, so convert to full date format.
 			b=$(/bin/date -d @"$a" "$r_full_datetime_format")
@@ -19976,6 +20031,145 @@ IsSiteUp()
 	return 1
 
 	} &> /dev/null
+
+LoadQpkgDbCertDetails()
+	{
+
+	# Inputs: (global)
+	#	$qpkg_name
+
+	db_qpkg_cert=$(GetQpkgDbCert) || return
+	db_qpkg_cert_startdate_epoch=$(GetQpkgDbCertStartDateEpoch)
+	db_qpkg_cert_enddate_epoch=$(GetQpkgDbCertEndDateEpoch)
+	db_qpkg_cert_startdate=$(GetQpkgDbCertStartDate)
+	db_qpkg_cert_enddate=$(GetQpkgDbCertEndDate)
+	db_qpkg_cert_issuer=$(GetQpkgDbCertIssuer)
+
+	}
+
+PrintCertValidStatus()
+	{
+
+	IsQpkgDbCertValid && printf yes || printf no
+
+	}
+
+IsQpkgDbCertValid()
+	{
+
+	local -i now_epoch
+
+	now_epoch=$(ConvertNowToSeconds)
+
+	[[ -n ${db_qpkg_cert_startdate_epoch:=0} && $db_qpkg_cert_startdate_epoch -gt 0 ]] || return
+	[[ -n ${db_qpkg_cert_enddate_epoch:=0} && $db_qpkg_cert_enddate_epoch -gt 0 ]] || return
+	[[ -n ${now_epoch:=0} && $now_epoch -gt 0 ]] || return
+
+	[[ $db_qpkg_cert_startdate_epoch -le $now_epoch && $now_epoch -lt $db_qpkg_cert_enddate_epoch ]]
+
+	}
+
+GetQpkgDbCertStartDate()
+	{
+
+	[[ -n ${db_qpkg_cert_startdate_epoch:=0} && $db_qpkg_cert_startdate_epoch -gt 0 ]] || return
+
+	/bin/date -d @$db_qpkg_cert_startdate_epoch
+
+	}
+
+GetQpkgDbCertEndDate()
+	{
+
+	[[ -n ${db_qpkg_cert_enddate_epoch:=0} && $db_qpkg_cert_enddate_epoch -gt 0 ]] || return
+
+	/bin/date -d @$db_qpkg_cert_enddate_epoch
+
+	}
+
+GetQpkgDbCertStartDateEpoch()
+	{
+
+	[[ -n $db_qpkg_cert ]] || return
+
+	/usr/bin/openssl x509 -startdate -noout <<< "$db_qpkg_cert" | /usr/bin/cut -d= -f2- | /bin/date -f - +%s
+
+	}
+
+GetQpkgDbCertEndDateEpoch()
+	{
+
+	[[ -n $db_qpkg_cert ]] || return
+
+	/usr/bin/openssl x509 -enddate -noout <<< "$db_qpkg_cert" | /usr/bin/cut -d= -f2- | /bin/date -f - +%s
+
+	}
+
+GetQpkgDbCertIssuer()
+	{
+
+	[[ -n $db_qpkg_cert ]] || return
+
+	/usr/bin/openssl x509 -issuer -noout <<< "$db_qpkg_cert" | /bin/sed -n 's/.*O=\([^,]*\).*/\1/p'
+
+	}
+
+GetQpkgDbCert()
+	{
+
+	[[ -s $r_cert_db_pathfile ]] || return
+	[[ -n $qpkg_name ]] || return
+
+	local match_column
+	local pysqlite_command
+	local query
+	local select_column
+	local table
+	local uri
+
+	# Simple.
+
+		match_column=QpkgName
+		select_column=Cert
+		table=Certificate
+
+	# Compound.
+
+		query="SELECT $select_column FROM $table WHERE $match_column = ?"
+		uri="file:$r_cert_db_pathfile?mode=ro"		# Open as read-only.
+
+		read -r -d '' pysqlite_command <<EOB
+import sqlite3
+import sys
+import ctypes
+
+from ctypes import util
+
+# Force SQLite to allow global URI parsing in Python 2.7
+sqlite_path = ctypes.util.find_library('sqlite3')
+
+if sqlite_path:
+    sqlite3_lib = ctypes.CDLL(sqlite_path)													# directive:ignore-leader
+    sqlite3_lib.sqlite3_config(17, 1)	# SQLITE_CONFIG_URI is constant 17. 1 turns it ON.	# directive:ignore-leader
+
+conn = sqlite3.connect('$uri')
+cursor = conn.cursor()
+
+cursor.execute("""$query""", ('$qpkg_name',))
+record = cursor.fetchone()
+
+cursor.close()
+conn.close()
+
+if record:
+    print record[0]																			# directive:ignore-leader
+else:
+    sys.exit(1)																				# directive:ignore-leader
+EOB
+
+	/usr/local/bin/python2 -c "$pysqlite_command"
+
+	}
 
 CaughtSIGINT()
 	{
