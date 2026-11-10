@@ -6619,9 +6619,9 @@ _GenerateDepsReportDataRow_()
 					fi
 				else
 					signed_msg=$(FormatReportField "$signed" alert)
-					cert_startdate_msg=$(FormatReportField N/A alert)
-					cert_enddate_msg=$(FormatReportField N/A alert)
-					cert_valid_msg=$(FormatReportField "$cert_valid" alert)
+					cert_startdate_msg=$(FormatReportField N/A oops)
+					cert_enddate_msg=$(FormatReportField N/A oops)
+					cert_valid_msg=$(FormatReportField "$cert_valid" oops)
 					req_oops=true
 				fi
 			else
@@ -18938,7 +18938,7 @@ TextBrightRedBlink()
 	[[ -n ${1:-} ]] || return
 
 	if [[ $colourful = true ]]; then
-		printf '\033[1;5;31m%s\033[39;22m' "$1"
+		printf '\033[1;5;31m%s\033[25m' "$1"
 	else
 		printf '%s' "$1"
 	fi
