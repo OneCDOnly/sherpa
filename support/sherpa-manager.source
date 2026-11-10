@@ -1028,7 +1028,7 @@ ConfigEnv()
 			r_ani_end_pathfile=$r_animation_path/$r_ani_id.end			# Internal fileflag (to stop animation cleanly).
 			r_ani_frame_pathfile=$r_animation_path/$r_ani_id.frame		# Next frame to be displayed by animator process.
 			r_ani_pid_pathfile=$r_animation_path/$r_ani_id.pid			# PID of forked animator process.
-			r_ani_resume_pathfile=$r_animation_path/$r_ani_id.resume	# If exists, animation was running prior to PauseAni(), and should be started again ASAP.
+			r_ani_resume_pathfile=$r_animation_path/$r_ani_id.resume	# If exists, animation was running prior to PauseSpinner(), and should be started again ASAP.
 
 		readonly r_ani_end_pathfile
 		readonly r_ani_frame_pathfile
@@ -1837,9 +1837,9 @@ AssignQpkgsToActions()
 
 	FuncInit
 
-	PauseAni
+	PauseSpinner
 	ShowAsProc 'action assignment'
-	ResumeAni
+	ResumeSpinner
 
 	local action
 	local prospect
@@ -2189,9 +2189,9 @@ ProcActions()
 
 	FuncInit
 
-	PauseAni
+	PauseSpinner
 	ShowAsProc 'package actions'
-	ResumeAni
+	ResumeSpinner
 
 	local -i tier_index
 	local action
@@ -2300,7 +2300,7 @@ ProcActions()
 
 	IsOsCanManageSignedPackages && ProcAction unsign all QPKG unsign	# For QPKGs that failed to install.
 
-	EndAni
+	EndSpinner
 
 	if IsDebug; then
 		ListQPKGsActions
@@ -2447,7 +2447,7 @@ ProcAction()
 				ShowKeystrokes			# Enable before removing Entware (& GNU `stty`).
 			fi
 
-			PauseAni
+			PauseSpinner
 
 			CreateAndSetPidFile
 			$a "_${r_package_type}:${r_action}_" "${a_target_packages[@]}" &
@@ -2576,14 +2576,14 @@ ProcAction()
 
 			[[ ${useropt_terse:=true} = false && $useropt_verbose = false ]] && echo
 			ShowAsProc 'package actions'
-			ResumeAni
+			ResumeSpinner
 			;;
 		IPK|PIP)
 			if [[ $ipks_downgrade = true || $ipks_install = true || $ipks_upgrade = true || $pips_install = true ]]; then
-				PauseAni
+				PauseSpinner
 				InitActionForkCounters
 				${r_package_type}s:${r_action}		# Only process these packages in groups, not individually.
-				ResumeAni
+				ResumeSpinner
 			fi
 	esac
 
@@ -2739,7 +2739,7 @@ PrepareArgs()
 	#	$useropt_help_basic
 
 	ShowAsProc args
-	StartAni
+	StartSpinner
 
 	local a
 
@@ -4040,9 +4040,9 @@ AllocPackGroupsToAcs()
 
 	FuncInit
 
-	PauseAni
+	PauseSpinner
 	ShowAsProc 'package groups'
-	ResumeAni
+	ResumeSpinner
 
 	local action
 	local group
@@ -4092,9 +4092,9 @@ AllocPackStatesToAcs()
 
 	FuncInit
 
-	PauseAni
+	PauseSpinner
 	ShowAsProc 'conditional package states'
-	ResumeAni
+	ResumeSpinner
 
 	local action
 	local check_later
@@ -4383,7 +4383,7 @@ CalcIpkDepsToInstall()
 		FuncExit 1; return
 	fi
 
-	EndAni
+	EndSpinner
 
 	DebugInfo "$requested_count IPK$(Pluralise "$requested_count") requested" "'$req_list' "
 
@@ -4430,7 +4430,7 @@ CalcIpkDepsToInstall()
 
 	if [[ $pre_exclude_count -gt 0 ]]; then
 		ShowAsProc 'exclude IPKs already installed'
-		StartAni
+		StartSpinner
 
 		DebugInfo "$pre_exclude_count IPK$(Pluralise "$pre_exclude_count") required (including dependencies)" "'$pre_exclude_list' "
 
@@ -4452,7 +4452,7 @@ CalcIpkDepsToInstall()
 			fi
 		done
 
-		EndAni
+		EndSpinner
 	else
 		DebugAsDone 'no IPKs to exclude'
 	fi
@@ -4486,9 +4486,9 @@ CalcIpkDownloadSize()
 	fi
 
 	if [[ $size_count -gt 0 ]]; then
-		EndAni
+		EndSpinner
 		ShowAsProc "calculate size of IPK$(Pluralise "$size_count") to download"
-		StartAni
+		StartSpinner
 
 		DebugAsDone "$size_count IPK$(Pluralise "$size_count") to download: '$(IPKs-ACdownload-to:List)'"
 		a_sizes=($($r_gnu_grep_cmd -w '^Package:\|^Size:' "$r_external_packages_pathfile" | $r_gnu_grep_cmd --after-context 1 --no-group-separator ": $(/bin/sed 's/ /$ /g;s/\$ /\$\\\|: /g' <<< "$(IPKs-ACdownload-to:List)")" | /bin/grep '^Size:' | /bin/sed 's/^Size: //'))
@@ -4567,7 +4567,7 @@ IPKs:upgrade()
 		dir_location=$r_ipk_download_path
 		UpdateDirSizeProgress_prefix=$desc
 
-		PauseAni
+		PauseSpinner
 
 		_DirSizeMonitor_ &
 		pid=$!
@@ -4591,7 +4591,7 @@ IPKs:upgrade()
 		fi
 
 		[[ ${useropt_terse:=true} = false && ${useropt_verbose:=false} = false ]] && echo
-		ResumeAni
+		ResumeSpinner
 	fi
 
 	FuncExit $z
@@ -4679,7 +4679,7 @@ IPKs:install()
 		dir_location=$r_ipk_download_path
 		UpdateDirSizeProgress_prefix=$desc
 
-		PauseAni
+		PauseSpinner
 		_DirSizeMonitor_ &
 		pid=$!
 
@@ -4710,7 +4710,7 @@ IPKs:install()
 		fi
 
 		[[ ${useropt_terse:=true} = false && ${useropt_verbose:=false} = false ]] && echo
-		ResumeAni
+		ResumeSpinner
 	fi
 
 	FuncExit $z
@@ -4771,7 +4771,7 @@ IPKs:downgrade()
 		done_ok_count=0
 		log_pathfile=$r_log_path/ipks.$r_download_log_file
 
-		PauseAni
+		PauseSpinner
 		ShowAsProc "$desc"
 
 		SetQpkgArch
@@ -4838,7 +4838,7 @@ IPKs:downgrade()
 		done_ok_count=0
 		log_pathfile=$r_log_path/ipks.$r_downgrade_log_file
 
-		PauseAni
+		PauseSpinner
 		ShowAsProc "$desc"
 
 		ShowAsPercentProgress "$desc" '' "$done_ok_count" 0 "$done_fail_count" "$total_count"
@@ -4933,9 +4933,9 @@ PIPs:install()
 		exec_cmd="$r_pip_cmd install --upgrade --no-input $(PIPs-ACinstall-to:List) --cache-dir $r_pip_cache_path --root-user-action=ignore"
 		desc="$action $total_count $package_name ${package_type}$(Pluralise "$total_count")"
 
-		EndAni
+		EndSpinner
 		ShowAsPercentProgress "$desc" '' "$done_ok_count" 0 0 "$total_count"
-		StartAni
+		StartSpinner
 
 		Executer "$exec_cmd" "$log_pathfile" log:failure-only
 		z=$?
@@ -4955,11 +4955,11 @@ PIPs:install()
 			fi
 		fi
 
-		EndAni
+		EndSpinner
 		ShowAsPercentProgress "$desc" '' "$done_ok_count" 0 "$done_fail_count" "$total_count"
 
 		[[ ${useropt_terse:=true} = false && ${useropt_verbose:=false} = false ]] && echo
-		StartAni
+		StartSpinner
 	fi
 
 	FuncExit $z
@@ -8047,9 +8047,9 @@ UpdateActionForkProgress()
 
 	if [[ -n $a ]]; then
 #		if [[ $worker_count -eq 1 ]]; then
-#			PauseAni
+#			PauseSpinner
 			ShowAsProc "${fork_progress_prefix:-}" "$a "
-#			ResumeAni
+#			ResumeSpinner
 #		else
 #			ShowAsProc "${fork_progress_prefix:-}" "$a "
 #		fi
@@ -8231,7 +8231,7 @@ CheckEnv()
 	FuncInit
 
 	ShowAsProc 'check environment'
-	ResumeAni
+	ResumeSpinner
 
 	CheckSelfSigned
 	CheckIncompatibleQPKGs
@@ -8711,9 +8711,9 @@ RefreshAndStoreQPKGsStates()
 
 	local -r r_pid_pathfile
 
-	PauseAni
+	PauseSpinner
 	ShowAsProc 'basic package states'
-	ResumeAni
+	ResumeSpinner
 
 	# Faster to launch several concurrent loops async than a single loop. Launch those requiring more processing-time first.
 
@@ -8775,9 +8775,9 @@ LoadQPKGsStates()
 	local b
 	local qpkg_name
 
-	PauseAni
+	PauseSpinner
 	ShowAsProc 'load QPKG states'
-	ResumeAni
+	ResumeSpinner
 
 	# Load status lines from individual files into session arrays.
 
@@ -9691,7 +9691,7 @@ ShowReport()
 	# Inputs: (global)
 	#	$r_report_output_pathfile
 
-	EndAni
+	EndSpinner
 	EraseThisLine
 
 	if [[ -s $r_report_output_pathfile ]]; then
@@ -9715,7 +9715,7 @@ ShowVersionsList()
 	#	$r_script_built_epoch
 	#	$r_this_package_ver
 
-	EndAni
+	EndSpinner
 	EraseThisLine
 
 	Display "QPKG: $(ConvertAsSmartDate "$r_this_package_ver")"
@@ -9835,7 +9835,7 @@ ShowQPKGList()
 
 	local qpkg_name
 
-	EndAni
+	EndSpinner
 	EraseThisLine
 
 	if IsFuncExist QPKGs-$1.IsAny && QPKGs-$1.IsAny; then
@@ -16916,7 +16916,7 @@ ShowTitle()
 
 	FuncInit
 
-	PauseAni
+	PauseSpinner
 	EraseThisLine
 
 	# Only show ASCII title when no arguments are specified.
@@ -17255,7 +17255,7 @@ DisplayProcReport()
 	[[ -n ${1:-} ]] && a=$1' '
 
 	ShowAsProc "${a}report"
-	StartAni
+	StartSpinner
 
 	report_title_shown=true
 
@@ -18274,7 +18274,7 @@ ShowAsNote()
 
 	[[ -n ${1:-} ]] || return
 
-	PauseAni
+	PauseSpinner
 
 	local a
 	local b
@@ -18294,7 +18294,7 @@ ShowAsDone()
 
 	[[ -n ${1:-} ]] || return
 
-	PauseAni
+	PauseSpinner
 
 	local a
 	local b
@@ -18314,7 +18314,7 @@ ShowAsNews()
 
 	[[ -n ${1:-} ]] || return
 
-	PauseAni
+	PauseSpinner
 
 	local a
 	local b
@@ -18334,7 +18334,7 @@ ShowAsWarn()
 
 	[[ -n ${1:-} ]] || return
 
-	PauseAni
+	PauseSpinner
 
 	local a
 	local b
@@ -18354,7 +18354,7 @@ ShowAsAbort()
 
 	[[ -n ${1:-} ]] || return
 
-	PauseAni
+	PauseSpinner
 
 	local a
 	local b
@@ -18375,7 +18375,7 @@ ShowAsFail()
 
 	[[ -n ${1:-} ]] || return
 
-	PauseAni
+	PauseSpinner
 
 	local a
 	local b
@@ -18395,7 +18395,7 @@ ShowAsError()
 
 	[[ -n ${1:-} ]] || return
 
-	PauseAni
+	PauseSpinner
 
 	local a
 	local b
@@ -18420,7 +18420,7 @@ ShowAsBug()
 
 	[[ -n ${1:-} && -n ${2:-} ]] || return
 
-	PauseAni
+	PauseSpinner
 
 	local -i i
 	local a
@@ -19608,9 +19608,9 @@ LoadObjects()
 
 	LoadLists
 
-	PauseAni
+	PauseSpinner
 	ShowAsProc objects
-	ResumeAni
+	ResumeSpinner
 
 	# NOTE: Set these prior to calling RefreshArchive()
 
@@ -19670,9 +19670,9 @@ LoadDatabase()
 
 	LoadObjects
 
-	PauseAni
+	PauseSpinner
 	ShowAsProc database
-	ResumeAni
+	ResumeSpinner
 
 	# NOTE: Set these prior to calling RefreshArchive()
 
@@ -19789,7 +19789,7 @@ LoadDatabase()
 
 	}
 
-StartAni()
+StartSpinner()
 	{
 
 	IsNtDebug || return							# Don't start an animation in debug mode.
@@ -19802,7 +19802,7 @@ StartAni()
 
 	}
 
-PauseAni()
+PauseSpinner()
 	{
 
 	[[ -s ${r_ani_pid_pathfile:-} ]] || return	# Don't try to stop an animation without a PID.
@@ -19815,7 +19815,7 @@ PauseAni()
 
 	}
 
-ResumeAni()
+ResumeSpinner()
 	{
 
 	IsNtDebug || return							# Don't start an animation in debug mode.
@@ -19829,7 +19829,7 @@ ResumeAni()
 
 	}
 
-EndAni()
+EndSpinner()
 	{
 
 	# Inputs: (global)
@@ -19989,7 +19989,7 @@ CaughtSIGINT()
 	[[ -n ${r_inhibit_display_pathfile:-} ]] && /bin/touch "$r_inhibit_display_pathfile"
 	[[ -n ${r_abort_actions_pathfile:-} ]] && /bin/touch "$r_abort_actions_pathfile"
 
-	EndAni
+	EndSpinner
 	EraseThisLine
 	ShowAsAbort 'caught SIGINT'
 	CloseMsgPipe
@@ -20007,7 +20007,7 @@ CaughtEXIT()
 
 	CloseIpkArchive
 	ReleaseLockfile
-	EndAni
+	EndSpinner
 	ShowKeystrokes
 	ShowCursor
 
