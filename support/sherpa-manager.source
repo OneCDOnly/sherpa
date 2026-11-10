@@ -419,8 +419,8 @@ LoadConsts()
 		r_report_qpkg_can_backup_column_width=8
 		r_report_qpkg_can_clean_column_width=9
 		r_report_qpkg_can_start_to_update_column_width=9
-		r_report_qpkg_cert_enddate_column_width=45
-		r_report_qpkg_cert_startdate_column_width=45
+		r_report_qpkg_cert_enddate_column_width=34
+		r_report_qpkg_cert_startdate_column_width=34
 		r_report_qpkg_cert_valid_column_width=18
 		r_report_qpkg_dependencies_column_width=29
 		r_report_qpkg_install_date_column_width=11
@@ -533,14 +533,16 @@ LoadConsts()
 			r_chars_regular_prompt='$ '
 			r_chars_results='= '
 			r_chars_super_prompt='# '
-			r_extended_date_format='+%A %-d %B %Y'
+			r_extended_date_format='+%a %-d %b %Y'
 			r_extended_time_format='%-I:%M:%S %p %Z'
+			r_full_date_format='+%A %-d %B %Y'
 
 		# Compound.
 
 			r_chars_normal=$r_chars_bullet
 			r_chars_sudo_prompt=$r_chars_regular_prompt'sudo '
-			r_full_datetime_format=$r_extended_date_format' '$r_extended_time_format
+			r_extended_datetime_format=$r_extended_date_format' '$r_extended_time_format
+			r_full_datetime_format=$r_full_date_format' '$r_extended_time_format
 
 			if IsOsCanSudo; then
 				if [[ $(GetUserSudoUID) = undefined ]]; then
@@ -556,6 +558,7 @@ LoadConsts()
 			fi
 
 		local -r r_extended_time_format
+		local -r r_full_datetime_format
 		readonly r_chars_alert
 		readonly r_chars_attention
 		readonly r_chars_blank
@@ -569,7 +572,7 @@ LoadConsts()
 		readonly r_chars_sudo_prompt
 		readonly r_chars_super_prompt
 		readonly r_extended_date_format
-		readonly r_full_datetime_format
+		readonly r_extended_datetime_format
 		readonly r_help_syntax_prefix
 		readonly r_help_syntax_sudo_prefix
 
@@ -5643,7 +5646,7 @@ GenerateStatusReportTitleRow()
 	a=''
 
 	QPKGs-ISupgradable.IsAny && a=" $(TextBrightWhite '(')$(TextBrightOrange new)$(TextBrightWhite ')')"
-	a_headers=("$(TextBrightWhite 'QPKG name:')" "$(TextBrightWhite 'Status:')" "$(TextBrightWhite 'Last action (result):')" "$(TextBrightWhite 'QPKG version')${a}$(TextBrightWhite ':')" "$(TextBrightWhite 'Appl. version:')" "$(TextBrightWhite 'Location:')")
+	a_headers=("$(TextBrightWhite 'QPKG name:')" "$(TextBrightWhite 'Status:')" "$(TextBrightWhite 'Last action (result):')" "$(TextBrightWhite 'QPKG version')${a}$(TextBrightWhite ':')" "$(TextBrightWhite 'Appl. version:')" "$(TextBrightWhite 'Installation path:')")
 
 	if IsOsCanAutowidthTableColumns; then
 		(
@@ -5952,7 +5955,7 @@ GenerateReposReportTitleRow()
 
 	local -a a_headers
 
-	a_headers=('QPKG name:' 'Repository:' 'Install date:')
+	a_headers=('QPKG name:' 'Repository:' 'Installation date:')
 
 	if IsOsCanAutowidthTableColumns; then
 		(
@@ -6082,7 +6085,7 @@ _GenerateReposReportDataRow_()
 					/bin/touch "$r_report_flags_path"/repo-other
 			esac
 
-			install_date_msg=$(FormatReportField "$(GetQpkgInstalledDate)")
+			install_date_msg=$(FormatReportField "$(ConvertAsSmartDate "$(GetQpkgInstalledDate)")")
 	esac
 
 	[[ -n $auxiliary_msg ]] && eval "${auxiliary_column}_msg=\"$auxiliary_msg\""
@@ -17807,7 +17810,7 @@ ConvertSecondsToFullDate()
 	# Outputs: (local)
 	#	stdout = real date.
 
-	/bin/date -d @"${1:-}" "$r_full_datetime_format"
+	/bin/date -d @"${1:-}" "$r_extended_datetime_format"
 
 	} 2> /dev/null
 
@@ -17985,7 +17988,7 @@ ConvertAsSmartDate()
 
 	# Inputs: (global)
 	#	$r_extended_date_format
-	#	$r_full_datetime_format
+	#	$r_extended_datetime_format
 
 	# Outputs: (local)
 	#	stdout = formatted datetime string.
@@ -18009,7 +18012,7 @@ ConvertAsSmartDate()
 			b=$(/bin/date -d ${a::4}-${a:4:2}-${a:6:2} "$r_extended_date_format")
 			;;
 		10)		# Assume input is epoch time, so convert to full date format.
-			b=$(/bin/date -d @"$a" "$r_full_datetime_format")
+			b=$(/bin/date -d @"$a" "$r_extended_datetime_format")
 	esac
 
 	if [[ -n $b ]]; then
@@ -18026,12 +18029,12 @@ ConvertNowToFullDate()
 	{
 
 	# Inputs: (global)
-	#	$r_full_datetime_format
+	#	$r_extended_datetime_format
 
 	# Outputs: (local)
 	#	stdout = real date.
 
-	/bin/date "$r_full_datetime_format"
+	/bin/date "$r_extended_datetime_format"
 
 	} 2> /dev/null
 
