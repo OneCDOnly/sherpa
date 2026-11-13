@@ -8162,7 +8162,9 @@ UpdateDirSizeProgress()
 		(( ${last_active_epoch:=0} != 0 )) && stalled_seconds=$(CalcAmountDiff "$(ConvertNowToSeconds)" "$last_active_epoch")
 	fi
 
-	perc_msg=$(( 200 * ( current_bytes / dir_bytes ) % 2 + 100 * ( current_bytes / dir_bytes ) ))%
+#	perc_msg=$(( 200 * ( current_bytes / dir_bytes ) % 2 + 100 * ( current_bytes / dir_bytes ) ))%		# WARNING: don't use, doesn't work.
+	perc_msg=$((200*(current_bytes)/(dir_bytes)%2+100*(current_bytes)/(dir_bytes)))%
+
 	(( current_bytes < dir_bytes )) && [[ $perc_msg = '100%' ]] && perc_msg=99%		# Ensure display doesn't hit 100% until the last byte is downloaded.
 	progress_msg="$perc_msg ($(TextBrightWhite "$(FormatAsIsoBytes "$current_bytes")")/$(TextBrightWhite "$(FormatAsIsoBytes "$dir_bytes")"))"
 
