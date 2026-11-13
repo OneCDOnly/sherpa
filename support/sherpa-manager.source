@@ -4436,7 +4436,7 @@ CalcIpkDepsToInstall()
 	pre_exclude_list=${a_dep_acc[*]}
 	pre_exclude_count=$(/usr/bin/wc -w <<< "$pre_exclude_list")
 
-	if (( pre_exclude_count < 0 )); then
+	if (( pre_exclude_count > 0 )); then
 		ShowAsProc 'exclude IPKs already installed'
 		StartSpinner
 
