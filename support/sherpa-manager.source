@@ -505,7 +505,7 @@ LoadConsts()
 
 			UpdateSessionColumns
 
-			r_debug_log_width=$((sess_columns-12))			# Subtract debug log line leader width.
+			r_debug_log_width=$(( sess_columns - 12 ))			# Subtract debug log line leader width.
 
 		readonly r_debug_log_width
 		readonly r_help_desc_indent
@@ -2714,7 +2714,7 @@ SetMaxForks()
 				max_forks=1
 				;;
 			clean)											# Don't make too-many calls to PyPI at the same time.
-				max_forks=$(((r_concurrency+1)/2))
+				max_forks=$(( ( r_concurrency + 1 ) / 2 ))
 				;;
 			backup|deactivate|download|uninstall|update)	# Low-resource actions, so allow multiple forks, even on ARMv5.
 				max_forks=4
@@ -2723,7 +2723,7 @@ SetMaxForks()
 				max_forks=8
 		esac
 
-		[[ $max_forks -ne $default_forks ]] && reason="'$1' was requested"
+		(( max_forks != default_forks )) && reason="'$1' was requested"
 	fi
 
 	[[ -n $reason ]] && DebugInfo "setting \$max_forks to $max_forks because $reason."
@@ -4502,7 +4502,7 @@ CalcIpkDownloadSize()
 		a_sizes=($($r_gnu_grep_cmd -w '^Package:\|^Size:' "$r_external_packages_pathfile" | $r_gnu_grep_cmd --after-context 1 --no-group-separator ": $(/bin/sed 's/ /$ /g;s/\$ /\$\\\|: /g' <<< "$(IPKs-ACdownload-to:List)")" | /bin/grep '^Size:' | /bin/sed 's/^Size: //'))
 
 		# shellcheck disable=2283
-		IPKs-ACdownload-to:Size = "$(IFS=+; echo "$((${a_sizes[*]}))")"		# Nifty array sizing shortcut found here: https://stackoverflow.com/a/13635566/6182835
+		IPKs-ACdownload-to:Size = "$(IFS=+; echo "$(( ${a_sizes[*]} ))")"		# Nifty array sizing shortcut found here: https://stackoverflow.com/a/13635566/6182835
 		DebugAsDone "$(FormatAsThous "$(IPKs-ACdownload-to:Size)") bytes ($(FormatAsIsoBytes "$(IPKs-ACdownload-to:Size)")) to download"
 	else
 		DebugAsDone 'no IPKs to size'
@@ -5410,7 +5410,7 @@ LenANSIDiff()
 	a=${1:-}
 		b=$(StripANSICodes "$a")
 
-	printf '%s' "$((${#a}-${#b}))"
+	printf '%s' "$(( ${#a} - ${#b} ))"
 
 	return 0
 
@@ -5536,7 +5536,7 @@ DisplayAsIndentQuotedInfoItem()
 	if IsOsCanAutowidthTableColumns; then
 		printf "%${r_help_desc_indent}s%s|%s\n" '' "'${1:-}'" "${r_chars_dash}$(AddPeriod "${2:-}")"
 	else
-		printf "%${r_help_desc_indent}s%-$((r_report_info_name_column_width+2+$(LenANSIDiff "${1:-}")))s%s\n" '' "'${1:-}'" "${r_chars_dash}$(AddPeriod "${2:-}")"
+		printf "%${r_help_desc_indent}s%-$(( r_report_info_name_column_width + 2 + $(LenANSIDiff "${1:-}") ))s%s\n" '' "'${1:-}'" "${r_chars_dash}$(AddPeriod "${2:-}")"
 	fi
 
 	}
@@ -7100,7 +7100,7 @@ FormatReportFieldWidth()
 	[[ -n ${1:-} && -n ${2:-} ]] || return
 	(( $2 >= 0 )) || return
 
-	printf "%-$(($(LenANSIDiff "$1")+$2+r_report_column_spacing))s" "$1"
+	printf "%-$(( $(LenANSIDiff "$1") + $2 + r_report_column_spacing ))s" "$1"
 
 	}
 
@@ -7802,7 +7802,7 @@ GetLogSessStartLine()
 
 	local -i a
 
-	a=$(($(/bin/grep -n 'SCRIPT:.*started:' "$r_session_tail_pathfile" | /usr/bin/tail -n${1:-1} | /usr/bin/head -n1 | /usr/bin/cut -d':' -f1)-1))
+	a=$(( $(/bin/grep -n 'SCRIPT:.*started:' "$r_session_tail_pathfile" | /usr/bin/tail -n${1:-1} | /usr/bin/head -n1 | /usr/bin/cut -d':' -f1) - 1 ))
 	(( a < 1 )) && a=1
 	printf '%s' "$a"
 
@@ -7819,7 +7819,7 @@ GetLogSessFinishLine()
 
 	local -i a
 
-	a=$(($(/bin/grep -n 'SCRIPT:.*finished:' "$r_session_tail_pathfile" | /usr/bin/tail -n${1:-1} | /usr/bin/cut -d':' -f1)+2))
+	a=$(( $(/bin/grep -n 'SCRIPT:.*finished:' "$r_session_tail_pathfile" | /usr/bin/tail -n${1:-1} | /usr/bin/cut -d':' -f1) + 2 ))
 	(( a == 2 )) && a=3
 	printf '%s' "$a"
 
@@ -8035,8 +8035,8 @@ RefreshActionForkCounts()
 	skip_ok_count=$(FileCountAll "$proc_skip_ok_count_path")
 	working_count=$(FileCountAll "$proc_working_count_path")
 
-	skipper_count=$((skip_ok_count+skip_error_count+skip_abort_count))		# Compile all 'skip' types into a single number.
-	worker_count=$((queued_count+working_count))							# Compile all 'work' types into a single number.
+	skipper_count=$(( skip_ok_count + skip_error_count + skip_abort_count ))		# Compile all 'skip' types into a single number.
+	worker_count=$(( queued_count + working_count ))							# Compile all 'work' types into a single number.
 
 	} &> /dev/null
 
@@ -8162,7 +8162,7 @@ UpdateDirSizeProgress()
 		(( ${last_active_epoch:=0} != 0 )) && stalled_seconds=$(CalcAmountDiff "$(ConvertNowToSeconds)" "$last_active_epoch")
 	fi
 
-	perc_msg=$((200*(current_bytes)/(dir_bytes)%2+100*(current_bytes)/(dir_bytes)))%
+	perc_msg=$(( 200 * ( current_bytes / dir_bytes ) % 2 + 100 * ( current_bytes / dir_bytes ) ))%
 	(( current_bytes < dir_bytes )) && [[ $perc_msg = '100%' ]] && perc_msg=99%		# Ensure display doesn't hit 100% until the last byte is downloaded.
 	progress_msg="$perc_msg ($(TextBrightWhite "$(FormatAsIsoBytes "$current_bytes")")/$(TextBrightWhite "$(FormatAsIsoBytes "$dir_bytes")"))"
 
@@ -10361,7 +10361,7 @@ GetCpuStepping()
 
 	a=$(GetValueFromFile '^stepping' /proc/cpuinfo) || return 1
 
-	printf '%s' "$((a))"
+	printf '%s' "$(( a ))"
 
 	return 0
 
@@ -10378,7 +10378,7 @@ GetCpuVariant()
 
 	a=$(GetValueFromFile '^CPU variant' /proc/cpuinfo) || return 1
 
-	printf '%s' "$((a))"
+	printf '%s' "$(( a ))"
 
 	return 0
 
@@ -10395,7 +10395,7 @@ GetCpuRevision()
 
 	a=$(GetValueFromFile '^CPU revision' /proc/cpuinfo) || return 1
 
-	printf '%s' "$((a))"
+	printf '%s' "$(( a ))"
 
 	return 0
 
@@ -10814,7 +10814,7 @@ GetHardwareInstalledRAMgb()
 
 	a=$(/bin/grep MemTotal /proc/meminfo | /bin/sed "$r_regex_process_ram")
 
-	b=$((((a/1024)*1000)/1024))
+	b=$(( (( a / 1024 ) * 1000 ) / 1024 ))
 
 	c=${b%???}.${b:${#b}<3?0:-3}
 
@@ -10842,7 +10842,7 @@ GetOsFirmwareBuild()
 	#	stdout = 4 char string.
 	#	$? = 0 if found, 250 if not.
 
-	printf '%04d' "$((10#$(/sbin/getcfg System Number -d 0 -f /etc/config/uLinux.conf)))"
+	printf '%04d' "$(( 10#$(/sbin/getcfg System Number -d 0 -f /etc/config/uLinux.conf) ))"
 
 	}
 
@@ -10855,7 +10855,7 @@ GetOsFirmwareDate()
 	#	stdout = 8 char string (YYYYMMDD).
 	#	$? = 0 if found, 250 if not.
 
-	printf '%08d' "$((10#$(/sbin/getcfg System 'Build Number' -d 0 -f /etc/config/uLinux.conf)))"
+	printf '%08d' "$(( 10#$(/sbin/getcfg System 'Build Number' -d 0 -f /etc/config/uLinux.conf) ))"
 
 	}
 
@@ -10867,7 +10867,7 @@ GetOsFirmwareVer()
 	# Outputs: (local)
 	#	stdout = 10 char string, with build number.
 
-	printf '%010d' "$((10#$(ConvertFirmwareVersionStringToNumber "$(GetOsFirmwareVersion).$(GetOsFirmwareBuild)")))"
+	printf '%010d' "$(( 10#$(ConvertFirmwareVersionStringToNumber "$(GetOsFirmwareVersion).$(GetOsFirmwareBuild)") ))"
 
 	}
 
@@ -15179,9 +15179,9 @@ IsThisLoadAverageAboveTrigger()
 
 	a=$(( r_cpu_threads * ${2:-1} * 100 ))
 	b=${1:-1}
-	b=$((10#${b/./}))
+	b=$(( 10#${b/./} ))
 
-	((b>=a))
+	(( b >= a ))
 
 	}
 
@@ -16837,7 +16837,7 @@ GenerateMD5()
 Pluralise()
 	{
 
-	[[ ${1:-0} -ne 1 ]] && printf s
+	(( ${1:-0} != 1 )) && printf s
 
 	}
 
@@ -17299,7 +17299,7 @@ ShowAsResultAndStdout()
 	local a
 
 	a=$r_chars_results
-	[[ ${1:-0} -ne 0 ]] && a=$r_chars_alert
+	(( ${1:-0} != 0 )) && a=$r_chars_alert
 
 	echo "${a}result: $(FormatExitcode "$1")"
 	echo "${a}────────── stdout/stderr begins below ──────────"
@@ -17894,7 +17894,7 @@ ConvertMillisecondsToSeconds()
 	# Outputs: (local)
 	#	stdout = seconds.
 
-	printf '%s' "$(($1/(10**3)))"
+	printf '%s' "$(( $1 / ( 10 ** 3 ) ))"
 
 	} 2> /dev/null
 
@@ -17933,7 +17933,7 @@ ConvertNanosecondsToMilliseconds()
 	# Outputs: (local)
 	#	stdout = milliseconds.
 
-	printf '%s' "$(($1/(10**6)))"
+	printf '%s' "$(( $1 / ( 10 ** 6 ) ))"
 
 	} 2> /dev/null
 
@@ -17961,7 +17961,7 @@ ConvertLongDateAsHuman()
 
 	a=${1//[!0-9]/}	# Strip non-digits.
 
-	if [[ ${#a} -ne 8 ]]; then
+	if (( ${#a} != 8 )); then
 		printf 'invalid longdate code length'
 
 		return 1
@@ -18095,7 +18095,7 @@ ConvertFirmwareVersionStringToNumber()
 	#	Example: '4.6.99.1234' becomes '0406991234'
 
 	# Output should be compared using forced base-10 syntax (to handle leading zeros):
-	#	Example: (( $((10#$a)) > $((10#$b)) )))
+	#	Example: (( 10#$a > 10#$b ))
 
 	# Use only this many digits from start of each field.
 
@@ -18126,7 +18126,7 @@ ConvertFirmwareVersionStringToNumber()
 	local -r r_minor_trim
 
 	while IFS=. read -r major intermediate minor build _; do
-		printf "%0${r_major_trim}d%0${r_intermediate_trim}d%0${r_minor_trim}d%0${r_build_trim}d" "$((10#${major:0:r_major_trim}))" "$((10#${intermediate:0:r_intermediate_trim}))" "$((10#${minor:0:r_minor_trim}))" "$((10#${build:0:r_build_trim}))"
+		printf "%0${r_major_trim}d%0${r_intermediate_trim}d%0${r_minor_trim}d%0${r_build_trim}d" "$(( 10#${major:0:r_major_trim} ))" "$(( 10#${intermediate:0:r_intermediate_trim} ))" "$(( 10#${minor:0:r_minor_trim} ))" "$(( 10#${build:0:r_build_trim} ))"
 	done <<< "$1"
 
 	}
@@ -19159,7 +19159,7 @@ Tableise()
 				printf "%s%*s%s", cell[row,col], max[col]-len[row,col], "", OFS
 			print cell[row,nf[row]]
 		}
-	}' FS='|' OFS="$(printf "%$((r_report_column_spacing))s")"
+	}' FS='|' OFS="$(printf "%$(( r_report_column_spacing ))s")"
 
 	}
 
