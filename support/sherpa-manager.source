@@ -16722,36 +16722,53 @@ FindPid()
 	{
 
 	# Inputs: (local)
-	#	$1 = Process pathfilename to find.
-	#	$2 (optional) = additional string to match if there are multiple processes with identical pathfilenames.
-
-	# Inputs: (global)
-	#	$e_nopfi
+	#	$1 = primary process name to match.
+	#	$2 (optional) = secondary process name to match.
+	#	$3 (optional) = tertiary string to match.
 
 	# Outputs: (local)
 	#	$? = 0 (found) or 1 (not found)
 	#	stdout = PID
 
-	ConfirmVarIsDefined 1 "${1:-}" "$e_nopfi" || return
+	ConfirmVarIsDefined 1 "${1:-}" "$e_nostr" || return
 
-	local -i a
-	local b
+	local -a args
+	local -i pid
+	local arg
+	local pid_path
+	local remainder
+	local temp
 
-	b=''
+	# shellcheck disable=2064
+	trap "$(shopt -p)" RETURN				# Restore original `shopt` settings on return.
 
-	[[ -n ${2:-} && $2 != undefined ]] && b=$2
+	shopt -s nullglob nocasematch			# 'nullglob': for /proc search, 'nocasematch': `screen` is shown as `SCREEN` in process list.
 
-	for a in $(/bin/pidof "$(/usr/bin/basename "$1")"); do
-		(( a > 1 )) || continue
-		[[ -d /proc/$a ]] || continue
-		[[ -e /proc/$a/cmdline && -L /proc/$a/exe ]] || continue
-		[[ $(< /proc/$a/cmdline) =~ $1 || $(/usr/bin/readlink /proc/$a/exe 2> /dev/null) = "$1" ]] || continue
+	for pid_path in /proc/[0-9]*/; do		# BusyBox `pidof` doesn't always return every instance of $1, so must look-for $1 the hard-way.
+		temp=${pid_path#/proc/}
+		pid=${temp%/}
 
-		if [[ -n $b ]]; then
-			[[ $(< /proc/$a/cmdline) =~ $b ]] || continue	# Check for additional string (if-specified).
+		(( pid > 1 )) || continue
+		[[ -e /proc/$pid/cmdline && -r /proc/$pid/cmdline && -L /proc/$pid/exe ]] || continue
+
+		args=()
+		remainder=''
+
+		while IFS= read -r -d '' arg || [[ -n "$arg" ]]; do
+			args+=("$arg")
+		done < "/proc/$pid/cmdline"
+
+		(( ${#args[@]} > 0 )) || continue
+		[[ ${args[0]} =~ $1 ]] || continue
+
+		if [[ -n ${2:-} && $2 != undefined ]] || [[ -n ${3:-} && $3 != undefined ]]; then
+			remainder=$(IFS=' '; echo "${args[*]:1}")			# First arg has been checked, so only check the remainder of string.
+
+			[[ "$remainder" == *"$2"* ]] || continue
+			[[ "$remainder" == *"$3"* ]] || continue
 		fi
 
-		printf '%s' "$a"
+		printf '%s' "$pid"
 
 		return
 	done
@@ -16952,7 +16969,7 @@ FormatAsThous()
 	b=''
 	c=''
 
-	while ((${#a}>0)); do
+	while (( ${#a} > 0 )); do
 		b=${a:${#a}<3?0:-3}			# A nifty trick found here: https://stackoverflow.com/a/19858692
 
 		if [[ -z $c ]]; then
