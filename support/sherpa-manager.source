@@ -2462,7 +2462,7 @@ ProcAction()
 			CreateAndSetPidFile
 			$a "_${r_package_type}:${r_action}_" "${a_target_packages[@]}" &
 			pid=$!
-			DebugAsDone "${FUNCNAME[0]}() has forked '$a()' for action '$r_action' with PID: '$pid'"
+			DebugAsDone "${FUNCNAME[0]}() has forked '$a()' for action '$r_action' with PID '$pid'"
 			WriteToPidFile "$pid" "$pidfile"
 
 			AppendToPidsFile "$pid" "$r_pid_pathfile"
@@ -5121,7 +5121,7 @@ _ExecOneActionWithManyForks_()
 			CreateAndSetPidFile
 			$a &
 			pid=$!
-			DebugAsDone "${FUNCNAME[0]}() has forked '$a()' for package '$qpkg_name' with PID: '$pid'"
+			DebugAsDone "${FUNCNAME[0]}() has forked '$a()' for package '$qpkg_name' with PID '$pid'"
 			WriteToPidFile "$pid" "$pidfile"
 
 			AppendToPidsFile "$pid" "$r_pid_pathfile"
