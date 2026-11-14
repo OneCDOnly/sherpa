@@ -1002,7 +1002,7 @@ ConfigEnv()
 
 		readonly r_abort_actions_pathfile
 		readonly r_action_msg_pipe
-		readonly r_action_msg_pipe_log_pathfile											# directive:omit-from-production
+		readonly r_action_msg_pipe_log_pathfile												# directive:omit-from-production
 		readonly r_action_results_pathfile
 		readonly r_oom_log_pathfile
 		readonly r_ram_freeused_output_pathfile
@@ -6394,8 +6394,8 @@ _GenerateDepsReportDataRow_()
 	IsQpkgEnabled "$name" && enabled=true
 	IsQpkgComplete "$name" && complete=true
 	IsQpkgSigned "$name" && signed=true
-	((db_qpkg_cert_startdate_epoch > 0)) && cert_startdate=$(ConvertSecondsToFullDate "$db_qpkg_cert_startdate_epoch")
-	((db_qpkg_cert_enddate_epoch > 0)) && cert_enddate=$(ConvertSecondsToFullDate "$db_qpkg_cert_enddate_epoch")
+	(( db_qpkg_cert_startdate_epoch > 0 )) && cert_startdate=$(ConvertSecondsToFullDate "$db_qpkg_cert_startdate_epoch")
+	(( db_qpkg_cert_enddate_epoch > 0 )) && cert_enddate=$(ConvertSecondsToFullDate "$db_qpkg_cert_enddate_epoch")
 	IsQpkgDbCertValid && cert_valid=true
 	IsQpkgProhibited "$name" && prohibited=true
 	[[ -z $deps_raw ]] && deps_raw=none
@@ -6621,13 +6621,13 @@ _GenerateDepsReportDataRow_()
 				if [[ $signed = true ]]; then
 					signed_msg=$(FormatReportField "$signed" ok)
 
-					if ((db_qpkg_cert_startdate_epoch < $(ConvertNowToSeconds))); then
+					if (( db_qpkg_cert_startdate_epoch < $(ConvertNowToSeconds) )); then
 						cert_startdate_msg=$(FormatReportField "$cert_startdate" ok)
 					else
 						cert_startdate_msg=$(FormatReportField "$cert_startdate" highlight)
 					fi
 
-					if ((db_qpkg_cert_enddate_epoch > $(ConvertNowToSeconds))); then
+					if (( db_qpkg_cert_enddate_epoch > $(ConvertNowToSeconds) )); then
 						cert_enddate_msg=$(FormatReportField "$cert_enddate" ok)
 					else
 						cert_enddate_msg=$(FormatReportField "$cert_enddate" oops)
@@ -6970,7 +6970,7 @@ _GenerateBacksReportItemLine_()
 	file_name=${2:-}
 	file_bytes=$(FormatAsThous "${3:-0}")
 
-	if ((${epoch_time%.*} < $(/bin/date --date="${4:-'1 week ago'}" +%s))); then
+	if (( ${epoch_time%.*} < $(/bin/date --date="${4:-'1 week ago'}" +%s) )); then
 		mode=highlight
 		/bin/touch "$r_report_flags_path"/backup-file-old
 	else
@@ -8038,7 +8038,7 @@ RefreshActionForkCounts()
 	skip_ok_count=$(FileCountAll "$proc_skip_ok_count_path")
 	working_count=$(FileCountAll "$proc_working_count_path")
 
-	skipper_count=$(( skip_ok_count + skip_error_count + skip_abort_count ))		# Compile all 'skip' types into a single number.
+	skipper_count=$(( skip_ok_count + skip_error_count + skip_abort_count ))	# Compile all 'skip' types into a single number.
 	worker_count=$(( queued_count + working_count ))							# Compile all 'work' types into a single number.
 
 	} &> /dev/null
@@ -14813,7 +14813,7 @@ IsEntwareUpgradable()
 
 	# NOTE: Entware not updating packages anymore for older arches: https://entware.net/2024/02/23/Changelog.html
 
-	if [[ $a = undefined ]] || ((${a//[!0-9]/}<r_entware_packages_last_updated)); then
+	if [[ $a = undefined ]] || (( ${a//[!0-9]/} < r_entware_packages_last_updated )); then
 		case $r_nas_arch in
 			armv5tel|i686|x86)
 				: # Do nothing.
@@ -17938,7 +17938,7 @@ ConvertMillisecondsToFuncDuration()
 	# Inputs: (local)
 	#	$1 = duration in milliseconds.
 
-	if ((${1:-0}<30000)); then
+	if (( ${1:-0} < 30000 )); then
 		printf '%s' "$(FormatAsThous "${1:-0}")ms" | /usr/bin/tail -n1		# Prevent "broken pipe" error: https://superuser.com/a/642932
 	else
 		ConvertMillisecondsToDuration "$1"
@@ -17992,11 +17992,11 @@ ConvertLongDateAsHuman()
 	b=10#${a:6:2}
 	c=''
 
-	if ((b >= 1 && b <= 10)); then
+	if (( b >= 1 && b <= 10 )); then
 		c=early
-	elif ((b >= 11 && b <= 20)); then
+	elif (( b >= 11 && b <= 20 )); then
 		c=mid
-	elif ((b >= 21 && b <= 31)); then
+	elif (( b >= 21 && b <= 31 )); then
 		c=late
 	else
 		printf 'invalid day code'
@@ -18006,7 +18006,7 @@ ConvertLongDateAsHuman()
 
 	b=${a:4:2}
 
-	if ((b < 1 || b > 12)); then
+	if (( b < 1 || b > 12 )); then
 		printf 'invalid month code'
 
 		return 1
@@ -20121,11 +20121,11 @@ IsQpkgDbCertValid()
 
 	now_epoch=$(ConvertNowToSeconds)
 
-	((${db_qpkg_cert_startdate_epoch:=0} > 0)) || return
-	((${db_qpkg_cert_enddate_epoch:=0} > 0)) || return
-	((${now_epoch:=0} > 0)) || return
+	(( ${db_qpkg_cert_startdate_epoch:=0} > 0 )) || return
+	(( ${db_qpkg_cert_enddate_epoch:=0} > 0 )) || return
+	(( ${now_epoch:=0} > 0 )) || return
 
-	((db_qpkg_cert_startdate_epoch <= now_epoch && now_epoch < db_qpkg_cert_enddate_epoch))
+	(( db_qpkg_cert_startdate_epoch <= now_epoch && now_epoch < db_qpkg_cert_enddate_epoch ))
 
 	}
 
@@ -20135,7 +20135,7 @@ GetQpkgDbCertStartDate()
 	# Inputs: (global)
 	#	$db_qpkg_cert_startdate_epoch
 
-	((${db_qpkg_cert_startdate_epoch:=0} > 0)) || return
+	(( ${db_qpkg_cert_startdate_epoch:=0} > 0 )) || return
 
 	/bin/date -d @$db_qpkg_cert_startdate_epoch
 
@@ -20147,7 +20147,7 @@ GetQpkgDbCertEndDate()
 	# Inputs: (global)
 	#	$db_qpkg_cert_enddate_epoch
 
-	((${db_qpkg_cert_enddate_epoch:=0} > 0)) || return
+	(( ${db_qpkg_cert_enddate_epoch:=0} > 0 )) || return
 
 	/bin/date -d @$db_qpkg_cert_enddate_epoch
 
