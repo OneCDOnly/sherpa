@@ -2689,6 +2689,7 @@ SetMaxForks()
 	[[ -n ${1:-} ]] || return
 
 	local -i default_forks
+	local a
 	local reason
 
 	default_forks=$r_concurrency
@@ -2719,8 +2720,21 @@ SetMaxForks()
 			backup|deactivate|download|uninstall|update)	# Low-resource actions, so allow multiple forks, even on ARMv5.
 				max_forks=4
 				;;
-			@(dis|en)ableau|rebuild|status)					# Really-low-resource actions.
+			@(dis|en)ableau|rebuild)						# Really-low-resource actions.
 				max_forks=8
+				;;
+			status)											# Vary depending-on 1 minute load average. Reduces the number of 'slow' results returned.
+				a=$(GetOsSysLoad1MinAverage)
+
+				if IsThisLoadAverageInsane "$a"; then
+					max_forks=1
+				elif IsThisLoadAverageHigh "$a"; then
+					max_forks=2
+				elif IsThisLoadAverageElevated "$a"; then
+					max_forks=4
+				else
+					max_forks=8
+				fi
 		esac
 
 		(( max_forks != default_forks )) && reason="'$1' was requested"
