@@ -302,6 +302,7 @@ LoadConsts()
 
 	# Various.
 
+		printf -v r_chars_tab '\t'		# QTS BusyBox 1.01 `sed` interprets '\t' literally, so put it in a variable instead.
 		r_cert_db_pathfile=/etc/config/nas_sign_qpkg.db
 		r_entware_packages_last_updated=20261106
 		r_file_change_threshold_minutes=60
@@ -309,6 +310,7 @@ LoadConsts()
 		r_this_script_ver='<?manager_version?>'
 
 		readonly r_cert_db_pathfile
+		readonly r_chars_tab
 		readonly r_entware_packages_last_updated
 		readonly r_file_change_threshold_minutes
 		readonly r_script_built_epoch
@@ -4250,38 +4252,58 @@ PatchEntwareService()
 	#	$r_external_apps_path
 	#	$r_external_apps_temp_path
 
-	local append_text
+	local insertion_text
 	local match_text
 	local r_package_init_pathfile
-	local r_prefix
 
-	append_text=''
+	insertion_text=''
 	match_text=''
 	r_package_init_pathfile=$(GetQpkgServicePathFile Entware)
-	r_prefix='# The following line was inserted by sherpa: https://git.io/sherpa'
 
 	local -r r_package_init_pathfile
-	local -r r_prefix
 
 	if /bin/grep "$r_external_apps_temp_path" "$r_package_init_pathfile" &> /dev/null; then
 		DebugInfo 'patch: "'$r_external_apps_path' shuffle" - already done'
 	else
 		# Ensure existing /opt files are moved out-of-the-way before Entware creates new /opt symlink:
 
-		append_text='external_apps_path='$r_external_apps_path' external_apps_temp_path='$r_external_apps_temp_path'; /bin/rmdir "$external_apps_path" "$external_apps_temp_path" 2> /dev/null; [[ -d $external_apps_path \&\& ! -L $external_apps_path \&\& ! -d $external_apps_temp_path ]] \&\& /bin/mv "$external_apps_path" "$external_apps_temp_path"'
 		match_text='# sym-link $QPKG_DIR to /opt'
-		/bin/sed -i "s|$match_text|${match_text}\n\n\t${r_prefix}\n\t${append_text}\n|" "$r_package_init_pathfile"
+		insertion_text='external_apps_path='$r_external_apps_path' external_apps_temp_path='$r_external_apps_temp_path'; /bin/rmdir "$external_apps_path" "$external_apps_temp_path" 2> /dev/null; [[ -d $external_apps_path \&\& ! -L $external_apps_path \&\& ! -d $external_apps_temp_path ]] \&\& /bin/mv "$external_apps_path" "$external_apps_temp_path"'
+		ShoeHornTextLine "$match_text" "$insertion_text" "$r_package_init_pathfile"
 
 		# ... then restored afterward:
 
-		append_text='(shopt -s dotglob; [[ -L $external_apps_path \&\& -d $external_apps_temp_path ]] \&\& { /bin/mv "$external_apps_temp_path"/* "$external_apps_path"/; /bin/rm -rf "${external_apps_temp_path:?no path specified}" ;})'
 		match_text='/bin/ln -sf $QPKG_DIR /opt'
-		/bin/sed -i "s|$match_text|${match_text}\n\n\t${r_prefix}\n\t${append_text}\n|" "$r_package_init_pathfile"
+		insertion_text='(shopt -s dotglob; [[ -L $external_apps_path \&\& -d $external_apps_temp_path ]] \&\& { /bin/mv "$external_apps_temp_path"/* "$external_apps_path"/; /bin/rm -rf "${external_apps_temp_path:?no path specified}" ;})'
+		ShoeHornTextLine "$match_text" "$insertion_text" "$r_package_init_pathfile"
 
 		DebugAsDone 'patch: "'$r_external_apps_path' shuffle"'
 	fi
 
 	return 0
+
+	}
+
+ShoeHornTextLine()
+	{
+
+	# Inputs: (local)
+	#	$1 = text string to match.
+	#	$2 = text string to insert after match string.
+	#	$3 = pathfile to modify contents of.
+
+	# Inputs: (global)
+	#	$r_chars_tab
+
+	[[ -n ${1:-} ]] || return
+	[[ -n ${2:-} ]] || return
+	[[ -s ${3:-} ]] || return
+
+	local prefix
+
+	prefix='# The following line was inserted by sherpa: https://git.io/sherpa'
+
+	/bin/sed -i "s|$1|${1}\n\n${r_chars_tab}${prefix}\n${r_chars_tab}${2}\n|" "$3"
 
 	}
 
