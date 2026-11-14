@@ -4281,10 +4281,10 @@ SaveIpkAndPipList()
 	#	$r_prev_pip_list_pathfile
 
 	$r_pip_cmd freeze | /usr/bin/cut -d'=' -f1 > "$r_prev_pip_list_pathfile"
-	[[ -s $r_prev_pip_list_pathfile ]] && DebugAsDone "saved current PIP list to $(FormatFileName "$r_prev_pip_list_pathfile")"
+	[[ -s $r_prev_pip_list_pathfile ]] && DebugAsDone "saved installed PIP list to $(FormatFileName "$r_prev_pip_list_pathfile")"
 
 	$r_opkg_cmd list-installed > "$r_prev_ipk_list_pathfile"
-	[[ -s $r_prev_ipk_list_pathfile ]] && DebugAsDone "saved current $(FormatPackageName Entware) IPK list to $(FormatFileName "$r_prev_ipk_list_pathfile")"
+	[[ -s $r_prev_ipk_list_pathfile ]] && DebugAsDone "saved installed IPK list to $(FormatFileName "$r_prev_ipk_list_pathfile")"
 
 	} 2> /dev/null
 
@@ -4713,7 +4713,7 @@ IPKs:install()
 			SaveActionResultMetrics er "$z" "$total_count"
 
 			if [[ -s $r_prev_ipk_list_pathfile.installing ]]; then
-				/bin/mv -f "$r_prev_ipk_list_pathfile.installing" "$r_prev_ipk_list_pathfile"
+				/bin/mv -f "$r_prev_ipk_list_pathfile.installing" "$r_prev_ipk_list_pathfile.install.failed"
 			fi
 		fi
 
@@ -4931,47 +4931,50 @@ PIPs:install()
 	total_count=0
 	z=0
 
-	if [[ $useropt_fix = true ]] || IPKs-ACinstall-ok.Exist python3-pip; then
-		PIPs-ACinstall-to:Add "$r_base_pips"
+	PIPs-ACinstall-to:Add "$r_base_pips"
+	(( total_count++ ))
 
-		if [[ -s $r_prev_pip_list_pathfile && $useropt_fix = false ]]; then		# Don't load previous PIP list during 'check'.
-			LoadPipList
-			/bin/mv -f "$r_prev_pip_list_pathfile" "$r_prev_pip_list_pathfile.installing"
-		fi
-
-		(( total_count++ ))
-
-		exec_cmd="$r_pip_cmd install --upgrade --no-input $(PIPs-ACinstall-to:List) --cache-dir $r_pip_cache_path --root-user-action=ignore"
-		desc="$action $total_count $package_name ${package_type}$(Pluralise "$total_count")"
-
-		EndSpinner
-		ShowAsPercentProgress "$desc" '' "$done_ok_count" 0 0 "$total_count"
-		StartSpinner
-
-		Executer "$exec_cmd" "$log_pathfile" log:failure-only
-		z=$?
-
-		if (( z == 0 )); then
-			(( done_ok_count++ ))
-			DebugAsDone "$desc"
-			SaveActionResultMetrics ok '' "$done_ok_count"
-
-			/bin/rm -f "$r_prev_pip_list_pathfile.installing" 2> /dev/null
-		else
-			(( done_fail_count++ ))
-			SaveActionResultMetrics er "$z" "$done_fail_count"
-
-			if [[ -s $r_prev_pip_list_pathfile.installing ]]; then
-				/bin/mv -f "$r_prev_pip_list_pathfile.installing" "$r_prev_pip_list_pathfile"
-			fi
-		fi
-
-		EndSpinner
-		ShowAsPercentProgress "$desc" '' "$done_ok_count" 0 "$done_fail_count" "$total_count"
-
-		[[ ${useropt_terse:=true} = false && ${useropt_verbose:=false} = false ]] && echo
-		StartSpinner
+	if [[ -s $r_prev_pip_list_pathfile && $useropt_fix = false ]]; then		# Don't load previous PIP list during 'check'.
+		LoadPipList
+		/bin/mv -f "$r_prev_pip_list_pathfile" "$r_prev_pip_list_pathfile.installing"
 	fi
+
+	if ! PIPs-ACinstall-to.IsAny; then
+		FuncExit $z
+
+		return
+	fi
+
+	exec_cmd="$r_pip_cmd install --upgrade --no-input $(PIPs-ACinstall-to:List) --cache-dir $r_pip_cache_path --root-user-action=ignore"
+	desc="$action $total_count $package_name ${package_type}$(Pluralise "$total_count")"
+
+	EndSpinner
+	ShowAsPercentProgress "$desc" '' "$done_ok_count" 0 0 "$total_count"
+	StartSpinner
+
+	Executer "$exec_cmd" "$log_pathfile" log:failure-only
+	z=$?
+
+	if (( z == 0 )); then
+		(( done_ok_count++ ))
+		DebugAsDone "$desc"
+		SaveActionResultMetrics ok '' "$done_ok_count"
+
+		/bin/rm -f "$r_prev_pip_list_pathfile.installing" 2> /dev/null
+	else
+		(( done_fail_count++ ))
+		SaveActionResultMetrics er "$z" "$done_fail_count"
+
+		if [[ -s $r_prev_pip_list_pathfile.installing ]]; then
+			/bin/mv -f "$r_prev_pip_list_pathfile.installing" "$r_prev_pip_list_pathfile.install.failed"
+		fi
+	fi
+
+	EndSpinner
+	ShowAsPercentProgress "$desc" '' "$done_ok_count" 0 "$done_fail_count" "$total_count"
+
+	[[ ${useropt_terse:=true} = false && ${useropt_verbose:=false} = false ]] && echo
+	StartSpinner
 
 	FuncExit $z
 
@@ -4987,7 +4990,7 @@ PIPs:uninstall()
 OpenIpkArchive()
 	{
 
-	# Unpack the package list file used by `opkg`.
+	# Unpack the `opkg` database list file.
 
 	# Inputs: (global)
 	#	$r_cache_path
@@ -4998,7 +5001,7 @@ OpenIpkArchive()
 	#	$? = 0 if successful, 1 if failed
 
 	if [[ ! -s $r_external_packages_archive_pathfile ]]; then
-		ShowAsError 'unable to locate the IPK list file'
+		ShowAsError 'unable to locate the IPK database file'
 
 		return 1
 	fi
@@ -5006,7 +5009,7 @@ OpenIpkArchive()
 	Executer "/usr/local/sbin/7z e -o$(/usr/bin/dirname "$r_external_packages_pathfile") $r_external_packages_archive_pathfile" "$r_cache_path/ipk.archive.extract" log:failure-only
 
 	if [[ ! -s $r_external_packages_pathfile ]]; then
-		ShowAsError 'unable to open the IPK list file'
+		ShowAsError 'unable to open the IPK database file'
 
 		return 1
 	fi
