@@ -422,6 +422,7 @@ LoadConsts()
 		r_report_qpkg_can_clean_column_width=9
 		r_report_qpkg_can_start_to_update_column_width=9
 		r_report_qpkg_cert_enddate_column_width=34
+		r_report_qpkg_cert_issuer_column_width=19
 		r_report_qpkg_cert_startdate_column_width=34
 		r_report_qpkg_cert_valid_column_width=18
 		r_report_qpkg_dependencies_column_width=29
@@ -6274,6 +6275,7 @@ GenerateDepsReportTitleRow()
 	# Inputs: (global)
 	#	$r_report_lazy_column_width
 	#	$r_report_qpkg_cert_enddate_column_width
+	#	$r_report_qpkg_cert_issuer_column_width
 	#	$r_report_qpkg_cert_startdate_column_width
 	#	$r_report_qpkg_cert_valid_column_width
 	#	$r_report_qpkg_dependencies_column_width
@@ -6290,7 +6292,7 @@ GenerateDepsReportTitleRow()
 
 	local -a a_headers
 
-	a_headers=('QPKG name:' 'Dependencies:' 'Optionals:' 'Prohibited?' 'Installed?' 'Enabled?' 'Complete?' 'Managed?' 'Signed?' 'Certificate start datetime:' 'Certificate end datetime:' 'Cert. valid?' 'Minimum RAM:' 'Min. OS:' 'Max. OS:' 'Installed QPKG author:')
+	a_headers=('QPKG name:' 'Dependencies:' 'Optionals:' 'Prohibited?' 'Installed?' 'Enabled?' 'Complete?' 'Managed?' 'Signed?' 'Certificate issuer:' 'Certificate start datetime:' 'Certificate end datetime:' 'Cert. valid?' 'Minimum RAM:' 'Min. OS:' 'Max. OS:' 'Installed QPKG author:')
 
 	if IsOsCanAutowidthTableColumns; then
 		(
@@ -6309,13 +6311,14 @@ GenerateDepsReportTitleRow()
 		FormatReportFieldWidth "${a_headers[6]}" "$r_report_qpkg_is_complete_column_width"
 		FormatReportFieldWidth "${a_headers[7]}" "$r_report_qpkg_is_managed_column_width"
 		FormatReportFieldWidth "${a_headers[8]}" "$r_report_qpkg_is_signed_column_width"
-		FormatReportFieldWidth "${a_headers[9]}" "$r_report_qpkg_cert_startdate_column_width"
-		FormatReportFieldWidth "${a_headers[10]}" "$r_report_qpkg_cert_enddate_column_width"
-		FormatReportFieldWidth "${a_headers[11]}" "$r_report_qpkg_cert_valid_column_width"
-		FormatReportFieldWidth "${a_headers[12]}" "$r_report_qpkg_min_ram_column_width"
-		FormatReportFieldWidth "${a_headers[13]}" "$r_report_qpkg_os_version_column_width"
+		FormatReportFieldWidth "${a_headers[9]}" "$r_report_qpkg_cert_issuer_column_width"
+		FormatReportFieldWidth "${a_headers[10]}" "$r_report_qpkg_cert_startdate_column_width"
+		FormatReportFieldWidth "${a_headers[11]}" "$r_report_qpkg_cert_enddate_column_width"
+		FormatReportFieldWidth "${a_headers[12]}" "$r_report_qpkg_cert_valid_column_width"
+		FormatReportFieldWidth "${a_headers[13]}" "$r_report_qpkg_min_ram_column_width"
 		FormatReportFieldWidth "${a_headers[14]}" "$r_report_qpkg_os_version_column_width"
-		FormatReportFieldWidth "${a_headers[15]}" "$r_report_lazy_column_width"
+		FormatReportFieldWidth "${a_headers[15]}" "$r_report_qpkg_os_version_column_width"
+		FormatReportFieldWidth "${a_headers[16]}" "$r_report_lazy_column_width"
 	fi
 
 	printf '\n'
@@ -6334,6 +6337,7 @@ _GenerateDepsReportDataRow_()
 	#	$qpkg_name
 	#	$r_report_flags_path
 	#	$r_report_qpkg_cert_enddate_column_width
+	#	$r_report_qpkg_cert_issuer_column_width
 	#	$r_report_qpkg_cert_startdate_column_width
 	#	$r_report_qpkg_cert_valid_column_width
 	#	$r_report_qpkg_dependencies_column_width
@@ -6362,7 +6366,7 @@ _GenerateDepsReportDataRow_()
 	local req_oops
 
 	# Simple.
-		a_column_vars=(author auxiliary cert_enddate cert_startdate cert_valid complete deps enabled installed managed max_os min_os min_ram name opt_deps prohibited signed)
+		a_column_vars=(author auxiliary cert_enddate cert_issuer cert_startdate cert_valid complete deps enabled installed managed max_os min_os min_ram name opt_deps prohibited signed)
 		auxiliary_column=deps		# Auxiliary messages are shown in this column name.
 		dep_name=''
 		mode=''
@@ -6476,16 +6480,17 @@ _GenerateDepsReportDataRow_()
 			# Assign & highlight field messages.
 
 			author_msg=$(FormatReportField N/A mute)
+			cert_enddate_msg=$(FormatReportField N/A mute)
+			cert_issuer_msg=$(FormatReportField N/A mute)
+			cert_startdate_msg=$(FormatReportField N/A mute)
+			cert_valid_msg=$(FormatReportField N/A mute)
+			complete_msg=$(FormatReportField N/A mute)
 			deps_msg=$(FormatReportField "${deps// /, }" normal_mute)
-			opt_deps_msg=$(FormatReportField "${opt_deps// /, }" mute)
 			enabled_msg=$(FormatReportField N/A mute)
 			installed_msg=$(FormatReportField "$installed" mute)
-			complete_msg=$(FormatReportField N/A mute)
 			managed_msg=$(FormatReportField N/A mute)
+			opt_deps_msg=$(FormatReportField "${opt_deps// /, }" mute)
 			signed_msg=$(FormatReportField N/A mute)
-			cert_startdate_msg=$(FormatReportField N/A mute)
-			cert_enddate_msg=$(FormatReportField N/A mute)
-			cert_valid_msg=$(FormatReportField N/A mute)
 
 			if ! IsQpkgProhibited "$qpkg_name"; then
 				prohibited_msg=$(FormatReportField "$prohibited" mute)
@@ -6623,6 +6628,7 @@ _GenerateDepsReportDataRow_()
 			if IsOsCanManageSignedPackages; then
 				if [[ $signed = true ]]; then
 					signed_msg=$(FormatReportField "$signed" ok)
+					cert_issuer_msg=$(FormatReportField "$db_qpkg_cert_issuer" ok)
 
 					if (( db_qpkg_cert_startdate_epoch < $(ConvertNowToSeconds) )); then
 						cert_startdate_msg=$(FormatReportField "$cert_startdate" ok)
@@ -6643,6 +6649,7 @@ _GenerateDepsReportDataRow_()
 					fi
 				else
 					signed_msg=$(FormatReportField "$signed" alert)
+					cert_issuer_msg=$(FormatReportField N/A oops)
 					cert_startdate_msg=$(FormatReportField N/A oops)
 					cert_enddate_msg=$(FormatReportField N/A oops)
 					cert_valid_msg=$(FormatReportField "$cert_valid" oops)
@@ -6650,6 +6657,7 @@ _GenerateDepsReportDataRow_()
 				fi
 			else
 				signed_msg=$(FormatReportField N/A ok)
+				cert_issuer_msg=$(FormatReportField N/A ok)
 				cert_startdate_msg=$(FormatReportField N/A ok)
 				cert_enddate_msg=$(FormatReportField N/A ok)
 				cert_valid_msg=$(FormatReportField N/A ok)
@@ -6662,9 +6670,9 @@ _GenerateDepsReportDataRow_()
 
 	if IsOsCanAutowidthTableColumns; then
 		if IsThisAnAlternateLine "$1"; then
-			TextOnDarkGrey "$(printf '%s' "$name_msg|$deps_msg|$opt_deps_msg|$prohibited_msg|$installed_msg|$enabled_msg|$complete_msg|$managed_msg|$signed_msg|$cert_startdate_msg|$cert_enddate_msg|$cert_valid_msg|$min_ram_msg|$min_os_msg|$max_os_msg|$(FormatReportFieldWidth "$author_msg" "$r_report_qpkg_author_column_width")")"
+			TextOnDarkGrey "$(printf '%s' "$name_msg|$deps_msg|$opt_deps_msg|$prohibited_msg|$installed_msg|$enabled_msg|$complete_msg|$managed_msg|$signed_msg|$cert_issuer_msg|$cert_startdate_msg|$cert_enddate_msg|$cert_valid_msg|$min_ram_msg|$min_os_msg|$max_os_msg|$(FormatReportFieldWidth "$author_msg" "$r_report_qpkg_author_column_width")")"
 		else
-			printf '%s' "$name_msg|$deps_msg|$opt_deps_msg|$prohibited_msg|$installed_msg|$enabled_msg|$complete_msg|$managed_msg|$signed_msg|$cert_startdate_msg|$cert_enddate_msg|$cert_valid_msg|$min_ram_msg|$min_os_msg|$max_os_msg|$author_msg"
+			printf '%s' "$name_msg|$deps_msg|$opt_deps_msg|$prohibited_msg|$installed_msg|$enabled_msg|$complete_msg|$managed_msg|$signed_msg|$cert_issuer_msg|$cert_startdate_msg|$cert_enddate_msg|$cert_valid_msg|$min_ram_msg|$min_os_msg|$max_os_msg|$author_msg"
 		fi
 	else
 		FormatReportFieldWidth "$name_msg" "$r_report_qpkg_name_column_width"
@@ -6676,6 +6684,7 @@ _GenerateDepsReportDataRow_()
 		FormatReportFieldWidth "$complete_msg" "$r_report_qpkg_is_complete_column_width"
 		FormatReportFieldWidth "$managed_msg" "$r_report_qpkg_is_managed_column_width"
 		FormatReportFieldWidth "$signed_msg" "$r_report_qpkg_is_signed_column_width"
+		FormatReportFieldWidth "$cert_issuer_msg" "$r_report_qpkg_cert_issuer_column_width"
 		FormatReportFieldWidth "$cert_startdate_msg" "$r_report_qpkg_cert_startdate_column_width"
 		FormatReportFieldWidth "$cert_enddate_msg" "$r_report_qpkg_cert_enddate_column_width"
 		FormatReportFieldWidth "$cert_valid_msg" "$r_report_qpkg_cert_valid_column_width"
