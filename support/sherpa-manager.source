@@ -807,7 +807,7 @@ SetCMDs()
 IsCMDsOk()
 	{
 
-	# Confirm required binaries are present.
+	# Confirm required utilities are present.
 
 	local -a a
 	local -a b
@@ -939,7 +939,6 @@ ConfigEnv()
 			r_packages_archive_pathfile=$r_cache_path/$r_nas_qpkg_arch.packages.tar.gz
 			r_packages_pathfile=$r_cache_path/$r_nas_qpkg_arch.packages
 			r_prev_ipk_list_pathfile=$r_ipk_cache_path/ipk-list.save
-			r_prev_pip_list_pathfile=$r_pip_cache_path/pip-list.save
 			r_session_archive_log_pathfile=$r_log_path/session.archive.log
 
 		readonly r_inhibit_display_pathfile
@@ -948,7 +947,6 @@ ConfigEnv()
 		readonly r_packages_archive_pathfile
 		readonly r_packages_pathfile
 		readonly r_prev_ipk_list_pathfile
-		readonly r_prev_pip_list_pathfile
 		readonly r_session_archive_log_pathfile
 
 	# Ephemeral paths.
@@ -1580,7 +1578,11 @@ DebugLogEnv()
 	fi | /bin/grep -iEv '^(devtmpfs|cgroup_root)'
 
 	DebugInfoMinSepr
-	Executer "SCREENDIR=$r_screen_socket_path /usr/sbin/screen -ls" "$r_screen_sessions_output_pathfile" '' 1 | /bin/sed "$r_regex_process_screen_sessions"
+
+	# NOTE: Screen version 4.00.03: `-ls` returns false, even if screens were found.
+	# Screen version 4.09.01 (GNU) 20-Aug-23: `-ls` returns true.
+
+	Executer "SCREENDIR=$r_screen_socket_path /usr/sbin/screen -ls; true" "$r_screen_sessions_output_pathfile" '' 1 | /bin/sed "$r_regex_process_screen_sessions"
 	DebugInfoMinSepr
 
 	if [[ -x $r_gnu_free_cmd ]]; then
@@ -1592,7 +1594,7 @@ DebugLogEnv()
 	fi
 
 	DebugInfoMinSepr
-	Executer "/bin/grep -iE 'out of memory|oom-killer' /mnt/HDA_ROOT/.logs/kmsg" "$r_oom_log_pathfile" '' 1
+	Executer "! /bin/grep -iE 'out of memory|oom-killer' /mnt/HDA_ROOT/.logs/kmsg" "$r_oom_log_pathfile" '' 1
 	DebugInfoMinSepr
 
 	if [[ $useropt_show_aboutall = true ]]; then
@@ -2090,6 +2092,10 @@ AssignQpkgsToActions()
 		for qpkg_name in $(QPKGs-GRdependent:Array); do
 			IsQpkgEnabled "$qpkg_name" && QPKGs-ACreactivate-to:Add "$qpkg_name"
 		done
+
+		# Clear "dead" screen sessions.
+
+		Executer "SCREENDIR=$r_screen_socket_path /usr/sbin/screen -wipe; true" "$r_screen_sessions_output_pathfile" '' 1 | /bin/sed "$r_regex_process_screen_sessions"
 	fi
 
 	# Don't permit these actions on the sherpa QPKG:
@@ -3951,7 +3957,7 @@ ShowArgSuggestions()
 		done > "$r_report_output_pathfile"
 
 		if (( ${#a_args_remaining[@]} > 0 )); then
-			ShowAsError "incomplete argument$(Pluralise "${#a_args_remaining[@]}") \"${a_args_remaining[*]}\". Please check the arguments again"
+			ShowAsError "incomplete argument$(Pluralise "${#a_args_remaining[@]}") '${a_args_remaining[*]}'. Please check the arguments again"
 			arg_problem=true
 			a_args_remaining=()
 		fi
@@ -4039,7 +4045,7 @@ ShowArgSuggestions()
 		done >> "$r_report_output_pathfile"
 
 		if (( ${#a_args_remaining[@]} > 0 )); then
-			ShowAsError "unknown argument$(Pluralise "${#a_args_remaining[@]}") \"${a_args_remaining[*]}\". Please check the arguments again"
+			ShowAsError "unidentified word$(Pluralise "${#a_args_remaining[@]}") '${a_args_remaining[*]}'. Please check the arguments again"
 			arg_problem=true
 			useropt_help_basic=false
 		fi
@@ -4307,17 +4313,12 @@ ShoeHornTextLine()
 
 	}
 
-SaveIpkAndPipList()
+SaveIpkList()
 	{
 
 	# Inputs: (global)
 	#	$r_opkg_cmd
-	#	$r_pip_cmd
 	#	$r_prev_ipk_list_pathfile
-	#	$r_prev_pip_list_pathfile
-
-	$r_pip_cmd freeze | /usr/bin/cut -d'=' -f1 > "$r_prev_pip_list_pathfile"
-	[[ -s $r_prev_pip_list_pathfile ]] && DebugAsDone "saved installed PIP list to $(FormatFileName "$r_prev_pip_list_pathfile")"
 
 	$r_opkg_cmd list-installed > "$r_prev_ipk_list_pathfile"
 	[[ -s $r_prev_ipk_list_pathfile ]] && DebugAsDone "saved installed IPK list to $(FormatFileName "$r_prev_ipk_list_pathfile")"
@@ -4340,28 +4341,6 @@ LoadIpkList()
 		while read -r name separator version; do
 			IPKs-ACinstall-to:Add "$(Lowercase "$name")"
 		done < "$r_prev_ipk_list_pathfile"
-	fi
-
-	}
-
-LoadPipList()
-	{
-
-	# Inputs: (global)
-	#	$r_prev_pip_list_pathfile
-
-	local name
-	local re
-
-	if [[ -s $r_prev_pip_list_pathfile ]]; then
-		DebugInfo "PIPs are being loaded from $(FormatFileName "$r_prev_pip_list_pathfile")"
-
-		while read -r name; do
-			name=$(Lowercase "$name")
-			re=\\b${name}\\b
-
-			[[ ${r_exclusion_pips[*]} =~ $re ]] || PIPs-ACinstall-to:Add "$name"
-		done < "$r_prev_pip_list_pathfile"
 	fi
 
 	}
@@ -4932,7 +4911,6 @@ PIPs:install()
 	#	$r_log_path
 	#	$r_pip_cache_path
 	#	$r_pip_cmd
-	#	$r_prev_pip_list_pathfile
 	#	$useropt_fix
 	#	$useropt_terse
 	#	$useropt_verbose
@@ -4970,11 +4948,6 @@ PIPs:install()
 	PIPs-ACinstall-to:Add "$r_base_pips"
 	(( total_count++ ))
 
-	if [[ -s $r_prev_pip_list_pathfile && $useropt_fix = false ]]; then		# Don't load previous PIP list during 'check'.
-		LoadPipList
-		/bin/mv -f "$r_prev_pip_list_pathfile" "$r_prev_pip_list_pathfile.installing"
-	fi
-
 	if ! PIPs-ACinstall-to.IsAny; then
 		FuncExit $z
 
@@ -4995,15 +4968,9 @@ PIPs:install()
 		(( done_ok_count++ ))
 		DebugAsDone "$desc"
 		SaveActionResultMetrics ok '' "$done_ok_count"
-
-		/bin/rm -f "$r_prev_pip_list_pathfile.installing" 2> /dev/null
 	else
 		(( done_fail_count++ ))
 		SaveActionResultMetrics er "$z" "$done_fail_count"
-
-		if [[ -s $r_prev_pip_list_pathfile.installing ]]; then
-			/bin/mv -f "$r_prev_pip_list_pathfile.installing" "$r_prev_pip_list_pathfile.install.failed"
-		fi
 	fi
 
 	EndSpinner
@@ -12199,7 +12166,7 @@ _QPKG:uninstall_()
 
 	(( z == 0 )) || FuncForkExit $z
 
-	[[ $qpkg_name = Entware ]] && SaveIpkAndPipList
+	[[ $qpkg_name = Entware ]] && SaveIpkList
 
 	current_ver=$(GetQpkgInstalledVer)
 
@@ -16769,11 +16736,17 @@ FindPid()
 	ConfirmVarIsDefined 1 "${1:-}" "$e_nostr" || return
 
 	local -a args
+	local -i loop_count
+	local -i loop_limit
 	local -i pid
 	local arg
+	local cmdline_pathfile
+	local exe_pathfile
 	local pid_path
 	local remainder
 	local temp
+
+	loop_limit=16							# Limit the number of arg `read` attempts. Avoid getting stuck in a `read` loop.
 
 	# shellcheck disable=2064
 	trap "$(shopt -p)" RETURN				# Restore original `shopt` settings on return.
@@ -16782,25 +16755,40 @@ FindPid()
 
 	for pid_path in /proc/[0-9]*/; do		# BusyBox `pidof` doesn't always return every instance of $1, so must look-for $1 the hard-way.
 		temp=${pid_path#/proc/}
+
 		pid=${temp%/}
 
+		cmdline_pathfile=/proc/$pid/cmdline
+		exe_pathfile=/proc/$pid/exe
+
 		(( pid > 1 )) || continue
-		[[ -e /proc/$pid/cmdline && -r /proc/$pid/cmdline && -L /proc/$pid/exe ]] || continue
+		[[ -e $cmdline_pathfile && -r $cmdline_pathfile && -L $exe_pathfile ]] || continue
 
 		args=()
+		loop_count=0
 		remainder=''
 
-		while IFS= read -r -d '' arg || [[ -n "$arg" ]]; do
-			args+=("$arg")
-		done < "/proc/$pid/cmdline"
+		# Reading from /proc here, so must avoid TOCTOU.
+
+		if exec 3< "$cmdline_pathfile" 2> /dev/null; then
+			while IFS= read -r -u 3 -d '' arg; do
+				args+=("$arg")
+				(( loop_count++ )); (( loop_count >= loop_limit )) && break
+			done
+
+			exec 3<&-
+		fi
 
 		(( ${#args[@]} > 0 )) || continue
 		[[ ${args[0]} =~ $1 ]] || continue
 
-		if [[ -n ${2:-} && $2 != undefined ]] || [[ -n ${3:-} && $3 != undefined ]]; then
-			remainder=$(IFS=' '; echo "${args[*]:1}")			# First arg has been checked, so only check the remainder of string.
+		remainder=$(IFS=' '; echo "${args[*]:1}")			# First arg has been checked, so only check the remainder of string.
 
+		if [[ -n ${2:-} && $2 != undefined ]]; then
 			[[ "$remainder" == *"$2"* ]] || continue
+		fi
+
+		if [[ -n ${3:-} && $3 != undefined ]]; then
 			[[ "$remainder" == *"$3"* ]] || continue
 		fi
 
