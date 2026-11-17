@@ -3959,7 +3959,7 @@ ShowArgSuggestions()
 		done > "$r_report_output_pathfile"
 
 		if (( ${#a_args_remaining[@]} > 0 )); then
-			ShowAsError "incomplete argument$(Pluralise "${#a_args_remaining[@]}") \"${a_args_remaining[*]}\". Please check the arguments again"
+			ShowAsError "incomplete argument$(Pluralise "${#a_args_remaining[@]}") '${a_args_remaining[*]}'. Please check the arguments again"
 			arg_problem=true
 			a_args_remaining=()
 		fi
@@ -4047,7 +4047,7 @@ ShowArgSuggestions()
 		done >> "$r_report_output_pathfile"
 
 		if (( ${#a_args_remaining[@]} > 0 )); then
-			ShowAsError "unknown argument$(Pluralise "${#a_args_remaining[@]}") \"${a_args_remaining[*]}\". Please check the arguments again"
+			ShowAsError "unidentified word$(Pluralise "${#a_args_remaining[@]}") '${a_args_remaining[*]}'. Please check the arguments again"
 			arg_problem=true
 			useropt_help_basic=false
 		fi
