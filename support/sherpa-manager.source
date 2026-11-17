@@ -1584,7 +1584,7 @@ DebugLogEnv()
 	# NOTE: Screen version 4.00.03: `-ls` returns false, even if screens were found.
 	# Screen version 4.09.01 (GNU) 20-Aug-23: `-ls` returns true.
 
-	Executer "SCREENDIR=$r_screen_socket_path /usr/sbin/screen -ls" "$r_screen_sessions_output_pathfile" '' 1 | /bin/sed "$r_regex_process_screen_sessions"
+	Executer "SCREENDIR=$r_screen_socket_path /usr/sbin/screen -ls; true" "$r_screen_sessions_output_pathfile" '' 1 | /bin/sed "$r_regex_process_screen_sessions"
 	DebugInfoMinSepr
 
 	if [[ -x $r_gnu_free_cmd ]]; then
@@ -1596,7 +1596,7 @@ DebugLogEnv()
 	fi
 
 	DebugInfoMinSepr
-	Executer "/bin/grep -iE 'out of memory|oom-killer' /mnt/HDA_ROOT/.logs/kmsg" "$r_oom_log_pathfile" '' 1
+	Executer "! /bin/grep -iE 'out of memory|oom-killer' /mnt/HDA_ROOT/.logs/kmsg" "$r_oom_log_pathfile" '' 1
 	DebugInfoMinSepr
 
 	if [[ $useropt_show_aboutall = true ]]; then
@@ -2094,6 +2094,10 @@ AssignQpkgsToActions()
 		for qpkg_name in $(QPKGs-GRdependent:Array); do
 			IsQpkgEnabled "$qpkg_name" && QPKGs-ACreactivate-to:Add "$qpkg_name"
 		done
+
+		# Clear "dead" screen sessions.
+
+		Executer "SCREENDIR=$r_screen_socket_path /usr/sbin/screen -wipe; true" "$r_screen_sessions_output_pathfile" '' 1 | /bin/sed "$r_regex_process_screen_sessions"
 	fi
 
 	# Don't permit these actions on the sherpa QPKG:
