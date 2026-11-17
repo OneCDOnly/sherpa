@@ -807,7 +807,7 @@ SetCMDs()
 IsCMDsOk()
 	{
 
-	# Confirm required binaries are present.
+	# Confirm required utilities are present.
 
 	local -a a
 	local -a b
@@ -1580,6 +1580,10 @@ DebugLogEnv()
 	fi | /bin/grep -iEv '^(devtmpfs|cgroup_root)'
 
 	DebugInfoMinSepr
+
+	# NOTE: Screen version 4.00.03: `-ls` returns false, even if screens were found.
+	# Screen version 4.09.01 (GNU) 20-Aug-23: `-ls` returns true.
+
 	Executer "SCREENDIR=$r_screen_socket_path /usr/sbin/screen -ls" "$r_screen_sessions_output_pathfile" '' 1 | /bin/sed "$r_regex_process_screen_sessions"
 	DebugInfoMinSepr
 
@@ -16769,11 +16773,17 @@ FindPid()
 	ConfirmVarIsDefined 1 "${1:-}" "$e_nostr" || return
 
 	local -a args
+	local -i loop_count
+	local -i loop_limit
 	local -i pid
 	local arg
+	local cmdline_pathfile
+	local exe_pathfile
 	local pid_path
 	local remainder
 	local temp
+
+	loop_limit=16							# Limit the number of arg `read` attempts. Avoid getting stuck in a `read` loop.
 
 	# shellcheck disable=2064
 	trap "$(shopt -p)" RETURN				# Restore original `shopt` settings on return.
@@ -16782,25 +16792,40 @@ FindPid()
 
 	for pid_path in /proc/[0-9]*/; do		# BusyBox `pidof` doesn't always return every instance of $1, so must look-for $1 the hard-way.
 		temp=${pid_path#/proc/}
+
 		pid=${temp%/}
 
+		cmdline_pathfile=/proc/$pid/cmdline
+		exe_pathfile=/proc/$pid/exe
+
 		(( pid > 1 )) || continue
-		[[ -e /proc/$pid/cmdline && -r /proc/$pid/cmdline && -L /proc/$pid/exe ]] || continue
+		[[ -e $cmdline_pathfile && -r $cmdline_pathfile && -L $exe_pathfile ]] || continue
 
 		args=()
+		loop_count=0
 		remainder=''
 
-		while IFS= read -r -d '' arg || [[ -n "$arg" ]]; do
-			args+=("$arg")
-		done < "/proc/$pid/cmdline"
+		# Reading from /proc here, so must avoid TOCTOU.
+
+		if exec 3< "$cmdline_pathfile" 2> /dev/null; then
+			while IFS= read -r -u 3 -d '' arg; do
+				args+=("$arg")
+				(( loop_count++ )); (( loop_count >= loop_limit )) && break
+			done
+
+			exec 3<&-
+		fi
 
 		(( ${#args[@]} > 0 )) || continue
 		[[ ${args[0]} =~ $1 ]] || continue
 
-		if [[ -n ${2:-} && $2 != undefined ]] || [[ -n ${3:-} && $3 != undefined ]]; then
-			remainder=$(IFS=' '; echo "${args[*]:1}")			# First arg has been checked, so only check the remainder of string.
+		remainder=$(IFS=' '; echo "${args[*]:1}")			# First arg has been checked, so only check the remainder of string.
 
+		if [[ -n ${2:-} && $2 != undefined ]]; then
 			[[ "$remainder" == *"$2"* ]] || continue
+		fi
+
+		if [[ -n ${3:-} && $3 != undefined ]]; then
 			[[ "$remainder" == *"$3"* ]] || continue
 		fi
 
