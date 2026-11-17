@@ -939,7 +939,6 @@ ConfigEnv()
 			r_packages_archive_pathfile=$r_cache_path/$r_nas_qpkg_arch.packages.tar.gz
 			r_packages_pathfile=$r_cache_path/$r_nas_qpkg_arch.packages
 			r_prev_ipk_list_pathfile=$r_ipk_cache_path/ipk-list.save
-			r_prev_pip_list_pathfile=$r_pip_cache_path/pip-list.save
 			r_session_archive_log_pathfile=$r_log_path/session.archive.log
 
 		readonly r_inhibit_display_pathfile
@@ -948,7 +947,6 @@ ConfigEnv()
 		readonly r_packages_archive_pathfile
 		readonly r_packages_pathfile
 		readonly r_prev_ipk_list_pathfile
-		readonly r_prev_pip_list_pathfile
 		readonly r_session_archive_log_pathfile
 
 	# Ephemeral paths.
@@ -4315,17 +4313,12 @@ ShoeHornTextLine()
 
 	}
 
-SaveIpkAndPipList()
+SaveIpkList()
 	{
 
 	# Inputs: (global)
 	#	$r_opkg_cmd
-	#	$r_pip_cmd
 	#	$r_prev_ipk_list_pathfile
-	#	$r_prev_pip_list_pathfile
-
-	$r_pip_cmd freeze | /usr/bin/cut -d'=' -f1 > "$r_prev_pip_list_pathfile"
-	[[ -s $r_prev_pip_list_pathfile ]] && DebugAsDone "saved installed PIP list to $(FormatFileName "$r_prev_pip_list_pathfile")"
 
 	$r_opkg_cmd list-installed > "$r_prev_ipk_list_pathfile"
 	[[ -s $r_prev_ipk_list_pathfile ]] && DebugAsDone "saved installed IPK list to $(FormatFileName "$r_prev_ipk_list_pathfile")"
@@ -4348,28 +4341,6 @@ LoadIpkList()
 		while read -r name separator version; do
 			IPKs-ACinstall-to:Add "$(Lowercase "$name")"
 		done < "$r_prev_ipk_list_pathfile"
-	fi
-
-	}
-
-LoadPipList()
-	{
-
-	# Inputs: (global)
-	#	$r_prev_pip_list_pathfile
-
-	local name
-	local re
-
-	if [[ -s $r_prev_pip_list_pathfile ]]; then
-		DebugInfo "PIPs are being loaded from $(FormatFileName "$r_prev_pip_list_pathfile")"
-
-		while read -r name; do
-			name=$(Lowercase "$name")
-			re=\\b${name}\\b
-
-			[[ ${r_exclusion_pips[*]} =~ $re ]] || PIPs-ACinstall-to:Add "$name"
-		done < "$r_prev_pip_list_pathfile"
 	fi
 
 	}
@@ -4940,7 +4911,6 @@ PIPs:install()
 	#	$r_log_path
 	#	$r_pip_cache_path
 	#	$r_pip_cmd
-	#	$r_prev_pip_list_pathfile
 	#	$useropt_fix
 	#	$useropt_terse
 	#	$useropt_verbose
@@ -4978,11 +4948,6 @@ PIPs:install()
 	PIPs-ACinstall-to:Add "$r_base_pips"
 	(( total_count++ ))
 
-	if [[ -s $r_prev_pip_list_pathfile && $useropt_fix = false ]]; then		# Don't load previous PIP list during 'check'.
-		LoadPipList
-		/bin/mv -f "$r_prev_pip_list_pathfile" "$r_prev_pip_list_pathfile.installing"
-	fi
-
 	if ! PIPs-ACinstall-to.IsAny; then
 		FuncExit $z
 
@@ -5003,15 +4968,9 @@ PIPs:install()
 		(( done_ok_count++ ))
 		DebugAsDone "$desc"
 		SaveActionResultMetrics ok '' "$done_ok_count"
-
-		/bin/rm -f "$r_prev_pip_list_pathfile.installing" 2> /dev/null
 	else
 		(( done_fail_count++ ))
 		SaveActionResultMetrics er "$z" "$done_fail_count"
-
-		if [[ -s $r_prev_pip_list_pathfile.installing ]]; then
-			/bin/mv -f "$r_prev_pip_list_pathfile.installing" "$r_prev_pip_list_pathfile.install.failed"
-		fi
 	fi
 
 	EndSpinner
@@ -12207,7 +12166,7 @@ _QPKG:uninstall_()
 
 	(( z == 0 )) || FuncForkExit $z
 
-	[[ $qpkg_name = Entware ]] && SaveIpkAndPipList
+	[[ $qpkg_name = Entware ]] && SaveIpkList
 
 	current_ver=$(GetQpkgInstalledVer)
 
