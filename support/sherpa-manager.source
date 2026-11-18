@@ -1559,7 +1559,7 @@ DebugLogEnv()
 	fi
 
 	if [[ -n ${r_websites:-} ]]; then
-		for (( n=0; n < ${#r_websites[@]}; n++ )); do
+		for (( n = 0; n < ${#r_websites[@]}; n++ )); do
 			if IsSiteUp ${r_websites[n]}; then
 				DebugWebsite ok "${r_websites[n]}" up
 			else
