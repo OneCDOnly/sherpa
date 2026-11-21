@@ -117,7 +117,7 @@ echo $public_function_name':Add()
 
 	local ar=(${1:-}) it='\'\''
 
-	[[ ${#ar[@]} -eq 0 ]] && return
+	(( ${#ar[@]} == 0 )) && return
 
 	for it in "${ar[@]:-}"; do
 		! '$public_function_name'.Exist "$it" && '$_placeholder_array_'+=("$it")
@@ -135,7 +135,7 @@ echo $public_function_name':Add()
 '$public_function_name':Count()
 	{
 
-	echo "${#'$_placeholder_array_'[@]}"
+	echo -n "${#'$_placeholder_array_'[@]}"
 
 	}
 
@@ -158,14 +158,14 @@ echo $public_function_name':Add()
 '$public_function_name'.IsAny()
 	{
 
-	[[ ${#'$_placeholder_array_'[@]} -gt 0 ]]
+	(( ${#'$_placeholder_array_'[@]} > 0 ))
 
 	}
 
 '$public_function_name'.IsNone()
 	{
 
-	[[ ${#'$_placeholder_array_'[@]} -eq 0 ]]
+	(( ${#'$_placeholder_array_'[@]} == 0 ))
 
 	}
 
