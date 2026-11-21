@@ -1746,7 +1746,7 @@ CheckTasks()
 
 					installed_version=$($r_opkg_cmd list-installed | /bin/grep "^${target_packages%% *} *" | /usr/bin/head -n1 | /usr/bin/cut -d' ' -f3 | /usr/bin/cut -d'-' -f1)
 
-					if (( ${installed_version//.} > 238 )); then
+					if [[ -n $installed_version ]] && (( ${installed_version//.} > 238 )); then
 						ipks_downgrade=true
 						ShowAsNote "various IPKs will be downgraded to suit $r_kernel_page_size kernel page size"
 						IPKs-ACdowngrade-to:Add "$target_packages"
@@ -1765,7 +1765,7 @@ CheckTasks()
 
 #				installed_version=$($r_opkg_cmd list-installed | /bin/grep "^${target_packages%% *} *" | /usr/bin/head -n1 | /usr/bin/cut -d' ' -f3 | /usr/bin/cut -d'-' -f1)
 
-#				if (( ${installed_version//.} > 2392 )); then
+#				if [[ -n $installed_version ]] && (( ${installed_version//.} > 2392 )); then
 #					ipks_downgrade=true
 #					ShowAsNote "git IPKs will be downgraded back to a working version"
 #					IPKs-ACdowngrade-to:Add "$target_packages"
@@ -1785,7 +1785,7 @@ CheckTasks()
 #
 #				installed_version=$($r_opkg_cmd list-installed | /bin/grep "^${target_packages%% *} *" | /usr/bin/head -n1 | /usr/bin/cut -d' ' -f3 | /usr/bin/cut -d'-' -f1)
 #
-#				if (( ${installed_version//.} > 2462 )); then
+#				if [[ -n $installed_version ]] && (( ${installed_version//.} > 2462 )); then
 #					ipks_downgrade=true
 #					ShowAsNote "git IPKs will be downgraded back to working versions"
 #					IPKs-ACdowngrade-to:Add "$target_packages"
@@ -1803,7 +1803,7 @@ CheckTasks()
 
 #		installed_version=$($r_opkg_cmd list-installed | /bin/grep "^${target_packages%% *} *" | /usr/bin/head -n1 | /usr/bin/cut -d' ' -f3 | /usr/bin/cut -d'-' -f1)
 
-#		if (( ${installed_version//.} > 4041 )); then
+#		if [[ -n $installed_version ]] && (( ${installed_version//.} > 4041 )); then
 #			ipks_downgrade=true
 #			ShowAsNote "Transmission IPKs will be downgraded back to working versions"
 #			IPKs-ACdowngrade-to:Add "$target_packages"
