@@ -13225,7 +13225,11 @@ _QPKG:sign_()
 
 	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
-	if ! IsOsCanManageSignedPackages; then
+	if IsQpkgProhibited; then
+		SaveActionResultMetrics sk 'prohibited package'
+		MarkActionForkAsSkippedOk
+		z=2
+	elif ! IsOsCanManageSignedPackages; then
 		SaveActionResultMetrics sk "incompatible $(GetOsName) version"
 		MarkActionForkAsSkippedOk
 		z=2
