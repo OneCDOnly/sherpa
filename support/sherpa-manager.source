@@ -1742,11 +1742,12 @@ CheckTasks()
 				if IsOsNonStdKernelPageSize; then
 					target_packages='ar binutils libbfd libctf libopcodes objdump'
 
-					# Assume first package version is same as remaining package versions.
+					# Assume first package version returned is the same as remaining package versions.
 
 					installed_version=$($r_opkg_cmd list-installed | /bin/grep "^${target_packages%% *} *" | /usr/bin/head -n1 | /usr/bin/cut -d' ' -f3 | /usr/bin/cut -d'-' -f1)
+					installed_version=${installed_version//.}
 
-					if [[ -n $installed_version ]] && (( ${installed_version//.} > 238 )); then
+					if IsInteger "$installed_version" && (( installed_version > 238 )); then
 						ipks_downgrade=true
 						ShowAsNote "various IPKs will be downgraded to suit $r_kernel_page_size kernel page size"
 						IPKs-ACdowngrade-to:Add "$target_packages"
@@ -1764,8 +1765,9 @@ CheckTasks()
 				# Assume first package version is same as remaining package versions.
 
 #				installed_version=$($r_opkg_cmd list-installed | /bin/grep "^${target_packages%% *} *" | /usr/bin/head -n1 | /usr/bin/cut -d' ' -f3 | /usr/bin/cut -d'-' -f1)
+#				installed_version=${installed_version//.}
 
-#				if [[ -n $installed_version ]] && (( ${installed_version//.} > 2392 )); then
+#				if IsInteger "$installed_version" && (( installed_version > 2392 )); then
 #					ipks_downgrade=true
 #					ShowAsNote "git IPKs will be downgraded back to a working version"
 #					IPKs-ACdowngrade-to:Add "$target_packages"
@@ -1784,8 +1786,9 @@ CheckTasks()
 				# Assume first package version is same as remaining package versions.
 #
 #				installed_version=$($r_opkg_cmd list-installed | /bin/grep "^${target_packages%% *} *" | /usr/bin/head -n1 | /usr/bin/cut -d' ' -f3 | /usr/bin/cut -d'-' -f1)
+#				installed_version=${installed_version//.}
 #
-#				if [[ -n $installed_version ]] && (( ${installed_version//.} > 2462 )); then
+#				if IsInteger "$installed_version" && (( installed_version > 2462 )); then
 #					ipks_downgrade=true
 #					ShowAsNote "git IPKs will be downgraded back to working versions"
 #					IPKs-ACdowngrade-to:Add "$target_packages"
@@ -1802,8 +1805,9 @@ CheckTasks()
 		# Assume first package version is same as remaining package versions.
 
 #		installed_version=$($r_opkg_cmd list-installed | /bin/grep "^${target_packages%% *} *" | /usr/bin/head -n1 | /usr/bin/cut -d' ' -f3 | /usr/bin/cut -d'-' -f1)
+#		installed_version=${installed_version//.}
 
-#		if [[ -n $installed_version ]] && (( ${installed_version//.} > 4041 )); then
+#		if IsInteger "$installed_version" && (( installed_version > 4041 )); then
 #			ipks_downgrade=true
 #			ShowAsNote "Transmission IPKs will be downgraded back to working versions"
 #			IPKs-ACdowngrade-to:Add "$target_packages"
@@ -10758,7 +10762,7 @@ GetBusyBoxFunctionCount()
 
 	a=$(/bin/busybox --list 2> /dev/null | /usr/bin/wc -l)
 
-	if [[ -n $a ]] && IsNumber $a && (( a > 0 )); then
+	if [[ -n $a ]] && IsInteger $a && (( a > 0 )); then
 		printf '%s' "$a"
 	else					# BusyBox 1.01 doesn't support the `--list` arg, but can get a rough count of included functions by counting the commas shown by the BusyBox help screen.
 		a=$(/bin/busybox)
@@ -16112,22 +16116,18 @@ IsQpkgTimeoutsIncreased()
 
 	}
 
-IsNumber()
+IsInteger()
 	{
 
 	# Input: (local)
 	#	$1 = string
 
 	# Output: (local)
-	#	$? = 0 if $1 has any numerals.
+	#	$? = 0 if $1 is a number. Nothing non-numeric.
 
 	[[ -n ${1:-} ]] || return
 
-	local a
-
-	a=${1//[!0-9]/}	# Strip non-digits.
-
-	(( ${#a} > 0 ))
+	! [[ "$1" =~ [^0-9] ]]
 
 	}
 
@@ -16188,7 +16188,7 @@ IsLessSupportHeaders()
 
 	a=$(GetLessVersion)
 
-	IsNumber $a && (( a >= 685 ))
+	IsInteger $a && (( a >= 685 ))
 
 	}
 
