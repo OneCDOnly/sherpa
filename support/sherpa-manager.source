@@ -13369,7 +13369,7 @@ _QPKG:unsign_()
 		MarkActionForkAsSkippedAbort
 		z=3
 	elif IsNtQpkgSigned; then
-		SaveActionResultMetrics sk 'already unsigned'
+		SaveActionResultMetrics sk 'not signed'
 		MarkActionForkAsSkippedOk
 		z=2
 	fi
