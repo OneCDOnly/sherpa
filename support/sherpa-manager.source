@@ -10667,10 +10667,13 @@ GetOsKernelPageSize()
 	{
 
 	local a
+	local -i b
 
 	if [[ -x /sbin/hal_app ]]; then
-		a=$(/sbin/hal_app --get_pagesize)B
-		[[ $a = 4096B ]] && printf 4kiB || printf '%s' "$a"
+		a=$(/sbin/hal_app --get_pagesize)
+		[[ -n $a ]] || return
+		b=$(( a / ( 2 ** 10 ) ))
+		printf '%skiB' "$b"
 	else
 		/bin/grep KernelPageSize /proc/1/smaps | /usr/bin/head -n1 | /usr/bin/cut -f2 -d':' | /bin/tr -d ' ' | /bin/sed "$r_regex_fix_kib"
 	fi
