@@ -20191,7 +20191,10 @@ GetCertStartDateEpoch()
 	{
 
 	# Inputs: (local)
-	#	$1 = certificate to extract date from.
+	#	$1 = certificate string to extract date from.
+
+	# Outputs: (local)
+	#	stdout = start date in epoch seconds.
 
 	[[ -n ${1:-} ]] || return
 
@@ -20203,7 +20206,10 @@ GetCertEndDateEpoch()
 	{
 
 	# Inputs: (local)
-	#	$1 = certificate to extract date from.
+	#	$1 = certificate string to extract date from.
+
+	# Outputs: (local)
+	#	stdout = end date in epoch seconds.
 
 	[[ -n ${1:-} ]] || return
 
@@ -20215,7 +20221,10 @@ GetCertIssuer()
 	{
 
 	# Inputs: (local)
-	#	$1 = certificate to extract issuer from.
+	#	$1 = certificate string to extract issuer from.
+
+	# Outputs: (local)
+	#	stdout = certificate issuer.
 
 	[[ -n ${1:-} ]] || return
 
@@ -20227,6 +20236,12 @@ GetCertIssuer()
 
 GetSignedCertificate()
 	{
+
+	# Inputs: (local)
+	#	$1 = QPKG name.
+
+	# Outputs: (local)
+	#	stdout = NAS database certificate string.
 
 	[[ -s $r_cert_db_pathfile ]] || return
 	[[ -n ${1:-} ]] || return
