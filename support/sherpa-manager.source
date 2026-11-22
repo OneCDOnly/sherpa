@@ -422,10 +422,11 @@ LoadConsts()
 		r_report_qpkg_can_clean_column_width=9
 		r_report_qpkg_can_start_to_update_column_width=9
 		r_report_qpkg_cert_enddate_column_width=34
+		r_report_qpkg_cert_issuer_column_width=19
 		r_report_qpkg_cert_startdate_column_width=34
 		r_report_qpkg_cert_valid_column_width=18
 		r_report_qpkg_dependencies_column_width=29
-		r_report_qpkg_install_date_column_width=11
+		r_report_qpkg_install_date_column_width=34
 		r_report_qpkg_is_complete_column_width=9
 		r_report_qpkg_is_enabled_column_width=8
 		r_report_qpkg_is_enhanced_column_width=9
@@ -1558,7 +1559,7 @@ DebugLogEnv()
 	fi
 
 	if [[ -n ${r_websites:-} ]]; then
-		for (( n=0; n < ${#r_websites[@]}; n++ )); do
+		for (( n = 0; n < ${#r_websites[@]}; n++ )); do
 			if IsSiteUp ${r_websites[n]}; then
 				DebugWebsite ok "${r_websites[n]}" up
 			else
@@ -1741,11 +1742,12 @@ CheckTasks()
 				if IsOsNonStdKernelPageSize; then
 					target_packages='ar binutils libbfd libctf libopcodes objdump'
 
-					# Assume first package version is same as remaining package versions.
+					# Assume first package version returned is the same as remaining package versions.
 
 					installed_version=$($r_opkg_cmd list-installed | /bin/grep "^${target_packages%% *} *" | /usr/bin/head -n1 | /usr/bin/cut -d' ' -f3 | /usr/bin/cut -d'-' -f1)
+					installed_version=${installed_version//.}
 
-					if (( ${installed_version//.} > 238 )); then
+					if IsInteger "$installed_version" && (( installed_version > 238 )); then
 						ipks_downgrade=true
 						ShowAsNote "various IPKs will be downgraded to suit $r_kernel_page_size kernel page size"
 						IPKs-ACdowngrade-to:Add "$target_packages"
@@ -1763,8 +1765,9 @@ CheckTasks()
 				# Assume first package version is same as remaining package versions.
 
 #				installed_version=$($r_opkg_cmd list-installed | /bin/grep "^${target_packages%% *} *" | /usr/bin/head -n1 | /usr/bin/cut -d' ' -f3 | /usr/bin/cut -d'-' -f1)
+#				installed_version=${installed_version//.}
 
-#				if (( ${installed_version//.} > 2392 )); then
+#				if IsInteger "$installed_version" && (( installed_version > 2392 )); then
 #					ipks_downgrade=true
 #					ShowAsNote "git IPKs will be downgraded back to a working version"
 #					IPKs-ACdowngrade-to:Add "$target_packages"
@@ -1783,8 +1786,9 @@ CheckTasks()
 				# Assume first package version is same as remaining package versions.
 #
 #				installed_version=$($r_opkg_cmd list-installed | /bin/grep "^${target_packages%% *} *" | /usr/bin/head -n1 | /usr/bin/cut -d' ' -f3 | /usr/bin/cut -d'-' -f1)
+#				installed_version=${installed_version//.}
 #
-#				if (( ${installed_version//.} > 2462 )); then
+#				if IsInteger "$installed_version" && (( installed_version > 2462 )); then
 #					ipks_downgrade=true
 #					ShowAsNote "git IPKs will be downgraded back to working versions"
 #					IPKs-ACdowngrade-to:Add "$target_packages"
@@ -1801,8 +1805,9 @@ CheckTasks()
 		# Assume first package version is same as remaining package versions.
 
 #		installed_version=$($r_opkg_cmd list-installed | /bin/grep "^${target_packages%% *} *" | /usr/bin/head -n1 | /usr/bin/cut -d' ' -f3 | /usr/bin/cut -d'-' -f1)
+#		installed_version=${installed_version//.}
 
-#		if (( ${installed_version//.} > 4041 )); then
+#		if IsInteger "$installed_version" && (( installed_version > 4041 )); then
 #			ipks_downgrade=true
 #			ShowAsNote "Transmission IPKs will be downgraded back to working versions"
 #			IPKs-ACdowngrade-to:Add "$target_packages"
@@ -6124,9 +6129,9 @@ _GenerateReposReportDataRow_()
 		fi
 	else
 		if [[ -z $auxiliary_msg ]]; then
-
 			FormatReportFieldWidth "$name_msg" "$r_report_qpkg_name_column_width"
-			printf ' %s' "$assigned_repo_msg"
+			FormatReportFieldWidth "$assigned_repo_msg" "$r_report_qpkg_repo_column_width"
+			FormatReportFieldWidth "$install_date_msg" "$r_report_qpkg_install_date_column_width"
 		else
 			printf '%s %s' "$(TextDarkGrey "$name_msg")" "$(TextDarkGrey "($(LTrim "$assigned_repo_msg"))")"
 		fi
@@ -6274,6 +6279,7 @@ GenerateDepsReportTitleRow()
 	# Inputs: (global)
 	#	$r_report_lazy_column_width
 	#	$r_report_qpkg_cert_enddate_column_width
+	#	$r_report_qpkg_cert_issuer_column_width
 	#	$r_report_qpkg_cert_startdate_column_width
 	#	$r_report_qpkg_cert_valid_column_width
 	#	$r_report_qpkg_dependencies_column_width
@@ -6290,7 +6296,7 @@ GenerateDepsReportTitleRow()
 
 	local -a a_headers
 
-	a_headers=('QPKG name:' 'Dependencies:' 'Optionals:' 'Prohibited?' 'Installed?' 'Enabled?' 'Complete?' 'Managed?' 'Signed?' 'Certificate start datetime:' 'Certificate end datetime:' 'Cert. valid?' 'Minimum RAM:' 'Min. OS:' 'Max. OS:' 'Installed QPKG author:')
+	a_headers=('QPKG name:' 'Dependencies:' 'Optionals:' 'Prohibited?' 'Installed?' 'Enabled?' 'Complete?' 'Managed?' 'Signed?' 'Certificate issuer:' 'Certificate start datetime:' 'Certificate end datetime:' 'Cert. valid?' 'Minimum RAM:' 'Min. OS:' 'Max. OS:' 'Installed QPKG author:')
 
 	if IsOsCanAutowidthTableColumns; then
 		(
@@ -6309,13 +6315,14 @@ GenerateDepsReportTitleRow()
 		FormatReportFieldWidth "${a_headers[6]}" "$r_report_qpkg_is_complete_column_width"
 		FormatReportFieldWidth "${a_headers[7]}" "$r_report_qpkg_is_managed_column_width"
 		FormatReportFieldWidth "${a_headers[8]}" "$r_report_qpkg_is_signed_column_width"
-		FormatReportFieldWidth "${a_headers[9]}" "$r_report_qpkg_cert_startdate_column_width"
-		FormatReportFieldWidth "${a_headers[10]}" "$r_report_qpkg_cert_enddate_column_width"
-		FormatReportFieldWidth "${a_headers[11]}" "$r_report_qpkg_cert_valid_column_width"
-		FormatReportFieldWidth "${a_headers[12]}" "$r_report_qpkg_min_ram_column_width"
-		FormatReportFieldWidth "${a_headers[13]}" "$r_report_qpkg_os_version_column_width"
+		FormatReportFieldWidth "${a_headers[9]}" "$r_report_qpkg_cert_issuer_column_width"
+		FormatReportFieldWidth "${a_headers[10]}" "$r_report_qpkg_cert_startdate_column_width"
+		FormatReportFieldWidth "${a_headers[11]}" "$r_report_qpkg_cert_enddate_column_width"
+		FormatReportFieldWidth "${a_headers[12]}" "$r_report_qpkg_cert_valid_column_width"
+		FormatReportFieldWidth "${a_headers[13]}" "$r_report_qpkg_min_ram_column_width"
 		FormatReportFieldWidth "${a_headers[14]}" "$r_report_qpkg_os_version_column_width"
-		FormatReportFieldWidth "${a_headers[15]}" "$r_report_lazy_column_width"
+		FormatReportFieldWidth "${a_headers[15]}" "$r_report_qpkg_os_version_column_width"
+		FormatReportFieldWidth "${a_headers[16]}" "$r_report_lazy_column_width"
 	fi
 
 	printf '\n'
@@ -6334,6 +6341,7 @@ _GenerateDepsReportDataRow_()
 	#	$qpkg_name
 	#	$r_report_flags_path
 	#	$r_report_qpkg_cert_enddate_column_width
+	#	$r_report_qpkg_cert_issuer_column_width
 	#	$r_report_qpkg_cert_startdate_column_width
 	#	$r_report_qpkg_cert_valid_column_width
 	#	$r_report_qpkg_dependencies_column_width
@@ -6362,7 +6370,7 @@ _GenerateDepsReportDataRow_()
 	local req_oops
 
 	# Simple.
-		a_column_vars=(author auxiliary cert_enddate cert_startdate cert_valid complete deps enabled installed managed max_os min_os min_ram name opt_deps prohibited signed)
+		a_column_vars=(author auxiliary cert_enddate cert_issuer cert_startdate cert_valid complete deps enabled installed managed max_os min_os min_ram name opt_deps prohibited signed)
 		auxiliary_column=deps		# Auxiliary messages are shown in this column name.
 		dep_name=''
 		mode=''
@@ -6476,16 +6484,17 @@ _GenerateDepsReportDataRow_()
 			# Assign & highlight field messages.
 
 			author_msg=$(FormatReportField N/A mute)
+			cert_enddate_msg=$(FormatReportField N/A mute)
+			cert_issuer_msg=$(FormatReportField N/A mute)
+			cert_startdate_msg=$(FormatReportField N/A mute)
+			cert_valid_msg=$(FormatReportField N/A mute)
+			complete_msg=$(FormatReportField N/A mute)
 			deps_msg=$(FormatReportField "${deps// /, }" normal_mute)
-			opt_deps_msg=$(FormatReportField "${opt_deps// /, }" mute)
 			enabled_msg=$(FormatReportField N/A mute)
 			installed_msg=$(FormatReportField "$installed" mute)
-			complete_msg=$(FormatReportField N/A mute)
 			managed_msg=$(FormatReportField N/A mute)
+			opt_deps_msg=$(FormatReportField "${opt_deps// /, }" mute)
 			signed_msg=$(FormatReportField N/A mute)
-			cert_startdate_msg=$(FormatReportField N/A mute)
-			cert_enddate_msg=$(FormatReportField N/A mute)
-			cert_valid_msg=$(FormatReportField N/A mute)
 
 			if ! IsQpkgProhibited "$qpkg_name"; then
 				prohibited_msg=$(FormatReportField "$prohibited" mute)
@@ -6623,6 +6632,7 @@ _GenerateDepsReportDataRow_()
 			if IsOsCanManageSignedPackages; then
 				if [[ $signed = true ]]; then
 					signed_msg=$(FormatReportField "$signed" ok)
+					cert_issuer_msg=$(FormatReportField "$db_qpkg_cert_issuer" ok)
 
 					if (( db_qpkg_cert_startdate_epoch < $(ConvertNowToSeconds) )); then
 						cert_startdate_msg=$(FormatReportField "$cert_startdate" ok)
@@ -6643,6 +6653,7 @@ _GenerateDepsReportDataRow_()
 					fi
 				else
 					signed_msg=$(FormatReportField "$signed" alert)
+					cert_issuer_msg=$(FormatReportField N/A oops)
 					cert_startdate_msg=$(FormatReportField N/A oops)
 					cert_enddate_msg=$(FormatReportField N/A oops)
 					cert_valid_msg=$(FormatReportField "$cert_valid" oops)
@@ -6650,6 +6661,7 @@ _GenerateDepsReportDataRow_()
 				fi
 			else
 				signed_msg=$(FormatReportField N/A ok)
+				cert_issuer_msg=$(FormatReportField N/A ok)
 				cert_startdate_msg=$(FormatReportField N/A ok)
 				cert_enddate_msg=$(FormatReportField N/A ok)
 				cert_valid_msg=$(FormatReportField N/A ok)
@@ -6662,9 +6674,9 @@ _GenerateDepsReportDataRow_()
 
 	if IsOsCanAutowidthTableColumns; then
 		if IsThisAnAlternateLine "$1"; then
-			TextOnDarkGrey "$(printf '%s' "$name_msg|$deps_msg|$opt_deps_msg|$prohibited_msg|$installed_msg|$enabled_msg|$complete_msg|$managed_msg|$signed_msg|$cert_startdate_msg|$cert_enddate_msg|$cert_valid_msg|$min_ram_msg|$min_os_msg|$max_os_msg|$(FormatReportFieldWidth "$author_msg" "$r_report_qpkg_author_column_width")")"
+			TextOnDarkGrey "$(printf '%s' "$name_msg|$deps_msg|$opt_deps_msg|$prohibited_msg|$installed_msg|$enabled_msg|$complete_msg|$managed_msg|$signed_msg|$cert_issuer_msg|$cert_startdate_msg|$cert_enddate_msg|$cert_valid_msg|$min_ram_msg|$min_os_msg|$max_os_msg|$(FormatReportFieldWidth "$author_msg" "$r_report_qpkg_author_column_width")")"
 		else
-			printf '%s' "$name_msg|$deps_msg|$opt_deps_msg|$prohibited_msg|$installed_msg|$enabled_msg|$complete_msg|$managed_msg|$signed_msg|$cert_startdate_msg|$cert_enddate_msg|$cert_valid_msg|$min_ram_msg|$min_os_msg|$max_os_msg|$author_msg"
+			printf '%s' "$name_msg|$deps_msg|$opt_deps_msg|$prohibited_msg|$installed_msg|$enabled_msg|$complete_msg|$managed_msg|$signed_msg|$cert_issuer_msg|$cert_startdate_msg|$cert_enddate_msg|$cert_valid_msg|$min_ram_msg|$min_os_msg|$max_os_msg|$author_msg"
 		fi
 	else
 		FormatReportFieldWidth "$name_msg" "$r_report_qpkg_name_column_width"
@@ -6676,6 +6688,7 @@ _GenerateDepsReportDataRow_()
 		FormatReportFieldWidth "$complete_msg" "$r_report_qpkg_is_complete_column_width"
 		FormatReportFieldWidth "$managed_msg" "$r_report_qpkg_is_managed_column_width"
 		FormatReportFieldWidth "$signed_msg" "$r_report_qpkg_is_signed_column_width"
+		FormatReportFieldWidth "$cert_issuer_msg" "$r_report_qpkg_cert_issuer_column_width"
 		FormatReportFieldWidth "$cert_startdate_msg" "$r_report_qpkg_cert_startdate_column_width"
 		FormatReportFieldWidth "$cert_enddate_msg" "$r_report_qpkg_cert_enddate_column_width"
 		FormatReportFieldWidth "$cert_valid_msg" "$r_report_qpkg_cert_valid_column_width"
@@ -6995,7 +7008,7 @@ _GenerateBacksReportItemLine_()
 
 	if IsOsCanAutowidthTableColumns; then
 		if IsThisAnAlternateLine "$5"; then
-			TextOnDarkGrey "$(printf '%s' "$file_name_msg|$file_bytes_msg|$epoch_time_msg")"
+			TextOnDarkGrey "$(printf '%s' "$file_name_msg|$file_bytes_msg|$(FormatReportFieldWidth "$epoch_time_msg" "$r_report_qpkg_install_date_column_width")")"
 		else
 			printf '%s' "$file_name_msg|$file_bytes_msg|$epoch_time_msg"
 		fi
@@ -10654,10 +10667,13 @@ GetOsKernelPageSize()
 	{
 
 	local a
+	local -i b
 
 	if [[ -x /sbin/hal_app ]]; then
-		a=$(/sbin/hal_app --get_pagesize)B
-		[[ $a = 4096B ]] && printf 4kiB || printf '%s' "$a"
+		a=$(/sbin/hal_app --get_pagesize)
+		[[ -n $a ]] || return
+		b=$(( a / ( 2 ** 10 ) ))
+		printf '%skiB' "$b"
 	else
 		/bin/grep KernelPageSize /proc/1/smaps | /usr/bin/head -n1 | /usr/bin/cut -f2 -d':' | /bin/tr -d ' ' | /bin/sed "$r_regex_fix_kib"
 	fi
@@ -10749,7 +10765,7 @@ GetBusyBoxFunctionCount()
 
 	a=$(/bin/busybox --list 2> /dev/null | /usr/bin/wc -l)
 
-	if [[ -n $a ]] && IsNumber $a && (( a > 0 )); then
+	if [[ -n $a ]] && IsInteger $a && (( a > 0 )); then
 		printf '%s' "$a"
 	else					# BusyBox 1.01 doesn't support the `--list` arg, but can get a rough count of included functions by counting the commas shown by the BusyBox help screen.
 		a=$(/bin/busybox)
@@ -13216,7 +13232,11 @@ _QPKG:sign_()
 
 	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
-	if ! IsOsCanManageSignedPackages; then
+	if IsQpkgProhibited; then
+		SaveActionResultMetrics sk 'prohibited package'
+		MarkActionForkAsSkippedOk
+		z=2
+	elif ! IsOsCanManageSignedPackages; then
 		SaveActionResultMetrics sk "incompatible $(GetOsName) version"
 		MarkActionForkAsSkippedOk
 		z=2
@@ -13356,7 +13376,7 @@ _QPKG:unsign_()
 		MarkActionForkAsSkippedAbort
 		z=3
 	elif IsNtQpkgSigned; then
-		SaveActionResultMetrics sk 'already unsigned'
+		SaveActionResultMetrics sk 'not signed'
 		MarkActionForkAsSkippedOk
 		z=2
 	fi
@@ -16099,22 +16119,18 @@ IsQpkgTimeoutsIncreased()
 
 	}
 
-IsNumber()
+IsInteger()
 	{
 
 	# Input: (local)
 	#	$1 = string
 
 	# Output: (local)
-	#	$? = 0 if $1 has any numerals.
+	#	$? = 0 if $1 is a number. Nothing non-numeric.
 
 	[[ -n ${1:-} ]] || return
 
-	local a
-
-	a=${1//[!0-9]/}	# Strip non-digits.
-
-	(( ${#a} > 0 ))
+	! [[ "$1" =~ [^0-9] ]]
 
 	}
 
@@ -16175,7 +16191,7 @@ IsLessSupportHeaders()
 
 	a=$(GetLessVersion)
 
-	IsNumber $a && (( a >= 685 ))
+	IsInteger $a && (( a >= 685 ))
 
 	}
 
