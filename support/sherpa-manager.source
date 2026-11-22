@@ -51,8 +51,8 @@ Init()
 	HideCursor
 	HideKeystrokes
 	SetCMDs
-	LoadConsts
-	LoadDefaults
+	PrepareConsts
+	PrepareDefaults
 
 	ShowAsProc init
 
@@ -297,7 +297,7 @@ EndDebugLog()
 
 	}
 
-LoadConsts()
+PrepareConsts()
 	{
 
 	# Various.
@@ -670,7 +670,7 @@ LoadConsts()
 
 	}
 
-LoadDefaults()
+PrepareDefaults()
 	{
 
 	# Default flags.
@@ -743,15 +743,15 @@ LoadDefaults()
 		useropt_show_log_tail=false
 		useropt_show_packages=false
 		useropt_show_previous_action_results_report=false
-		useropt_show_report_info=$(LoadSetting ReportInfo true)
+		useropt_show_report_info=$(GetSetting ReportInfo true)
 		useropt_show_repos=false
 		useropt_show_status=false
-		useropt_terse=$(LoadSetting Terse true)
+		useropt_terse=$(GetSetting Terse true)
 		useropt_verbose=false
 
 	# User-selectable values.
 
-		useropt_branch=$(LoadSetting Git_Branch stable)
+		useropt_branch=$(GetSetting Git_Branch stable)
 
 	}
 
@@ -1648,7 +1648,7 @@ CheckTasks()
 	elif [[ $useropt_help_actions = true || $useropt_help_actions_all = true || $useropt_help_basic = true || $useropt_help_groups = true || $useropt_help_lists = true || $useropt_help_options = true || $useropt_help_packages = true || $useropt_help_problems = true || $useropt_help_show = true || $useropt_help_tips = true || $useropt_help_upgrades = true || $useropt_list_versions = true || $useropt_show_about = true || $useropt_show_about = true || $useropt_show_previous_action_results_report = true || $useropt_show_log_last = true || $useropt_show_log_tail = true || $switch_branch = true || $switch_colour = true || $switch_report_info = true || $switch_terse = true ]]; then
 		: # don't do anything
 	else
-		LoadDatabase
+		PrepareDb
 
 		for action in "${ar_user_qpkg_actions[@]}"; do
 			if QPKGs-AC${action}-to.IsAny; then
@@ -2108,7 +2108,10 @@ AssignQpkgsToActions()
 #	QPKGs-ACdeactivate-to:Remove sherpa
 	QPKGs-ACuninstall-to:Remove sherpa
 
-	QPKGs-ACsign-to.IsAny && LoadQpkgSigningCert
+	if QPKGs-ACsign-to.IsAny; then
+		PrepareSigningCertificate
+		PrepareSigningSignature
+	fi
 
 	IsDebug && ListQPKGsActionsAll			# directive:omit-from-production
 
@@ -2853,7 +2856,7 @@ ParseManagementArgs()
 					EnableDebugToArchiveAndFile
 					;;
 				fix)
-					LoadDatabase
+					PrepareDb
 					generate_show_report=true
 					get_qpkg_extended_states=true
 					requires_group=false
@@ -3242,7 +3245,7 @@ ParseShowArgs()
 				show)
 					case $group in
 						about)
-							LoadDatabase
+							PrepareDb
 							action=''
 							awaiting_group=false
 							get_qpkg_extended_states=false
@@ -3250,7 +3253,7 @@ ParseShowArgs()
 							useropt_show_about=true
 							;;
 						about-extra)
-							LoadDatabase
+							PrepareDb
 							action=''
 							awaiting_group=false
 							get_qpkg_extended_states=false
@@ -3258,7 +3261,7 @@ ParseShowArgs()
 							useropt_show_aboutextra=true
 							;;
 						about-sites)
-							LoadDatabase
+							PrepareDb
 							action=''
 							awaiting_group=false
 							get_qpkg_extended_states=false
@@ -3266,7 +3269,7 @@ ParseShowArgs()
 							useropt_show_aboutsites=true
 							;;
 						about-all)
-							LoadDatabase
+							PrepareDb
 							action=''
 							awaiting_group=false
 							get_qpkg_extended_states=false
@@ -3293,7 +3296,7 @@ ParseShowArgs()
 							useropt_show_backups=true
 							;;
 						dependent)
-							LoadDatabase
+							PrepareDb
 							action=''
 							awaiting_group=false
 							generate_show_report=true
@@ -3301,7 +3304,7 @@ ParseShowArgs()
 							useropt_show_dependencies=true
 							;;
 						features)
-							LoadDatabase
+							PrepareDb
 							action=''
 							awaiting_group=false
 							generate_show_report=true
@@ -3317,7 +3320,7 @@ ParseShowArgs()
 							useropt_show_log_last=true
 							;;
 						packages)
-							LoadDatabase
+							PrepareDb
 							action=''
 							awaiting_group=false
 							generate_show_report=true
@@ -3326,7 +3329,7 @@ ParseShowArgs()
 							useropt_show_packages=true
 							;;
 						repositories)
-							LoadDatabase
+							PrepareDb
 							action=''
 							awaiting_group=false
 							generate_show_report=true
@@ -3343,7 +3346,7 @@ ParseShowArgs()
 							show_action_results_report=true
 							;;
 						status)
-							LoadObjects
+							PrepareObjects
 							QPKGs.ACstatusGRall:Set
 							action=''
 							awaiting_group=false
@@ -3466,7 +3469,7 @@ ParseListArgs()
 				list)
 					case $group in
 						all|?(in)dependent|optional)
-							LoadObjects
+							PrepareObjects
 							QPKGs.AClistGR${group}:Set
 							action=''
 							awaiting_group=false
@@ -3476,7 +3479,7 @@ ParseListArgs()
 							show_title=false
 							;;
 						?(NT)active)
-							LoadObjects
+							PrepareObjects
 							QPKGs.AClistIS${group}:Set
 							QPKGs.ACstatusISinstalled:Set
 							action=''
@@ -3487,7 +3490,7 @@ ParseListArgs()
 							show_title=false
 							;;
 						?(NT)backedup|?(NT)complete|?(NT)enabled|?(NT)installable|?(NT)installed|?(NT)missing|?(NT)upgradable)
-							LoadObjects
+							PrepareObjects
 							QPKGs.AClistIS${group}:Set
 							action=''
 							awaiting_group=false
@@ -3497,7 +3500,7 @@ ParseListArgs()
 							show_title=false
 							;;
 						versions)
-							LoadDatabase
+							PrepareDb
 							action=''
 							awaiting_group=false
 							generate_list_report=true
@@ -3562,7 +3565,7 @@ ParseActionArgs()
 	requires_group=false
 	user_action=''			# The original user argument, detected as an action. There may be many variants per-action.
 
-	[[ -n ${a_args[*]+"${a_args[*]}"} ]] && LoadDatabase
+	[[ -n ${a_args[*]+"${a_args[*]}"} ]] && PrepareDb
 
 	for arg in ${a_args[@]+"${a_args[@]}"}; do
 		[[ -n $arg ]] || continue
@@ -3614,7 +3617,7 @@ ParseActionArgs()
 				?(de|re)activate|backup|clean|@(dis|en)able?(au)|reassign|@(re|un)install|resign|restore|update|upgrade)
 					case $group in
 						?(NT)active)
-							LoadObjects
+							PrepareObjects
 							QPKGs.AC${action}IS${group}:Set
 							QPKGs.ACstatusISinstalled:Set
 							awaiting_group=false
@@ -3626,7 +3629,7 @@ ParseActionArgs()
 
 			case $group in
 				all|canbackup|?(NT)canclean|canrestarttoupdate|?(in)dependent|hasdependents)
-					LoadObjects
+					PrepareObjects
 					QPKGs.AC${action}GR${group}:Set
 					awaiting_group=false
 					show_action_results_report=true
@@ -3634,7 +3637,7 @@ ParseActionArgs()
 					run_package_actions=true
 					;;
 				?(NT)backedup|?(NT)enabled|?(NT)installable|?(NT)installed|?(NT)missing|?(NT)upgradable)
-					LoadObjects
+					PrepareObjects
 					QPKGs.AC${action}IS${group}:Set
 					awaiting_group=false
 					show_action_results_report=true
@@ -3643,7 +3646,7 @@ ParseActionArgs()
 					;;
 				*)
 					[[ $action != show ]] || continue
-					LoadObjects
+					PrepareObjects
 					QPKGs-AC${action}-to:Add "$group"
 					awaiting_group=false
 					show_action_results_report=true
@@ -3664,7 +3667,7 @@ ParseActionArgs()
 
 		case $action in
 			status)
-				LoadObjects
+				PrepareObjects
 				QPKGs.ACstatusISinstalled:Set							# If status is specified without a group, then group is `installed`.
 				generate_show_report=true
 				get_qpkg_extended_states=true
@@ -5336,7 +5339,7 @@ WriteTerse()
 SaveSetting()
 	{
 
-	# Save a setting named as $1 with a value of $2 to persistent storage: /etc/config/qpkg.conf
+	# Save a setting named as $1 with a value of $2 to persistent storage: `/etc/config/qpkg.conf`
 
 	# Inputs: (local)
 	#	$1 = name
@@ -5361,10 +5364,10 @@ SaveSetting()
 
 	}
 
-LoadSetting()
+GetSetting()
 	{
 
-	# Load a setting named as $1 with a default value of $2 from persistent storage: /etc/config/qpkg.conf
+	# Load a setting named as $1 with a default value of $2 from persistent storage: `/etc/config/qpkg.conf`
 
 	# Inputs: (local)
 	#	$1 = setting name
@@ -5393,7 +5396,7 @@ LoadSetting()
 DeleteSetting()
 	{
 
-	# Remove a setting named as $1 from persistent storage: /etc/config/qpkg.conf
+	# Remove a setting named as $1 from persistent storage: `/etc/config/qpkg.conf`
 
 	# Inputs: (local)
 	#	$1 = name
@@ -5401,7 +5404,7 @@ DeleteSetting()
 
 	ConfirmVarIsDefined 1 "${1:-}" "$e_nonam" || return
 
-	if [[ $(LoadSetting "$1" none) != none ]]; then
+	if [[ $(GetSetting "$1" none) != none ]]; then
 		/sbin/setcfg -e sherpa "$1" -f /etc/config/qpkg.conf
 
 		[[ ${2:-} = announce ]] && ShowAsDone "user setting '$1' deleted"
@@ -6382,14 +6385,10 @@ _GenerateDepsReportDataRow_()
 
 	# Compound.
 
-		db_qpkg_cert=$(GetQpkgDbCert)
-
-		db_qpkg_cert_issuer=$(GetQpkgDbCertIssuer)
 		deps_raw=$(GetQpkgDbDependencies "$qpkg_name")
 		opt_deps_raw=$(GetQpkgDbOptDependencies "$qpkg_name")
 
-		db_qpkg_cert_enddate_epoch=$(GetQpkgDbCertEndDateEpoch)
-		db_qpkg_cert_startdate_epoch=$(GetQpkgDbCertStartDateEpoch)
+	PrepareSignedCertDetails "$qpkg_name"
 
 	for a in "${a_column_vars[@]}"; do
 		local ${a}=false
@@ -6405,8 +6404,8 @@ _GenerateDepsReportDataRow_()
 	IsQpkgEnabled "$name" && enabled=true
 	IsQpkgComplete "$name" && complete=true
 	IsQpkgSigned "$name" && signed=true
-	(( db_qpkg_cert_startdate_epoch > 0 )) && cert_startdate=$(ConvertSecondsToFullDate "$db_qpkg_cert_startdate_epoch")
-	(( db_qpkg_cert_enddate_epoch > 0 )) && cert_enddate=$(ConvertSecondsToFullDate "$db_qpkg_cert_enddate_epoch")
+	(( qpkg_signed_cert_startdate_epoch > 0 )) && cert_startdate=$(ConvertSecondsToFullDate "$qpkg_signed_cert_startdate_epoch")
+	(( qpkg_signed_cert_enddate_epoch > 0 )) && cert_enddate=$(ConvertSecondsToFullDate "$qpkg_signed_cert_enddate_epoch")
 	IsQpkgDbCertValid && cert_valid=true
 	IsQpkgProhibited "$name" && prohibited=true
 	[[ -z $deps_raw ]] && deps_raw=none
@@ -6632,15 +6631,15 @@ _GenerateDepsReportDataRow_()
 			if IsOsCanManageSignedPackages; then
 				if [[ $signed = true ]]; then
 					signed_msg=$(FormatReportField "$signed" ok)
-					cert_issuer_msg=$(FormatReportField "$db_qpkg_cert_issuer" ok)
+					cert_issuer_msg=$(FormatReportField "$qpkg_signed_cert_issuer" ok)
 
-					if (( db_qpkg_cert_startdate_epoch < $(ConvertNowToSeconds) )); then
+					if (( qpkg_signed_cert_startdate_epoch < $(ConvertNowToSeconds) )); then
 						cert_startdate_msg=$(FormatReportField "$cert_startdate" ok)
 					else
 						cert_startdate_msg=$(FormatReportField "$cert_startdate" highlight)
 					fi
 
-					if (( db_qpkg_cert_enddate_epoch > $(ConvertNowToSeconds) )); then
+					if (( qpkg_signed_cert_enddate_epoch > $(ConvertNowToSeconds) )); then
 						cert_enddate_msg=$(FormatReportField "$cert_enddate" ok)
 					else
 						cert_enddate_msg=$(FormatReportField "$cert_enddate" oops)
@@ -8728,7 +8727,7 @@ BuildExtendedQPKGsStates()
 		FuncExit; return
 	fi
 
-	LoadDatabase
+	PrepareDb
 	InitQPKGsStates
 	RefreshAndStoreQPKGsStates
 	LoadQPKGsStates
@@ -8752,7 +8751,7 @@ InitQPKGsStates()
 	# Outputs: (global)
 	#	$qpkgs_states_built
 
-	LoadObjects || return
+	PrepareObjects || return
 
 	FuncInit
 
@@ -9014,7 +9013,7 @@ HelpAbbreviations()
 
 	local -r r_pid_pathfile
 
-	LoadDatabase
+	PrepareDb
 	DisplayProcReport abbreviations
 	CreateReportPaths
 
@@ -13203,8 +13202,8 @@ _QPKG:sign_()
 	#	$qpkg_name
 	#	$r_abort_actions_pathfile
 	#	$r_cert_db_pathfile
-	#	$r_qpkg_certificate
-	#	$r_qpkg_signature
+	#	$r_qpkg_signing_certificate
+	#	$r_qpkg_signing_signature
 
 	# Outputs: (local)
 	#	$? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
@@ -13262,7 +13261,7 @@ _QPKG:sign_()
 
 	# Compound.
 
-		query="INSERT INTO $table (Type,QpkgName,Cert,DigitalSignature) VALUES ('qpkg','$package_name','$r_qpkg_certificate','$r_qpkg_signature')"
+		query="INSERT INTO $table (Type,QpkgName,Cert,DigitalSignature) VALUES ('qpkg','$package_name','$r_qpkg_signing_certificate','$r_qpkg_signing_signature')"
 		uri="file:$r_cert_db_pathfile"
 
 		read -r -d '' pysqlite_command <<EOB
@@ -16338,20 +16337,18 @@ RemovePidFile()
 
 	}
 
-LoadQpkgSigningCert()
+PrepareSigningCertificate()
 	{
 
 	# Outputs: (global)
-	#	$r_qpkg_certificate
-	#	$r_qpkg_signature
+	#	$r_qpkg_signing_certificate
 
-	r_qpkg_certificate=''
-	r_qpkg_signature=''
+	r_qpkg_signing_certificate=''
 
 	# This certificate is the same used by QNAP for myQNAPcloud v1.1.100
 	# Expires: 2nd Feb 2029
 
-	read -r -d '' r_qpkg_certificate <<EOB
+	read -r -d '' r_qpkg_signing_certificate <<EOB
 -----BEGIN CERTIFICATE-----
 MIIDvzCCAqegAwIBAgIEBYuKdDANBgkqhkiG9w0BAQsFADCBgDELMAkGA1UEBhMC
 VFcxDzANBgNVBAgMBlRhaXdhbjEPMA0GA1UEBwwGVGFpcGVpMQ0wCwYDVQQKDARR
@@ -16377,10 +16374,22 @@ dCpm
 -----END CERTIFICATE-----
 EOB
 
+	readonly r_qpkg_signing_certificate
+
+	}
+
+PrepareSigningSignature()
+	{
+
+	# Outputs: (global)
+	#	$r_qpkg_signing_signature
+
+	r_qpkg_signing_signature=''
+
 	# This signature is the same used by QNAP for myQNAPcloud v1.1.100
 	# Expires: 2nd Feb 2029
 
-	read -r -d '' r_qpkg_signature <<EOB
+	read -r -d '' r_qpkg_signing_signature <<EOB
 MIME-Version: 1.0
 Content-Disposition: attachment; filename=\"smime.p7m\"
 Content-Type: application/pkcs7-mime; smime-type=signed-data; name=\"smime.p7m\"
@@ -16424,8 +16433,7 @@ JhzjybAGqGh79Iy4rOs5dpyRIAlnf+ppYCgZWNLYwi8J0JAOcBMr+CZvhUxQge2A
 vhlKNCMp/lp+s1/yiJLAMScaNJiF5joaIekOPfKqH4FTQkc=
 EOB
 
-	readonly r_qpkg_certificate
-	readonly r_qpkg_signature
+	readonly r_qpkg_signing_signature
 
 	}
 
@@ -19740,7 +19748,7 @@ RefreshArchive()
 
 	}
 
-LoadObjects()
+PrepareObjects()
 	{
 
 	# Ensure `objects` in the local cache is up-to-date, then source it.
@@ -19802,7 +19810,7 @@ LoadObjects()
 
 	}
 
-LoadDatabase()
+PrepareDb()
 	{
 
 	# Ensure `packages` in the local cache is up-to-date, then source it.
@@ -19822,7 +19830,7 @@ LoadDatabase()
 
 	FuncInit
 
-	LoadObjects
+	PrepareObjects
 
 	PauseSpinner
 	ShowAsProc database
@@ -20131,15 +20139,25 @@ IsSiteUp()
 
 	} &> /dev/null
 
-LoadQpkgDbCertDetails()
+PrepareSignedCertDetails()
 	{
 
-	db_qpkg_cert=$(GetQpkgDbCert) || return
-	db_qpkg_cert_startdate_epoch=$(GetQpkgDbCertStartDateEpoch)
-	db_qpkg_cert_enddate_epoch=$(GetQpkgDbCertEndDateEpoch)
-	db_qpkg_cert_startdate=$(GetQpkgDbCertStartDate)
-	db_qpkg_cert_enddate=$(GetQpkgDbCertEndDate)
-	db_qpkg_cert_issuer=$(GetQpkgDbCertIssuer)
+	qpkg_signed_cert=''
+	qpkg_signed_cert_startdate_epoch=0
+	qpkg_signed_cert_enddate_epoch=0
+	qpkg_signed_cert_startdate=unknown
+	qpkg_signed_cert_enddate=unknown
+	qpkg_signed_cert_issuer=unknown
+
+	[[ -n ${1:-} ]] || return
+	qpkg_signed_cert=$(GetSignedCertificate "$1") || return
+
+	qpkg_signed_cert_startdate_epoch=$(GetCertStartDateEpoch "$qpkg_signed_cert")
+	qpkg_signed_cert_enddate_epoch=$(GetCertEndDateEpoch "$qpkg_signed_cert")
+
+	qpkg_signed_cert_startdate=$(ConvertSecondsToFullDate "$qpkg_signed_cert_startdate_epoch")
+	qpkg_signed_cert_enddate=$(ConvertSecondsToFullDate "$qpkg_signed_cert_enddate_epoch")
+	qpkg_signed_cert_issuer=$(GetCertIssuer "$qpkg_signed_cert")
 
 	}
 
@@ -20154,77 +20172,62 @@ IsQpkgDbCertValid()
 	{
 
 	# Inputs: (global)
-	#	$db_qpkg_cert_enddate_epoch
-	#	$db_qpkg_cert_startdate_epoch
+	#	$qpkg_signed_cert_enddate_epoch
+	#	$qpkg_signed_cert_startdate_epoch
 
 	local -i now_epoch
 
 	now_epoch=$(ConvertNowToSeconds)
 
-	(( ${db_qpkg_cert_startdate_epoch:=0} > 0 )) || return
-	(( ${db_qpkg_cert_enddate_epoch:=0} > 0 )) || return
+	(( ${qpkg_signed_cert_startdate_epoch:=0} > 0 )) || return
+	(( ${qpkg_signed_cert_enddate_epoch:=0} > 0 )) || return
 	(( ${now_epoch:=0} > 0 )) || return
 
-	(( db_qpkg_cert_startdate_epoch <= now_epoch && now_epoch < db_qpkg_cert_enddate_epoch ))
+	(( qpkg_signed_cert_startdate_epoch <= now_epoch && now_epoch < qpkg_signed_cert_enddate_epoch ))
 
 	}
 
-GetQpkgDbCertStartDate()
+GetCertStartDateEpoch()
 	{
 
-	# Inputs: (global)
-	#	$db_qpkg_cert_startdate_epoch
+	# Inputs: (local)
+	#	$1 = certificate to extract date from.
 
-	(( ${db_qpkg_cert_startdate_epoch:=0} > 0 )) || return
+	[[ -n ${1:-} ]] || return
 
-	/bin/date -d @$db_qpkg_cert_startdate_epoch
+	/usr/bin/openssl x509 -startdate -noout <<< "$1" | /usr/bin/cut -d= -f2- | /bin/date -f - +%s
 
 	}
 
-GetQpkgDbCertEndDate()
+GetCertEndDateEpoch()
 	{
 
-	# Inputs: (global)
-	#	$db_qpkg_cert_enddate_epoch
+	# Inputs: (local)
+	#	$1 = certificate to extract date from.
 
-	(( ${db_qpkg_cert_enddate_epoch:=0} > 0 )) || return
+	[[ -n ${1:-} ]] || return
 
-	/bin/date -d @$db_qpkg_cert_enddate_epoch
+	/usr/bin/openssl x509 -enddate -noout <<< "$1" | /usr/bin/cut -d= -f2- | /bin/date -f - +%s
 
 	}
 
-GetQpkgDbCertStartDateEpoch()
+GetCertIssuer()
 	{
 
-	[[ -n $db_qpkg_cert ]] || return
+	# Inputs: (local)
+	#	$1 = certificate to extract issuer from.
 
-	/usr/bin/openssl x509 -startdate -noout <<< "$db_qpkg_cert" | /usr/bin/cut -d= -f2- | /bin/date -f - +%s
+	[[ -n ${1:-} ]] || return
 
-	}
-
-GetQpkgDbCertEndDateEpoch()
-	{
-
-	[[ -n $db_qpkg_cert ]] || return
-
-	/usr/bin/openssl x509 -enddate -noout <<< "$db_qpkg_cert" | /usr/bin/cut -d= -f2- | /bin/date -f - +%s
+	/usr/bin/openssl x509 -issuer -noout <<< "$1" | /bin/sed -n 's/.*O=\([^,]*\).*/\1/p'
 
 	}
 
-GetQpkgDbCertIssuer()
-	{
-
-	[[ -n $db_qpkg_cert ]] || return
-
-	/usr/bin/openssl x509 -issuer -noout <<< "$db_qpkg_cert" | /bin/sed -n 's/.*O=\([^,]*\).*/\1/p'
-
-	}
-
-GetQpkgDbCert()
+GetSignedCertificate()
 	{
 
 	[[ -s $r_cert_db_pathfile ]] || return
-	[[ -n $qpkg_name ]] || return
+	[[ -n ${1:-} ]] || return
 
 	local match_column
 	local pysqlite_command
@@ -20261,7 +20264,7 @@ if sqlite_path:
 conn = sqlite3.connect('$uri')
 cursor = conn.cursor()
 
-cursor.execute("""$query""", ('$qpkg_name',))
+cursor.execute("""$query""", ('$1',))
 record = cursor.fetchone()
 
 cursor.close()
