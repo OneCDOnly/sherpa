@@ -1734,27 +1734,28 @@ CheckTasks()
 
 		SetQpkgArch
 
-		case $r_nas_qpkg_arch in
-			a41)
-				# These must be downgraded on ARMv7 when QTS has a non-standard (non-4kiB) kernel page size.
-				#	https://forum.qnap.com/viewtopic.php?p=850945#p850945
-
-				if IsOsNonStdKernelPageSize; then
-					target_packages='ar binutils libbfd libctf libopcodes objdump'
-
-					# Assume first package version returned is the same as remaining package versions.
-
-					installed_version=$($r_opkg_cmd list-installed | /bin/grep "^${target_packages%% *} *" | /usr/bin/head -n1 | /usr/bin/cut -d' ' -f3 | /usr/bin/cut -d'-' -f1)
-					installed_version=${installed_version//.}
-
-					if IsInteger "$installed_version" && (( installed_version > 238 )); then
-						ipks_downgrade=true
-						ShowAsNote "various IPKs will be downgraded to suit $r_kernel_page_size kernel page size"
-						IPKs-ACdowngrade-to:Add "$target_packages"
-					else
-						IPKs-ACdowngrade-sk:Add "$target_packages"
-					fi
-				fi
+#		case $r_nas_qpkg_arch in
+#			a41)
+#				# These must be downgraded on ARMv7 when QTS has a non-standard (non-4kiB) kernel page size.
+#				#	https://forum.qnap.com/viewtopic.php?p=850945#p850945
+#				#	TODO: 23/11/2026: this may not be an issue anymore. Disable and watch for complaints.
+#
+#				if IsOsNonStdKernelPageSize; then
+#					target_packages='ar binutils libbfd libctf libopcodes objdump'
+#
+#					# Assume first package version returned is the same as remaining package versions.
+#
+#					installed_version=$($r_opkg_cmd list-installed | /bin/grep "^${target_packages%% *} *" | /usr/bin/head -n1 | /usr/bin/cut -d' ' -f3 | /usr/bin/cut -d'-' -f1)
+#					installed_version=${installed_version//.}
+#
+#					if IsInteger "$installed_version" && (( installed_version > 238 )); then
+#						ipks_downgrade=true
+#						ShowAsNote "various IPKs will be downgraded to suit $r_kernel_page_size kernel page size"
+#						IPKs-ACdowngrade-to:Add "$target_packages"
+#					else
+#						IPKs-ACdowngrade-sk:Add "$target_packages"
+#					fi
+#				fi
 
 				# These must be downgraded on ARMv7 as 2.45.2 versions can't clone a repo.
 				#	https://github.com/Entware/Entware/issues/1072
@@ -1774,13 +1775,14 @@ CheckTasks()
 #				else
 #					IPKs-ACdowngrade-sk:Add "$target_packages"
 #				fi
-		esac
+#		esac
 
 #		case $r_nas_qpkg_arch in
 #			a64|a41|i64)
 				# These must be downgraded as 2.50.1 versions are inoperative.
 				#	https://github.com/Entware/Entware/issues/1241
-#
+				#	NOTE: this issue has been fixed.
+
 #				target_packages='git git-http'
 #
 				# Assume first package version is same as remaining package versions.
@@ -1799,6 +1801,7 @@ CheckTasks()
 
 		# Downgrade Transmission as 4.0.6 has an undefined issue.
 		#	https://github.com/OneCDOnly/sherpa/issues/306
+		#	NOTE: I've decided against forcing a downgrade.
 
 #		target_packages='transmission-daemon transmission-web'
 
@@ -15151,7 +15154,7 @@ IsOsOnline()
 IsOsStdKernelPageSize()
 	{
 
-	# Standard kernel page size for most QNAP NAS is 4kiB. Non-standard size is 32kiB (confirmed on the TS-431XeU, TS-431X3 & TS-1635).
+	# Standard kernel page size for most QNAP NAS is 4kiB. Non-standard size is 32kiB (confirmed on the TS-431XeU, TS-431X3 & TS-1635, but there are other models).
 	# https://www.qnap.com/en-us/how-to/faq/article/why-do-the-installed-third-party-containers-not-run-successfully-on-specific-32-bit-arm-devices
 
 	# Inputs: (global)
