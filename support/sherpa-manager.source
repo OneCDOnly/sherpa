@@ -20219,7 +20219,9 @@ GetCertIssuer()
 
 	[[ -n ${1:-} ]] || return
 
-	/usr/bin/openssl x509 -issuer -noout <<< "$1" | /bin/sed -n 's/.*O=\([^,]*\).*/\1/p'
+	# NOTE: `openssl` v3.0.20 (QTS 5.2.11) returns elements with whitespace either side of '=', `openssl` v3.5.7 (QTS 6.1.0) does not.
+
+	/usr/bin/openssl x509 -issuer -noout <<< "$1" | /bin/sed -n 's/.*O[[:space:]]=[[:space:]]\([^,]*\).*/\1/p;s/.*O=\([^,]*\).*/\1/p'
 
 	}
 
